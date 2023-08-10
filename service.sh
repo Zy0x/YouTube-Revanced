@@ -7,9 +7,9 @@ done
 
 # Detect temproot or fullroot
 if [ ! -e /data/local/tmp/magisk ]; then
-  sleep 15
+  sleep 10
 else
-  sleep 90
+  sleep 60
 fi
 
 PKGNAME=com.google.android.youtube
@@ -23,6 +23,7 @@ then
 	RVAPK="/data/adb/modules/YouTube-RVX/app/YouTubeRevanced-$RVAPPVER.apk"
 	chcon u:object_r:apk_data_file:s0 "$RVAPK"
 	mount -o bind "$RVAPK" "$STOCKAPK"
+ 	am force-stop "$PKGNAME"
 fi
 
 su -lp 2000 -c "cmd notification post -S bigtext -t 'YouTube RVX' tag '✅ YouTube RVX already to use...'" >/dev/null 2>&1
