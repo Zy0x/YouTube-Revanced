@@ -1,2 +1,2 @@
 ### New 
-- Bumped version to v19.04.34
+- Bumped version to v19.04.37
