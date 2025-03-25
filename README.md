@@ -64,7 +64,7 @@ Supports both **ROOT** and **NON-ROOT** versions! 🚀
 3. **Export settings** (Optional)  
 4. Enjoy ✨
 
----
+‎
 
 ## 📜 Sources & References  
 - 🔧 [Revancify Tools](https://github.com/decipher3114/Revancify)  
