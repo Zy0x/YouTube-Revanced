@@ -1,5 +1,4 @@
-# .github/workflows/update-json.yml
-name: Update JSON on Release
+name: Update update.json on Release
 
 on:
   release:
@@ -8,48 +7,62 @@ on:
 jobs:
   update-json:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+    # 1) Checkout branch main dengan token
+    - name: Checkout main branch
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}   # <-- pastikan ini ada
+        ref: main                             # <-- checkout ke main (bukan tag)
+        fetch-depth: 0                        # full history, agar commit & push aman
 
-      - name: Get Release Info
-        id: release
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const release = context.payload.release;
-            const tag = release.tag_name;
-            const versionCode = new Date(release.published_at).toISOString().split('T')[0].replace(/-/g, '');
-            const zipUrl = release.assets.find(a => a.name.endsWith('.zip'))?.browser_download_url || '';
-            const releaseType = release.prerelease ? "BETA" : "STABLE";
-            const changelog = release.body || '';
+    # 2) Ambil info release lewat github-script
+    - name: Get Release Info
+      id: release
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const r = context.payload.release;
+          core.setOutput("version", r.tag_name);
+          core.setOutput("versionCode",
+            new Date(r.published_at)
+              .toISOString().split('T')[0]
+              .replace(/-/g,'')
+          );
+          core.setOutput(
+            "zipUrl",
+            r.assets.find(a=>a.name.endsWith('.zip'))?.browser_download_url||''
+          );
+          core.setOutput("releaseType", r.prerelease ? "BETA" : "STABLE");
+          // escape quotes & newlines
+          core.setOutput(
+            "changelog",
+            (r.body||'')
+              .replace(/"/g,'\\"')
+              .replace(/\r?\n/g,'\\n')
+          );
 
-            core.setOutput("version", tag);
-            core.setOutput("versionCode", versionCode);
-            core.setOutput("zipUrl", zipUrl);
-            core.setOutput("releaseType", releaseType);
-            core.setOutput("changelog", changelog.replace(/"/g, '\\"').replace(/\r?\n/g, "\\n"));
+    # 3) Tulis file update.json
+    - name: Write update.json
+      run: |
+        cat <<EOF > update.json
+        {
+          "version": "${{ steps.release.outputs.version }}",
+          "versionCode": ${{ steps.release.outputs.versionCode }},
+          "zipUrl": "${{ steps.release.outputs.zipUrl }}",
+          "releaseType": "${{ steps.release.outputs.releaseType }}",
+          "changelog": "${{ steps.release.outputs.changelog }}"
+        }
+        EOF
 
-      - name: Write update.json
-        run: |
-          cat <<EOF > update.json
-          {
-            "version": "${{ steps.release.outputs.version }}",
-            "versionCode": ${{ steps.release.outputs.versionCode }},
-            "zipUrl": "${{ steps.release.outputs.zipUrl }}",
-            "releaseType": "${{ steps.release.outputs.releaseType }}",
-            "changelog": "${{ steps.release.outputs.changelog }}"
-          }
-          EOF
-
-      - name: Commit and Push update.json
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add update.json
-          git commit -m "Update update.json for release ${{ steps.release.outputs.version }}" || echo "No changes to commit"
-          git push origin HEAD
+    # 4) Commit & push ke main
+    - name: Commit and push update.json
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config user.name  "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add update.json
+        git diff --quiet && echo "No changes to commit" || git commit -m "🔄 Auto-update update.json for ${{ steps.release.outputs.version }}"
+        git push origin main
