@@ -1,0 +1,89 @@
+name: Update Changelog
+
+# Beri token write access
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true     # penting: simpan GITHUB_TOKEN ke git
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch latest release data (stable or beta)
+        id: release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const releases = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+
+            if (!releases.data.length) {
+              throw new Error("No releases found.");
+            }
+
+            const latest = releases.data[0];
+            const tag = latest.tag_name;
+            const name = latest.name || "";
+            const body = latest.body || "";
+            const prerelease = latest.prerelease;
+
+            core.setOutput("tag", tag);
+            core.setOutput("name", name);
+            core.setOutput("body", body);
+            core.setOutput("type", prerelease ? "Beta" : "Stable");
+          result-encoding: string
+
+      - name: Prepend release notes to changelog.md
+        run: |
+          # Create a temporary file to hold the new content
+          echo -e "# ${{ steps.release.outputs.type }} Release - ${{ steps.release.outputs.name }}\n" > temp_changelog.md
+          echo -e "${{ steps.release.outputs.body }}\n" >> temp_changelog.md
+          echo -e "‎ \n" >> temp_changelog.md
+          echo -e "‎ \n" >> temp_changelog.md
+
+          # Append the existing changelog content to the new file
+          cat changelog.md >> temp_changelog.md
+
+          # Replace the original changelog.md with the updated one
+          mv temp_changelog.md changelog.md
+
+      - name: Commit and push changelog update
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Stash local changes if there are any
+          git stash || echo "No local changes to stash"
+
+          # Pull changes from the remote and rebase
+          git pull origin main --rebase || { 
+            echo "Rebase failed, resetting local branch"; 
+            git reset --hard origin/main 
+          }
+
+          # Apply the stashed changes (if any)
+          git stash pop || echo "No stashed changes to apply"
+
+          # Commit any changes before pushing
+          git add changelog.md
+          git commit -m "Changelog update for release $TAG" || echo "No changes"
+
+          # Push changes back to main
+          git push origin main
