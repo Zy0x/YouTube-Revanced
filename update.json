@@ -1,7 +1,7 @@
 {
-  "version": "v20.12.46",
-  "versionCode": 20250419,
-  "zipUrl": "https://github.com/Zy0x/Test/releases/download/v1/tes.zip",
-  "changelog": "https://raw.githubusercontent.com/Zy0x/YouTube-Revanced/main/changelog.md"
-  "releaseType": "beta"
+    "version": "v20.12.46",
+    "versionCode": 20250419,
+    "zipUrl": "https://github.com/Zy0x/Test/releases/download/v1/tes.zip",
+    "changelog": "https://raw.githubusercontent.com/Zy0x/YouTube-Revanced/main/changelog.md"
+    "releaseType": "beta"
 }
