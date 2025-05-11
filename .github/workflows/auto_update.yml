@@ -1,0 +1,145 @@
+name: Auto-update update.json and changelog.md on Release
+
+# Izinkan akses write ke repositori
+permissions:
+  contents: write
+
+# Trigger workflow saat rilis diterbitkan atau diubah menjadi prarilis
+on:
+  workflow_dispatch:  # Trigger manual
+  release:
+    types: [published, prereleased, edited, deleted]
+
+jobs:
+  update-json-and-changelog:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Checkout kode sumber
+      - name: Checkout main branch
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 2) Generate file release_data.json
+      - name: Generate release_data.json
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // Pastikan event adalah 'release' dan memiliki tag_name
+            if (context.eventName !== 'release' || !context.payload.release?.tag_name) {
+              throw new Error('This workflow can only be triggered by a release event with a valid tag_name.');
+            }
+            // Ambil nama tag
+            const tag = context.payload.release.tag_name;
+            // Ekstrak versi menggunakan regex (contoh: v3.0)
+            const versionMatch = tag.match(/v\d+\.\d+/);
+            if (!versionMatch) {
+              throw new Error(`Invalid tag format: ${tag}. Expected format: Deity-vX.Y[-beta].`);
+            }
+            const version = versionMatch[0];
+            // Tentukan tipe rilis berdasarkan nama tag
+            const isBeta = tag.includes('-beta');
+            const type = isBeta ? 'beta' : 'stable';
+            // Buat file release_data.json
+            const d = new Date(context.payload.release.published_at);
+            const versionCode = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+            const zip = (context.payload.release.assets.find(a => a.name.endsWith('.zip')) || {}).browser_download_url || '';
+            require('fs').writeFileSync('release_data.json',
+              JSON.stringify({ 
+                version, 
+                versionCode, 
+                zipUrl: zip, 
+                releaseType: type,
+                releaseName: context.payload.release.name || 'No Release Name',
+                releaseBody: context.payload.release.body || 'No Release Notes'
+              }, null, 2)
+            );
+
+      # 3) (Opsional) Debug isi release_data.json
+      - name: Show release_data.json
+        run: cat release_data.json
+
+      # 4) Update file update.json
+      - name: Update update.json
+        run: |
+          VERSION=$(jq -r '.version' release_data.json)
+          VERSION_CODE=$(jq -r '.versionCode' release_data.json)
+          ZIP_URL=$(jq -r '.zipUrl' release_data.json)
+          RELEASE_TYPE=$(jq -r '.releaseType' release_data.json)
+          jq \
+            --arg version "$VERSION" \
+            --argjson versionCode "$VERSION_CODE" \
+            --arg zipUrl "$ZIP_URL" \
+            --arg releaseType "$RELEASE_TYPE" \
+            '.version     = $version |
+             .versionCode = $versionCode |
+             .zipUrl      = $zipUrl |
+             .releaseType = $releaseType' \
+            update.json > update.json.tmp && mv update.json.tmp update.json
+      # 5) Update file changelog.md
+      - name: Update changelog.md
+        run: |
+          RELEASE_NAME=$(jq -r '.releaseName' release_data.json)
+          RELEASE_BODY=$(jq -r '.releaseBody' release_data.json)
+          RELEASE_DATE=$(date +"%Y-%m-%d")
+
+          # Escape RELEASE_BODY untuk ditulis aman ke file (multiline, kutipan, karakter khusus)
+          BODY_ESCAPED=$(printf "%s\n" "$RELEASE_BODY" | sed 's/[\/&]/\\&/g')
+
+          # Periksa apakah RELEASE_NAME sudah ada di changelog.md
+          if grep -Fxq "# $RELEASE_NAME" changelog.md; then
+            echo "Release '$RELEASE_NAME' already exists in changelog.md. Updating and moving it to the top..."
+            # Hapus entri yang sudah ada dari changelog.md
+            awk -v release_name="$RELEASE_NAME" '
+              BEGIN { in_release = 0 }
+              {
+                if ($0 ~ "# " release_name) {
+                  in_release = 1
+                  next
+                }
+                if (in_release && $0 ~ /^# /) {
+                  in_release = 0
+                }
+                if (!in_release) {
+                  print $0
+                }
+              }
+            ' changelog.md > changelog.tmp && mv changelog.tmp changelog.md
+
+            # Tambahkan entri yang diperbarui ke bagian paling atas dengan jarak
+            {
+              echo "# $RELEASE_NAME"
+              echo "Released on: $RELEASE_DATE"
+              echo ""
+              echo "$BODY_ESCAPED"
+              echo "‎ "  # Baris kosong tambahan untuk jarak
+              echo "‎ "  # Baris kosong tambahan untuk jarak
+              echo "‎ "  # Baris kosong tambahan untuk jarak
+              cat changelog.md
+            } > changelog.tmp && mv changelog.tmp changelog.md
+          else
+            echo "Release '$RELEASE_NAME' not found in changelog.md. Adding new entry at the top with spacing..."
+            # Tambahkan entri baru ke bagian paling atas dengan jarak
+            {
+              echo "# $RELEASE_NAME"
+              echo "Released on: $RELEASE_DATE"
+              echo ""
+              echo "$BODY_ESCAPED"
+              echo "‎ "  # Baris kosong tambahan untuk jarak
+              echo "‎ "  # Baris kosong tambahan untuk jarak
+              echo "‎ "  # Baris kosong tambahan untuk jarak
+              cat changelog.md
+            } > changelog.tmp && mv changelog.tmp changelog.md
+          fi
+      # 6) Commit dan push perubahan ke main branch
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add update.json changelog.md
+          git commit -m "Auto-update update.json and changelog.md for $RELEASE_NAME" || echo "No changes to commit"
+          git push
