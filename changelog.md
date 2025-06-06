@@ -5,4 +5,4 @@
 - If YouTube is having problems (module not working) try to use the action button in magisk (root user).
 - Update Settings (optional) if u want use my preference
 
-`Note: Read README.MD first!` 
+`Note: Read README.MD first!`
