@@ -1,7 +1,8 @@
 ### Update
-- Bumped version to v20.12.46
-- Patched with Revancify Tools v2.6.1
-- Based on Anddea Patch v3.6.0 (thanks to Anddea)
+- Bumped version to v20.16.40
+- Patched with Revancify Tools v2.7.0
+- Based on Anddea Patch v3.10.0-dev.1(thanks to Anddea)
+- If YouTube is having problems (module not working) try to use the action button in magisk (root user).
 - Update Settings (optional) if u want use my preference
-### New
-- Added action button for repatch YouTube without reflashed module (Root Version)
+
+`Note: Read README.MD first!` 
