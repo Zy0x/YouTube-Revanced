@@ -1,0 +1,108 @@
+name: Release Update.json & Changelog.md
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published, prereleased, edited]
+
+jobs:
+  update-json-and-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Generate release_data.json
+        uses: actions/github-script@v6
+        with:
+          script: |
+            if (context.eventName !== 'release' || !context.payload.release?.tag_name) {
+              throw new Error('This workflow requires a release event with a valid tag_name.');
+            }
+            const tag = context.payload.release.tag_name;
+            const versionMatch = tag.match(/^v\d+\.\d+\.\d+(-R\d+)?$/);
+            if (!versionMatch) {
+              throw new Error(`Invalid tag format: ${tag}. Expected format: vX.Y.Z or vX.Y.Z-Rn`);
+            }
+            const version = tag.replace(/-R\d+$/, '');
+            const releaseType = tag.includes('-R') ? 'beta' : 'stable';
+            const d = new Date(context.payload.release.published_at);
+            const versionCode = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+            const zip = (context.payload.release.assets.find(a => a.name.endsWith('.zip')) || {}).browser_download_url || '';
+            require('fs').writeFileSync('release_data.json',
+              JSON.stringify({
+                version,
+                versionCode,
+                zipUrl: zip,
+                releaseType,
+                releaseName: context.payload.release.name || 'No Release Name',
+                releaseBody: context.payload.release.body || 'No Release Notes',
+                published_at: context.payload.release.published_at
+              }, null, 2)
+            );
+
+      - name: Show release_data.json
+        run: cat release_data.json
+
+      - name: Update update.json
+        run: |
+          VERSION=$(jq -r '.version' release_data.json)
+          VERSION_CODE=$(jq -r '.versionCode' release_data.json)
+          ZIP_URL=$(jq -r '.zipUrl' release_data.json)
+          RELEASE_TYPE=$(jq -r '.releaseType' release_data.json)
+          jq \
+            --arg version "$VERSION" \
+            --argjson versionCode "$VERSION_CODE" \
+            --arg zipUrl "$ZIP_URL" \
+            --arg releaseType "$RELEASE_TYPE" \
+            '.version     = $version |
+             .versionCode = $versionCode |
+             .zipUrl      = $zipUrl |
+             .releaseType = $releaseType' \
+            update.json > update.json.tmp && mv update.json.tmp update.json
+
+      - name: Update changelog.md
+        run: |
+          RELEASE_NAME=$(jq -r '.releaseName' release_data.json)
+          RELEASE_BODY=$(jq -r '.releaseBody' release_data.json)
+          RELEASE_DATE=$(date -d "$(jq -r '.published_at' release_data.json)" +"%Y-%m-%d" || date +"%Y-%m-%d")
+          # Pastikan changelog.md dihapus sepenuhnya
+          rm -f changelog.md || echo "No changelog.md to remove"
+          # Tulis ulang changelog.md dengan catatan rilis terbaru
+          echo -e "## $RELEASE_NAME ($RELEASE_DATE)\n\n$RELEASE_BODY\n" > changelog.md
+          # Verifikasi bahwa file ditulis dengan benar
+          if [ ! -f changelog.md ]; then
+            echo "Error: changelog.md was not created!"
+            exit 1
+          fi
+
+      - name: Verify changelog.md
+        run: |
+          echo "Content of changelog.md after update:"
+          cat changelog.md
+          # Verifikasi bahwa changelog.md hanya berisi satu bagian rilis
+          SECTION_COUNT=$(grep -c "^## " changelog.md)
+          echo "Number of release sections: $SECTION_COUNT"
+          if [ "$SECTION_COUNT" -ne 1 ]; then
+            echo "Error: changelog.md contains more than one release section!"
+            exit 1
+          fi
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add update.json changelog.md
+          git commit -m "Auto-update update.json and changelog.md for $RELEASE_NAME" || echo "No changes to commit"
+          git push
