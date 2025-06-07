@@ -1,4 +1,4 @@
-name: Release Update.json & Changelog.md
+name: Auto-update update.json and changelog.md on Release
 
 permissions:
   contents: write
@@ -35,8 +35,8 @@ jobs:
             if (!versionMatch) {
               throw new Error(`Invalid tag format: ${tag}. Expected format: vX.Y.Z or vX.Y.Z-Rn`);
             }
-            const version = tag.replace(/-R\d+$/, '');
-            const releaseType = tag.includes('-R') ? 'beta' : 'stable';
+            const version = tag.replace(/-R\d+$/, ''); // Untuk v20.16.40, tetap v20.16.40 karena tidak ada -R*
+            const releaseType = tag.includes('-R') ? 'beta' : 'stable'; // Untuk v20.16.40, akan menjadi 'stable'
             const d = new Date(context.payload.release.published_at);
             const versionCode = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
             const zip = (context.payload.release.assets.find(a => a.name.endsWith('.zip')) || {}).browser_download_url || '';
