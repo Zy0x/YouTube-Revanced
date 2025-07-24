@@ -1,7 +1,7 @@
 {
   "version": "v20.23.39",
-  "versionCode": 20250620,
-  "zipUrl": "https://github.com/Zy0x/YouTube-Revanced/releases/download/v20.23.39/Youtube.RVX.v20.23.39.zip",
+  "versionCode": 20250724,
+  "zipUrl": "https://github.com/Zy0x/YouTube-Revanced/releases/download/v20.23.39-R1/Youtube.RVX.v20.23.39-R1.zip",
   "changelog": "https://raw.githubusercontent.com/Zy0x/YouTube-Revanced/main/changelog.md",
-  "releaseType": "stable"
+  "releaseType": "beta"
 }
