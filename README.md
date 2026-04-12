@@ -37,12 +37,13 @@ Supports both **ROOT** and **NON-ROOT** versions! 🚀
 
 | Source | Download Link |
 |--------|--------------|
+| **MicroG-RE (Morphe)** | 🔗 [Download](https://github.com/MorpheApp/MicroG-RE/releases/latest) |
 | **MicroG-RE (Better UI)** | 🔗 [Download](http://github.com/wstxda/microg-re/releases/latest) |
 | **GmsCore from ReVanced** | 🔗 [Download](http://github.com/revanced/gmscore/releases/latest) |
 | **GmsCore from YT-Advanced** | 🔗 [Download](http://github.com/yt-advanced/gmscore/releases/latest) |
 
 > [!NOTE]
-> Recommended to use MicroG-RE!
+> Recommended to use MicroG-RE (Morphe)!
 
 ‎
 
