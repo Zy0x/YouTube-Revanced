@@ -1,8 +1,8 @@
-## v20.23.40-R1 (2026-05-03)
+## v20.23.40-R2 (2026-05-17)
 
 ### Update
-- Patched with Revancify Xisr Tool v1.4.4
-- Based on [Anddea Patch v4.0.0](https://github.com/anddea/revanced-patches/releases/tag/v4.0.0) (thanks to Anddea)
+- Patched with Revancify Xisr Tool v1.4.5
+- Based on [Anddea Patch v4.0.1-dev.1](https://github.com/anddea/revanced-patches/releases/tag/v4.0.0-dev.1) (thanks to Anddea)
 - All patch included!
 - Update Readme.md for NonRoot User (recommended using MicroG RE - Morphe)
 
