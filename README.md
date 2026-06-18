@@ -68,6 +68,7 @@ Supports both **ROOT** and **NON-ROOT** versions! 🚀
 ‎
 
 ## 📜 Sources & References  
-- 🔧 [Revancify Tools](https://github.com/decipher3114/Revancify)  
+- 🔧 [Revancify Tools](https://github.com/decipher3114/Revancify)
+- 🔧 [Revancify Xisr Tools](https://github.com/Xisrr1/Revancify-Xisr)
 - 📺 [YouTube ReVanced Patches](https://github.com/revanced)  
-- 🛠️ [Anddea Patch](https://github.com/anddea/revanced-patches)  
+- 🛠️ [Anddea Patch](https://github.com/anddea/revanced-patches)
