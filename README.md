@@ -19,7 +19,7 @@ Supports both **ROOT** and **NON-ROOT** versions! 🚀
 
 ✅ **Required:**  
 > - **KSU / Magisk / Apatch**  
-> - ❌ Do not use **TWRP** or other Custom Recovery!  
+> - ❌ Do not flash module on **TWRP** or other Custom Recovery!  
 
 🛠️ **Minimum Supported Versions:**  
 > - **Magisk**: `24200`  
