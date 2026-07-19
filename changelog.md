@@ -8,6 +8,7 @@
 
 ### Fix & Problem
 - If YouTube is having problems (module not working) try to use the action button in magisk (root user).
+- There have been many reports from some clients about buffering issues and video not playing (only sound). You can try the previous version or try downloading a different [GMS Core](https://github.com/Zy0x/YouTube-Revanced#-download-gmscoremicrog) . Every user's situation is different!
 
 `Note: Always Read README.MD first!` 
 
