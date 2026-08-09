@@ -60,7 +60,7 @@ Supports both **ROOT** and **NON-ROOT** versions! 🚀
 
 <h3>🌈 Non-Root</h3>  
 
-1. **Install GmsCore ([MicroG](https://github.com/Zy0x/YouTube-Revanced/view/main/README.md#-download-gmscoremicrog))**  
+1. **Install GmsCore ([MicroG](https://github.com/Zy0x/YouTube-Revanced/blob/main/README.md#-download-gmscoremicrog))**
 2. **Download & Install YouTube ReVanced (Non-Root Version)**  
 3. **Export settings** (Optional)  
 4. Enjoy ✨
