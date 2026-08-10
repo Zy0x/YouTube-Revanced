@@ -1,10 +1,11 @@
-## v20.51.39-R4 (2026-08-03)
+## v20.51.39-R5 (2026-08-10)
 
 ### Update
 - Patched with Revancify Xisr Tool v1.4.5
-- Based on [Anddea Patch v4.2.0-dev.11](https://github.com/anddea/revanced-patches/releases/tag/v4.2.0-dev.11) (thanks to Anddea)
+- Based on [Anddea Patch v4.2.0](https://github.com/anddea/revanced-patches/releases/tag/v4.2.0) (thanks to Anddea)
 - All patch included!
 - Update Readme.md for NonRoot User (recommended using MicroG RE - Morphe)
+- Cek this [Log Patch](https://github.com/Zy0x/YouTube-Revanced/blob/main/patch_log.txt) if u want
 
 ### Fix & Problem
 - If YouTube is having problems (module not working) try to use the action button in magisk (root user).
