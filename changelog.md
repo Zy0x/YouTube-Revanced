@@ -1,10 +1,9 @@
-## v20.51.39-R5 (2026-08-10)
+## v20.51.39-R6 (2026-08-29)
 
 ### Update
-- Patched with Revancify Xisr Tool v1.4.5
-- Based on [Anddea Patch v4.2.0](https://github.com/anddea/revanced-patches/releases/tag/v4.2.0) (thanks to Anddea)
+- Patched with Revancify Xisr Tool v1.4.6
+- Based on [Anddea Patch v4.3.0-dev.4](https://github.com/anddea/revanced-patches/releases/tag/v4.3.0-dev.4) (thanks to Anddea)
 - All patch included!
-- Update Readme.md for NonRoot User (recommended using MicroG RE - Morphe)
 - Cek this [Log Patch](https://github.com/Zy0x/YouTube-Revanced/blob/main/patch_log.txt) if u want
 
 ### Fix & Problem
