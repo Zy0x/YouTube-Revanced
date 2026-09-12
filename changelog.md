@@ -1,8 +1,9 @@
-## v20.51.39-R6 (2026-08-29)
+## v21.07.247 (2026-09-12)
 
 ### Update
 - Patched with Revancify Xisr Tool v1.4.6
-- Based on [Anddea Patch v4.3.0-dev.4](https://github.com/anddea/revanced-patches/releases/tag/v4.3.0-dev.4) (thanks to Anddea)
+- Bumped YouTube version to v21.07.247
+- Based on [Anddea Patch v4.3.0-dev.6](https://github.com/anddea/revanced-patches/releases/tag/v4.3.0-dev.4) (thanks to Anddea)
 - All patch included!
 - Cek this [Log Patch](https://github.com/Zy0x/YouTube-Revanced/blob/main/patch_log.txt) if u want
 
