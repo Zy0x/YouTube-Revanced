@@ -1,17 +1,14 @@
-## v21.07.247 (2026-09-12)
+## v21.13.164 (2026-09-29)
 
 ### Update
 - Patched with Revancify Xisr Tool v1.4.6
-- Bumped YouTube version to v21.07.247
-- Based on [Anddea Patch v4.3.0-dev.6](https://github.com/anddea/revanced-patches/releases/tag/v4.3.0-dev.6) (thanks to Anddea)
+- Bumped YouTube version to v21.13.164
+- Based on [Anddea Patch v4.3.1-dev.1](https://github.com/anddea/revanced-patches/releases/tag/v4.3.1-dev.1) (thanks to Anddea)
 - All patch included!
 - Cek this [Log Patch](https://github.com/Zy0x/YouTube-Revanced/blob/main/patch_log.txt) if u want
 
 ### Fix & Problem
-- If YouTube is having problems (module not working) try to use the action button in magisk (root user).
-- There have been many reports from some clients about buffering issues and video not playing (only sound). You can try the previous version or try downloading a different [GMS Core](https://github.com/Zy0x/YouTube-Revanced#-download-gmscoremicrog) . Every user's situation is different!
-- FIX Problem for Buffering Issue: Change spoof client — Go to Settings > ReVanced > Misc > Spoof client, and try switching to a different client (e.g., Android VR, iOS, or Android TV). Some clients handle seeking/forwarding better than others.
-- For Non-Root, if during installation it displays "Package incompatible" or something similar, try uninstalling the old version first and reinstalling it cleanly.
+For fix & problem Read in [here](https://github.com/Zy0x/YouTube-Revanced/tree/main#%EF%B8%8F-fix--problem)
 
 `Note: Always Read README.MD first!` 
 
