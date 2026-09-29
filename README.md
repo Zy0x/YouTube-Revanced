@@ -51,7 +51,7 @@ Supports both **ROOT** and **NON-ROOT** versions! 🚀
 
 <h3>🎭 Root</h3>  
 
-1. **Download** the module (**Root Version**)  
+1. **Download** the [module](https://github.com/Zy0x/YouTube-Revanced/releases/latest) (**Root Version**)  
 2. **Install** via **Magisk** / **KSU** / **Apatch**  
 3. **Export settings** (Optional)  
 4. Enjoy ✨  
@@ -61,7 +61,7 @@ Supports both **ROOT** and **NON-ROOT** versions! 🚀
 <h3>🌈 Non-Root</h3>  
 
 1. **Install GmsCore ([MicroG](https://github.com/Zy0x/YouTube-Revanced/blob/main/README.md#-download-gmscoremicrog))**
-2. **Download & Install YouTube ReVanced (Non-Root Version)**  
+2. **Download & Install [YouTube ReVanced](https://github.com/Zy0x/YouTube-Revanced/releases/latest) (Non-Root Version)**  
 3. **Export settings** (Optional)  
 4. Enjoy ✨
 
