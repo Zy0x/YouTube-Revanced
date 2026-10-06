@@ -71,6 +71,7 @@ Supports both **ROOT** and **NON-ROOT** versions! 🚀
 - There have been many reports from some clients about buffering issues and video not playing (only sound). You can try the previous version or try downloading a different [GMS Core](https://github.com/Zy0x/YouTube-Revanced#-download-gmscoremicrog) . Every user's situation is different!
 - FIX Problem for Buffering Issue: Change spoof client — Go to Settings > ReVanced > Misc > Spoof client, and try switching to a different client (e.g., Android VR, iOS, or Android TV). Some clients handle seeking/forwarding better than others.
 - For Non-Root, if during installation it displays "Package incompatible" or something similar, try uninstalling the old version first and reinstalling it cleanly.
+- New Issue For Non-Root Devices, If you encounter a "Playback ID: XXXXX" error or experience problems while seeking video, try going to RVX - Misc and disabling the PoToken Provider, then spoofing the video stream with another client.
 
 ## 📜 Sources & References  
 - 🔧 [Revancify Tools](https://github.com/decipher3114/Revancify)
