@@ -139,7 +139,7 @@ ROOT_PATCHED_APK="$BUILD_DIR/$TARGET_VERSION-Anddea.apk"
 echo "⚡ Memulai proses patching Non-Root..."
 mapfile -t NONROOT_ARGS < "$NONROOT_ARGS_FILE"
 java -jar "$CLI_JAR" \
-    -a com.google.android.youtube \
+    patch \
     -p "$PATCH_MPP" \
     -o "$NONROOT_OUT" \
     "${NONROOT_ARGS[@]}" \
@@ -153,7 +153,7 @@ echo "✅ Non-Root APK selesai: $NONROOT_OUT"
 echo "⚡ Memulai proses patching Root..."
 mapfile -t ROOT_ARGS < "$ROOT_ARGS_FILE"
 java -jar "$CLI_JAR" \
-    -a com.google.android.youtube \
+    patch \
     -p "$PATCH_MPP" \
     -o "$ROOT_PATCHED_APK" \
     "${ROOT_ARGS[@]}" \
