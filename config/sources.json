@@ -1,0 +1,38 @@
+[
+  {
+    "id": "anddea",
+    "name": "Anddea Patches (Default)",
+    "repository": "anddea/revanced-patches",
+    "manifestUrl": "https://raw.githubusercontent.com/anddea/revanced-patches/refs/heads/main/patches-list.json",
+    "defaultReleaseType": "dev",
+    "isDefault": true,
+    "description": "Sumber patch utama dengan fitur terlengkap dan kustomisasi mendalam untuk YouTube RVX."
+  },
+  {
+    "id": "morphe",
+    "name": "Morphe Official",
+    "repository": "MorpheApp/morphe-patches",
+    "manifestUrl": "https://raw.githubusercontent.com/MorpheApp/morphe-patches/refs/heads/main/patches-list.json",
+    "defaultReleaseType": "latest",
+    "isDefault": false,
+    "description": "Sumber patch resmi dari tim MorpheApp."
+  },
+  {
+    "id": "inotia00",
+    "name": "Inotia00 (ReVanced Extended)",
+    "repository": "inotia00/revanced-patches",
+    "manifestUrl": "https://raw.githubusercontent.com/inotia00/revanced-patches/refs/heads/revanced-extended/patches.json",
+    "defaultReleaseType": "latest",
+    "isDefault": false,
+    "description": "Sumber ReVanced Extended klasik dari developer inotia00."
+  },
+  {
+    "id": "revanced",
+    "name": "ReVanced Official",
+    "repository": "ReVanced/revanced-patches",
+    "manifestUrl": "https://raw.githubusercontent.com/ReVanced/revanced-patches/refs/heads/main/patches.json",
+    "defaultReleaseType": "latest",
+    "isDefault": false,
+    "description": "Sumber patch resmi dari ReVanced Team."
+  }
+]

@@ -1,18 +1,31 @@
-<h1 align="center">📺 YouTube ReVanced Patch</h1>
+<h1 align="center">📺 YouTube ReVanced (RVX) Builder</h1>
 
 <p align="center">
-  <b>A patched version of YouTube with ad-free experience and premium features using <a href="https://github.com/decipher3114/Revancify">Revancify Tools</a></b>  
+  <b>A patched version of YouTube with ad-free experience, AMOLED dark theme, and premium features powered by Morphe CLI & Anddea Patches</b>  
 </p>
 
 ‎
 
 ## ⚠️ Disclaimer  
 > **I only patch for personal use. Please use at your own risk!**  
+
 ‎
+
+## ⚡ Cloud Builder & Dashboard Interaktif
+Proyek ini kini dilengkapi dengan **Automated Cloud Builder** (berjalan via GitHub Actions) dan **Web Dashboard Interaktif** yang mobile-first:
+- 📱 **Web Dashboard**: Buka folder `/web/index.html` (atau aktifkan GitHub Pages) untuk memilih patch secara visual dengan toggle, tombol versi dinamis, dan 1-klik *Golden Preset*.
+- 🔒 **Keamanan Akses**: Dilindungi dengan autentikasi GitHub Personal Access Token (PAT) lokal di browser Anda untuk mencegah pihak luar memicu build.
+- 🚀 **Manual Build via GitHub Tab**: Kunjungi tab **Actions** > **Build & Package YouTube RVX** > **Run workflow** untuk menjalankan build secara langsung dari GitHub.
+- 🧪 **Mode Uji Coba**: Hasil build otomatis diunggah sebagai *Artifacts* untuk Anda unduh dan uji coba di HP terlebih dahulu sebelum dirilis resmi.
+
+‎
+
 ## 📌 About  
 This project provides a **YouTube ReVanced** patch that enables an ad-free experience and premium features **without a subscription**.  
 Supports both **ROOT** and **NON-ROOT** versions! 🚀  
+
 ‎
+
 ## 🔧 Requirements  
 
 <h4>🎭 Root Users 🎭</h4>
@@ -24,7 +37,9 @@ Supports both **ROOT** and **NON-ROOT** versions! 🚀
 🛠️ **Minimum Supported Versions:**  
 > - **Magisk**: `24200`  
 > - **KSU**: `11425`
+
 ---
+
 <h4>🌈 Non-Root Users 🌈</h4>
 
 ✅ **Required:**  
@@ -36,7 +51,7 @@ Supports both **ROOT** and **NON-ROOT** versions! 🚀
 ## 📥 Download GmsCore/MicroG  
 
 | Source | Download Link |
-|--------|--------------|
+|---|---|
 | **MicroG-RE (Morphe)** | 🔗 [Download](https://github.com/MorpheApp/MicroG-RE/releases/latest) |
 | **MicroG-RE (Better UI)** | 🔗 [Download](http://github.com/wstxda/microg-re/releases/latest) |
 | **GmsCore from ReVanced** | 🔗 [Download](http://github.com/revanced/gmscore/releases/latest) |
@@ -66,6 +81,7 @@ Supports both **ROOT** and **NON-ROOT** versions! 🚀
 4. Enjoy ✨
 
 ‎
+
 ## 🛠️ Fix & Problem
 - If YouTube is having problems (module not working) try to use the action button in magisk (root user).
 - There have been many reports from some clients about buffering issues and video not playing (only sound). You can try the previous version or try downloading a different [GMS Core](https://github.com/Zy0x/YouTube-Revanced#-download-gmscoremicrog) . Every user's situation is different!
@@ -78,3 +94,4 @@ Supports both **ROOT** and **NON-ROOT** versions! 🚀
 - 🔧 [Revancify Xisr Tools](https://github.com/Xisrr1/Revancify-Xisr)
 - 📺 [YouTube ReVanced Patches](https://github.com/revanced)  
 - 🛠️ [Anddea Patch](https://github.com/anddea/revanced-patches)
+- ⚙️ [Morphe CLI](https://github.com/MorpheApp/morphe-cli)

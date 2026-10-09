@@ -1,0 +1,131 @@
+name: Build & Package YouTube RVX
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      youtube_version:
+        description: 'Pilih Versi YouTube (recommended / nomor versi seperti 21.13.164)'
+        required: true
+        default: 'recommended'
+        type: string
+      patch_source:
+        description: 'Sumber Patch'
+        required: true
+        default: 'anddea'
+        type: choice
+        options:
+          - anddea
+          - morphe
+          - inotia00
+          - revanced
+      patch_tag:
+        description: 'Channel / Tipe Rilis Patch'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - latest
+      build_mode:
+        description: 'Mode Build (Uji Coba vs Publikasi Resmi)'
+        required: true
+        default: 'test'
+        type: choice
+        options:
+          - test
+          - release
+
+  repository_dispatch:
+    types: [build-rvx]
+
+jobs:
+  build-and-package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install System Utilities
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq zip unzip curl
+
+      - name: Parse Inputs
+        id: params
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            VERSION="${{ github.event.client_payload.youtube_version }}"
+            SOURCE="${{ github.event.client_payload.patch_source }}"
+            TAG="${{ github.event.client_payload.patch_tag }}"
+            MODE="${{ github.event.client_payload.build_mode }}"
+          else
+            VERSION="${{ inputs.youtube_version }}"
+            SOURCE="${{ inputs.patch_source }}"
+            TAG="${{ inputs.patch_tag }}"
+            MODE="${{ inputs.build_mode }}"
+          fi
+
+          VERSION=${VERSION:-recommended}
+          SOURCE=${SOURCE:-anddea}
+          TAG=${TAG:-dev}
+          MODE=${MODE:-test}
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "source=$SOURCE" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "mode=$MODE" >> $GITHUB_OUTPUT
+
+      - name: Run Build Script
+        run: |
+          chmod +x tools/*.sh
+          bash tools/build-module.sh \
+            "${{ steps.params.outputs.version }}" \
+            "${{ steps.params.outputs.source }}" \
+            "${{ steps.params.outputs.tag }}" \
+            "${{ steps.params.outputs.mode }}"
+
+      - name: Upload Test Artifacts (Mode Uji Coba)
+        if: steps.params.outputs.mode == 'test'
+        uses: actions/upload-artifact@v4
+        with:
+          name: YouTube-RVX-Test-Artifacts
+          path: |
+            build_out/*.apk
+            build_out/*.zip
+            build_out/*.log
+          retention-days: 7
+
+      - name: Publish Official Release (Mode Rilis)
+        if: steps.params.outputs.mode == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          MODULE_ZIP=$(ls build_out/YouTube.RVX.v*.zip | head -n 1)
+          NONROOT_APK=$(ls build_out/YouTube.RVX.v*-NonRoot.apk | head -n 1)
+          VERSION_TAG=$(basename "$MODULE_ZIP" .zip | sed 's/YouTube.RVX.//')
+          RELEASE_TITLE="$VERSION_TAG"
+          
+          # Catatan Rilis
+          NOTES="### Update\n- YouTube RVX $VERSION_TAG\n- Patched with Morphe CLI & ${{ steps.params.outputs.source }} Patches\n- Root Module and Non-Root APK included\n\n### Fix & Problem\n- For Non-Root, use latest GmsCore/MicroG.\n- For Root, flash via Magisk / KernelSU / APatch."
+
+          echo "🚀 Menerbitkan rilis: $VERSION_TAG"
+          gh release create "$VERSION_TAG" "$MODULE_ZIP" "$NONROOT_APK" \
+            --title "$RELEASE_TITLE" \
+            --notes "$NOTES"

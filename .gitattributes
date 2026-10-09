@@ -1,6 +1,11 @@
-# Enforce LF for all shell scripts and module files to prevent Android execution errors
+# Enforce LF for all shell scripts and module files to prevent Android and CI execution errors
 * text=auto eol=lf
 *.sh text eol=lf
+*.py text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.yml text eol=lf
 *.prop text eol=lf
 *.json text eol=lf
 *.md text eol=lf

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="Dashboard Interaktif Cloud Builder untuk YouTube ReVanced (RVX) berbasis Morphe CLI & Anddea Patches">
+  <title>YouTube RVX Cloud Builder</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FF0000'><path d='M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z'/></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header class="navbar" role="banner">
+    <div class="nav-container">
+      <div class="brand">
+        <span class="brand-icon" aria-hidden="true">📺</span>
+        <div>
+          <h1 class="brand-title">RVX Builder</h1>
+          <p class="brand-subtitle">Cloud Patcher & Management</p>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <button id="btnAuthModal" class="btn-chip" aria-label="Pengaturan Keamanan dan Akses" title="Kelola Kunci Akses GitHub">
+          <span id="authStatusIcon">🔒</span>
+          <span id="authStatusText">Terkunci</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-content" role="main">
+
+    <!-- Hero Card: Target & Source Selection -->
+    <section class="card config-card" aria-labelledby="section-config">
+      <h2 id="section-config" class="card-title">1. Sumber Patch & Versi YouTube</h2>
+      
+      <!-- Source Provider Selector -->
+      <div class="form-group">
+        <label for="selectSource" class="form-label">Sumber Patch (.mpp):</label>
+        <select id="selectSource" class="form-control" aria-label="Pilih Sumber Patch">
+          <option value="anddea" selected>⭐ Anddea Patches (Default - Fitur Lengkap)</option>
+          <option value="morphe">Morphe Official (MorpheApp)</option>
+          <option value="inotia00">Inotia00 (ReVanced Extended)</option>
+          <option value="revanced">ReVanced Official</option>
+        </select>
+        <p id="sourceDesc" class="form-hint">Patch utama dengan opsi kustomisasi mendalam.</p>
+      </div>
+
+      <!-- Version Selector -->
+      <div class="form-group">
+        <div class="label-with-badge">
+          <label class="form-label">Pilih Versi YouTube Target:</label>
+          <span id="versionLoadingBadge" class="badge badge-info">Memuat versi...</span>
+        </div>
+        <div id="versionListContainer" class="version-list-grid" role="radiogroup" aria-label="Daftar Versi YouTube Kompatibel">
+          <!-- Diisi secara dinamis oleh JavaScript -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Preset Action Bar -->
+    <section class="preset-bar" aria-label="Aksi Preset">
+      <button id="btnLoadGoldenPreset" class="btn btn-primary" aria-label="Muat Racikan Saya (Golden Preset)">
+        <span aria-hidden="true">⚡</span> Muat Racikan Saya (81 Patch)
+      </button>
+      <button id="btnResetPatches" class="btn btn-secondary" aria-label="Reset Patch ke Standar">
+        <span aria-hidden="true">🔄</span> Reset Standar
+      </button>
+    </section>
+
+    <!-- Patch Customization & Categories -->
+    <section class="card" aria-labelledby="section-patches">
+      <div class="patches-header">
+        <div>
+          <h2 id="section-patches" class="card-title">2. Kustomisasi Patch</h2>
+          <p class="form-hint"><span id="activePatchCount">0</span> patch aktif dipilih</p>
+        </div>
+        <div class="search-box">
+          <input type="search" id="inputSearchPatch" class="form-control search-input" placeholder="Cari nama patch..." aria-label="Cari nama patch">
+        </div>
+      </div>
+
+      <!-- Accordion Categories Container -->
+      <div id="patchCategoriesContainer" class="categories-list">
+        <!-- Diisi secara dinamis oleh JavaScript -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Sticky Bottom Build Bar -->
+  <footer class="bottom-bar" role="contentinfo">
+    <div class="bottom-container">
+      <div class="build-mode-selector">
+        <label for="selectBuildMode" class="sr-only">Mode Build</label>
+        <select id="selectBuildMode" class="form-control form-control-sm" aria-label="Mode Eksekusi">
+          <option value="test" selected>🧪 Uji Coba (Artifact Test)</option>
+          <option value="release">🚀 Publikasikan (Release Resmi)</option>
+        </select>
+      </div>
+      <button id="btnTriggerBuild" class="btn btn-build" aria-label="Jalankan Build di GitHub Cloud">
+        <span class="btn-icon">⚡</span>
+        <span class="btn-text">Build on GitHub</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- Security Gatekeeper Modal -->
+  <div id="authModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalAuthTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalAuthTitle" class="modal-title">🔐 Kunci Keamanan & Akses GitHub</h3>
+        <button id="btnCloseAuthModal" class="btn-close" aria-label="Tutup Dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-secondary">
+          Untuk mencegah orang lain menjalankan build di repositori Anda, tombol <b>Build</b> dilindungi dengan Token GitHub Anda sendiri.
+        </p>
+
+        <div class="form-group">
+          <label for="inputGithubToken" class="form-label">GitHub Personal Access Token (PAT):</label>
+          <input type="password" id="inputGithubToken" class="form-control" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+          <p class="form-hint">
+            Token <b>HANYA disimpan secara lokal</b> di browser Anda (localStorage) dan dikirim langsung ke <code>api.github.com</code> via HTTPS.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="inputPasscode" class="form-label">PIN / Kunci Web Pribadi (Opsional):</label>
+          <input type="password" id="inputPasscode" class="form-control" placeholder="Masukkan 4-6 digit PIN" maxlength="12">
+        </div>
+
+        <div id="authAlert" class="alert hidden" role="alert"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnClearAuth" class="btn btn-danger">Hapus Token</button>
+        <button id="btnSaveAuth" class="btn btn-primary">Simpan & Buka Kunci</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Build Progress / Log Modal -->
+  <div id="buildProgressModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalProgressTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalProgressTitle" class="modal-title">🚀 Status Cloud Build</h3>
+        <button id="btnCloseProgressModal" class="btn-close" aria-label="Tutup Dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="buildStatusBox" class="status-box">
+          <div class="spinner"></div>
+          <p id="buildStatusMsg" class="status-msg">Mengirim sinyal build ke GitHub Actions...</p>
+        </div>
+        <div id="buildActionLinks" class="action-links hidden">
+          <a id="linkActionsRun" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-block">
+            Lihat Proses di Tab GitHub Actions ↗
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

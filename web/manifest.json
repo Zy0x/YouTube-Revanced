@@ -1,0 +1,24 @@
+{
+  "name": "YouTube RVX Cloud Builder",
+  "short_name": "RVX Builder",
+  "description": "Interactive Cloud Patcher & Management Dashboard untuk YouTube ReVanced (RVX)",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192' fill='%23FF0033'><rect width='192' height='192' rx='36' fill='%23121212'/><path d='M156 64a18 18 0 0 0-13-13C131 48 96 48 96 48s-35 0-47 3a18 18 0 0 0-13 13C33 76 33 96 33 96s0 20 3 32a18 18 0 0 0 13 13c12 3 47 3 47 3s35 0 47-3a18 18 0 0 0 13-13c3-12 3-32 3-32s0-20-3-32zM83 118V74l39 22-39 22z' fill='%23FF0033'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' fill='%23FF0033'><rect width='512' height='512' rx='96' fill='%23121212'/><path d='M416 170a48 48 0 0 0-35-35C349 128 256 128 256 128s-93 0-125 7a48 48 0 0 0-35 35C88 202 88 256 88 256s0 54 8 86a48 48 0 0 0 35 35c32 7 125 7 125 7s93 0 125-7a48 48 0 0 0 35-35c8-32 8-86 8-86s0-54-8-86zM221 315V197l104 59-104 59z' fill='%23FF0033'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

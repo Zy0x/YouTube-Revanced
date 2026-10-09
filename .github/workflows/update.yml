@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
@@ -24,7 +24,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Generate release_data.json
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             if (context.eventName !== 'release' || !context.payload.release?.tag_name) {
@@ -32,12 +32,9 @@ jobs:
             }
             const tag = context.payload.release.tag_name;
             const versionMatch = tag.match(/^v\d+\.\d+\.\d+(-R\d+)?$/);
-            if (!versionMatch) {
-              throw new Error(`Invalid tag format: ${tag}. Expected format: vX.Y.Z or vX.Y.Z-Rn`);
-            }
-            const version = tag.replace(/-R\d+$/, ''); // Untuk v20.16.40, tetap v20.16.40 karena tidak ada -R*
-            const releaseType = tag.includes('-R') ? 'beta' : 'stable'; // Untuk v20.16.40, akan menjadi 'stable'
-            const d = new Date(context.payload.release.published_at);
+            const version = versionMatch ? tag.replace(/-R\d+$/, '') : tag;
+            const releaseType = tag.includes('-R') || context.payload.release.prerelease ? 'beta' : 'stable';
+            const d = new Date(context.payload.release.published_at || new Date());
             const versionCode = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
             const zip = (context.payload.release.assets.find(a => a.name.endsWith('.zip')) || {}).browser_download_url || '';
             require('fs').writeFileSync('release_data.json',
@@ -46,9 +43,9 @@ jobs:
                 versionCode,
                 zipUrl: zip,
                 releaseType,
-                releaseName: context.payload.release.name || 'No Release Name',
+                releaseName: context.payload.release.name || tag,
                 releaseBody: context.payload.release.body || 'No Release Notes',
-                published_at: context.payload.release.published_at
+                published_at: context.payload.release.published_at || new Date().toISOString()
               }, null, 2)
             );
 
@@ -77,32 +74,14 @@ jobs:
           RELEASE_NAME=$(jq -r '.releaseName' release_data.json)
           RELEASE_BODY=$(jq -r '.releaseBody' release_data.json)
           RELEASE_DATE=$(date -d "$(jq -r '.published_at' release_data.json)" +"%Y-%m-%d" || date +"%Y-%m-%d")
-          # Pastikan changelog.md dihapus sepenuhnya
-          rm -f changelog.md || echo "No changelog.md to remove"
-          # Tulis ulang changelog.md dengan catatan rilis terbaru
+          
+          # Tulis catatan rilis terbaru
           echo -e "## $RELEASE_NAME ($RELEASE_DATE)\n\n$RELEASE_BODY\n" > changelog.md
-          # Verifikasi bahwa file ditulis dengan benar
-          if [ ! -f changelog.md ]; then
-            echo "Error: changelog.md was not created!"
-            exit 1
-          fi
-
-      - name: Verify changelog.md
-        run: |
-          echo "Content of changelog.md after update:"
-          cat changelog.md
-          # Verifikasi bahwa changelog.md hanya berisi satu bagian rilis
-          SECTION_COUNT=$(grep -c "^## " changelog.md)
-          echo "Number of release sections: $SECTION_COUNT"
-          if [ "$SECTION_COUNT" -ne 1 ]; then
-            echo "Error: changelog.md contains more than one release section!"
-            exit 1
-          fi
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add update.json changelog.md
-          git commit -m "Auto-update update.json and changelog.md for $RELEASE_NAME" || echo "No changes to commit"
+          git commit -m "Auto-update update.json and changelog.md for release $RELEASE_NAME" || echo "No changes to commit"
           git push
