@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+build_out/
+*.apk
+*.zip
+*.log
+*.tmp
+stock-youtube.apk
