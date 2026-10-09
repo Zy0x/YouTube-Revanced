@@ -6,10 +6,11 @@
 - Based on [Anddea Patch v4.3.1-dev.1](https://github.com/anddea/revanced-patches/releases/tag/v4.3.1-dev.1) (thanks to Anddea)
 - All patch included!
 - Cek this [Log Patch](https://github.com/Zy0x/YouTube-Revanced/blob/main/patch_log.txt) if u want
+- Added module.prop template and action.sh for Magisk/KernelSU/APatch WebUI support
+- Optimized customize.sh, service.sh, and uninstall.sh for dynamic mount handling and stability
 
 ### Fix & Problem
 - For Non-Root Devices, If you encounter a "Playback ID: XXXXX" error or experience problems while seeking video, try going to RVX - Misc and disabling the PoToken Provider, then spoofing the video stream with another client.
 - For Another fix & problem Read in [here](https://github.com/Zy0x/YouTube-Revanced/tree/main#%EF%B8%8F-fix--problem)
 
-`Note: Always Read README.MD first!` 
-
+`Note: Always Read README.MD first!`

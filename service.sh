@@ -1,55 +1,52 @@
 #!/system/bin/sh
 
 MODPATH=${0%/*}
-base="$MODPATH/ori/*.apk"
+[ -d "$MODPATH/app" ] || MODPATH="/data/adb/modules/YouTube-RVX"
 
 # Wait till device boot process completes
 while [ "$(getprop sys.boot_completed)" != "1" ]; do
 	sleep 1
 done
 
-# Device online functions
-wait_until_login()
-{
-    # whether in lock screen, tested on Android 7.1 & 10.0
-    # in case of other magisk module remounting /data as RW
-    while [ "$(dumpsys window policy | grep mInputRestricted=true)" != "" ]; do
-        sleep 2
-    done
-    # we doesn't have the permission to rw "/sdcard" before the user unlocks the screen
-    while [ ! -d "/sdcard/Android" ]; do
-        sleep 2
-    done
+# Device online functions (for temp-root/early unlock environments)
+wait_until_login() {
+	while [ "$(dumpsys window policy 2>/dev/null | grep mInputRestricted=true)" != "" ]; do
+		sleep 2
+	done
+	while [ ! -d "/sdcard/Android" ]; do
+		sleep 2
+	done
 }
 #wait_until_login
 
-# Detect Root
+# Root environment sleep delay
 if [ -e /data/local/tmp/magisk ]; then
-    sleep 60
+	sleep 60
 else
-    sleep 3
+	sleep 3
 fi
 
 # Mounting
 PKGNAME=com.google.android.youtube
-STOCKAPPVER=$(dumpsys package $PKGNAME | grep versionName | cut -d "=" -f 2 | sed -n '1p')
-RVAPPVER=$(basename /data/adb/modules/YouTube-RVX/app/YouTube* .apk | cut -d "-" -f 2)
+STOCKAPPVER=$(dumpsys package $PKGNAME 2>/dev/null | grep versionName | cut -d "=" -f 2 | sed -n '1p')
 
-if [ "$STOCKAPPVER" = "$RVAPPVER" ]
-then
-	STOCKAPK=$(pm path $PKGNAME | grep base | cut -d ":" -f2)
-	RVAPK="/data/adb/modules/YouTube-RVX/app/YouTubeRevanced-$RVAPPVER.apk"
-	chcon u:object_r:apk_data_file:s0 "$RVAPK"
-	mount -o bind "$RVAPK" "$STOCKAPK"
-	am force-stop "$PKGNAME"
-elif [ "$STOCKAPPVER" != "$RVAPPVER" ]
-then
-    pm install -r -d $base
-    STOCKAPK=$(pm path $PKGNAME | grep base | cut -d ":" -f2)
-	RVAPK="/data/adb/modules/YouTube-RVX/app/YouTubeRevanced-$RVAPPVER.apk"
-    chcon u:object_r:apk_data_file:s0 "$RVAPK"
-    mount -o bind "$RVAPK" "$STOCKAPK"
-    am force-stop "$PKGNAME"
+RVAPK=$(ls "$MODPATH/app"/YouTubeRevanced-*.apk 2>/dev/null | head -n 1)
+RVAPPVER=$(basename "$RVAPK" .apk 2>/dev/null | cut -d "-" -f 2)
+
+if [ -f "$RVAPK" ] && [ -n "$STOCKAPPVER" ] && [ -n "$RVAPPVER" ]; then
+	if [ "$STOCKAPPVER" != "$RVAPPVER" ] && [ -d "$MODPATH/ori" ]; then
+		for BASE_APK in "$MODPATH/ori"/*.apk; do
+			[ -f "$BASE_APK" ] || continue
+			pm install -r -d "$BASE_APK" >/dev/null 2>&1
+		done
+	fi
+
+	STOCKAPK=$(pm path $PKGNAME 2>/dev/null | grep base | cut -d ":" -f2)
+	if [ -n "$STOCKAPK" ]; then
+		chcon u:object_r:apk_data_file:s0 "$RVAPK" 2>/dev/null
+		mount -o bind "$RVAPK" "$STOCKAPK"
+		am force-stop "$PKGNAME" 2>/dev/null
+	fi
 fi
 
-su -lp 2000 -c "cmd notification post -S bigtext -t 'YouTube RVX' tag '✅ YouTube RVX already to use...'" >/dev/null 2>&1
+su -lp 2000 -c "cmd notification post -S bigtext -t 'YouTube RVX' tag '✅ YouTube RVX is ready to use...'" >/dev/null 2>&1
