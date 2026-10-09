@@ -65,6 +65,10 @@ def build_cli_arguments(patches_manifest, target_version, config_payload, is_roo
     excluded_from_payload = set(config_payload.get('excluded_patches', []))
     included_from_payload = set(config_payload.get('included_patches', []))
 
+    # Jika payload tidak menentukan included_patches, gunakan semua patch valid sebagai default
+    if not included_from_payload:
+        included_from_payload = set(valid_patch_names) - excluded_from_payload
+
     if is_root:
         for r_name in root_specific_names:
             excluded_from_payload.add(r_name)
@@ -74,18 +78,25 @@ def build_cli_arguments(patches_manifest, target_version, config_payload, is_roo
         for r_name in root_specific_names:
             if r_name in valid_patch_names:
                 included_from_payload.add(r_name)
+            if r_name in excluded_from_payload:
+                excluded_from_payload.remove(r_name)
 
-    # Tambahkan argumen exclude (-e <patch>)
-    for p_name in sorted(list(excluded_from_payload)):
-        if p_name in valid_patch_names or p_name in root_specific_names:
-            args.extend(["-e", p_name])
+    # In Morphe CLI:
+    # -e = --enable <patchName>
+    # -d = --disable <patchName>
+    # Note: DO NOT use -i (in Morphe CLI, -i is reserved for --install to ADB device)
 
-    # Tambahkan argumen include (-i <patch>)
+    # 1. Enable patches (-e <name>)
     for p_name in sorted(list(included_from_payload)):
         if p_name in valid_patch_names and p_name not in excluded_from_payload:
-            args.extend(["-i", p_name])
+            args.extend(["-e", p_name])
 
-    # Tangani Options Kustomisasi (-O <key=value>)
+    # 2. Disable patches (-d <name>)
+    for p_name in sorted(list(excluded_from_payload)):
+        if p_name in valid_patch_names or p_name in root_specific_names:
+            args.extend(["-d", p_name])
+
+    # 3. Tangani Options Kustomisasi (-O <key=value>)
     options = config_payload.get('options', {})
     for key, val in options.items():
         if isinstance(val, dict):
