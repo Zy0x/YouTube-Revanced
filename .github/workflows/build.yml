@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       youtube_version:
-        description: 'Pilih Versi YouTube (recommended / nomor versi seperti 21.13.164)'
+        description: 'Pilih Versi YouTube (recommended / versi spesifik seperti 21.13.164)'
         required: true
         default: 'recommended'
         type: string
@@ -62,24 +62,36 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install System Utilities
+      - name: Install System Utilities & Python Packages
         run: |
           sudo apt-get update
           sudo apt-get install -y jq zip unzip curl
+          python3 -m pip install -q packaging requests beautifulsoup4
 
-      - name: Parse Inputs
+      - name: Extract Dynamic Configuration Payload
         id: params
         run: |
+          CONFIG_FILE="build_out/dynamic_config.json"
+          mkdir -p build_out
+
           if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "📥 Membaca konfigurasi dari Web Dashboard (repository_dispatch)..."
             VERSION="${{ github.event.client_payload.youtube_version }}"
             SOURCE="${{ github.event.client_payload.patch_source }}"
             TAG="${{ github.event.client_payload.patch_tag }}"
             MODE="${{ github.event.client_payload.build_mode }}"
+            
+            # Simpan payload lengkap (patch choices, options) ke dynamic_config.json
+            echo '${{ toJson(github.event.client_payload) }}' > "$CONFIG_FILE"
           else
+            echo "📥 Membaca konfigurasi dari Form GitHub (workflow_dispatch)..."
             VERSION="${{ inputs.youtube_version }}"
             SOURCE="${{ inputs.patch_source }}"
             TAG="${{ inputs.patch_tag }}"
             MODE="${{ inputs.build_mode }}"
+            
+            # Gunakan config/golden-preset.json sebagai dasar
+            cp config/golden-preset.json "$CONFIG_FILE"
           fi
 
           VERSION=${VERSION:-recommended}
@@ -91,6 +103,7 @@ jobs:
           echo "source=$SOURCE" >> $GITHUB_OUTPUT
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "mode=$MODE" >> $GITHUB_OUTPUT
+          echo "config=$CONFIG_FILE" >> $GITHUB_OUTPUT
 
       - name: Run Build Script
         run: |
@@ -99,7 +112,8 @@ jobs:
             "${{ steps.params.outputs.version }}" \
             "${{ steps.params.outputs.source }}" \
             "${{ steps.params.outputs.tag }}" \
-            "${{ steps.params.outputs.mode }}"
+            "${{ steps.params.outputs.mode }}" \
+            "${{ steps.params.outputs.config }}"
 
       - name: Upload Test Artifacts (Mode Uji Coba)
         if: steps.params.outputs.mode == 'test'
@@ -110,6 +124,7 @@ jobs:
             build_out/*.apk
             build_out/*.zip
             build_out/*.log
+            build_out/*_args.txt
           retention-days: 7
 
       - name: Publish Official Release (Mode Rilis)
@@ -122,10 +137,9 @@ jobs:
           VERSION_TAG=$(basename "$MODULE_ZIP" .zip | sed 's/YouTube.RVX.//')
           RELEASE_TITLE="$VERSION_TAG"
           
-          # Catatan Rilis
           NOTES="### Update\n- YouTube RVX $VERSION_TAG\n- Patched with Morphe CLI & ${{ steps.params.outputs.source }} Patches\n- Root Module and Non-Root APK included\n\n### Fix & Problem\n- For Non-Root, use latest GmsCore/MicroG.\n- For Root, flash via Magisk / KernelSU / APatch."
 
-          echo "🚀 Menerbitkan rilis: $VERSION_TAG"
+          echo "🚀 Menerbitkan rilis resmi: $VERSION_TAG"
           gh release create "$VERSION_TAG" "$MODULE_ZIP" "$NONROOT_APK" \
             --title "$RELEASE_TITLE" \
             --notes "$NOTES"

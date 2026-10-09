@@ -1,6 +1,6 @@
 /**
- * YouTube RVX Cloud Builder - Interactive Web App
- * Keamanan Tinggi, Mobile-First & Sinkronisasi Real-Time
+ * YouTube RVX Cloud Builder - Universal Dynamic Web App
+ * Keamanan Tinggi, Universal Multi-Source Parser, Opsi Kustomisasi Dinamis
  */
 
 const STATE = {
@@ -10,6 +10,7 @@ const STATE = {
   availableVersions: [],
   patches: [],
   selectedPatches: new Set(),
+  selectedOptions: {},
   goldenPreset: null,
   authToken: localStorage.getItem('rvx_gh_pat') || '',
   authPasscode: localStorage.getItem('rvx_passcode') || '',
@@ -89,8 +90,8 @@ async function loadSourcesAndPresets() {
 
     if (sourcesRes && sourcesRes.ok) {
       STATE.sources = await sourcesRes.json();
+      renderSourceSelector();
     } else {
-      // Fallback default
       STATE.sources = [
         {
           id: 'anddea',
@@ -109,6 +110,49 @@ async function loadSourcesAndPresets() {
   }
 }
 
+function renderSourceSelector() {
+  const select = document.getElementById('selectSource');
+  select.innerHTML = '';
+  STATE.sources.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = s.name;
+    if (s.id === STATE.currentSource) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
+// =============================================================================
+// Universal Parser: Mengekstrak Versi YouTube dari Format Apa Pun
+// =============================================================================
+function extractUniversalVersions(patches, pkgName = 'com.google.android.youtube') {
+  const versions = new Set();
+
+  patches.forEach(p => {
+    const compat = p.compatiblePackages;
+    if (!compat) return;
+
+    // Format 1: Anddea / Morphe (Object: { "com.google.android.youtube": ["21.13.164", ...] })
+    if (typeof compat === 'object' && !Array.isArray(compat)) {
+      if (Array.isArray(compat[pkgName])) {
+        compat[pkgName].forEach(v => versions.add(String(v).trim()));
+      }
+    }
+    // Format 2: ReVanced / Inotia00 (Array of objects: [ { name: "...", versions: [...] } ])
+    else if (Array.isArray(compat)) {
+      compat.forEach(entry => {
+        if (entry && entry.name === pkgName && Array.isArray(entry.versions)) {
+          entry.versions.forEach(v => versions.add(String(v).trim()));
+        }
+      });
+    }
+  });
+
+  return Array.from(versions).sort((a, b) => {
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  }).reverse();
+}
+
 // =============================================================================
 // Fetch Manifest & Render Patches Secara Dinamis
 // =============================================================================
@@ -119,7 +163,7 @@ async function fetchAndRenderPatches(sourceId) {
 
   versionBadge.textContent = 'Memuat versi...';
   versionBadge.className = 'badge badge-info';
-  versionContainer.innerHTML = '<p class="form-hint">Mengambil versi kompatibel dari sumber...</p>';
+  versionContainer.innerHTML = '<p class="form-hint">Menganalisis manifest patch...</p>';
   patchContainer.innerHTML = '<div class="spinner"></div>';
 
   const sourceConfig = STATE.sources.find(s => s.id === sourceId) || {
@@ -134,31 +178,20 @@ async function fetchAndRenderPatches(sourceId) {
     const rawPatches = data.patches || [];
     STATE.patches = rawPatches;
 
-    // 1. Ekstrak Semua Versi Kompatibel untuk YouTube
-    const versionsSet = new Set();
-    rawPatches.forEach(p => {
-      const pkg = p.compatiblePackages?.['com.google.android.youtube'];
-      if (Array.isArray(pkg)) {
-        pkg.forEach(v => versionsSet.add(v));
-      }
-    });
-
-    const sortedVersions = Array.from(versionsSet).sort((a, b) => {
-      return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
-    }).reverse();
-
+    // 1. Ekstraksi Universal Versi
+    const sortedVersions = extractUniversalVersions(rawPatches);
     STATE.availableVersions = sortedVersions;
+
     const recommendedVersion = sortedVersions[0] || '21.13.164';
+    versionBadge.textContent = `${sortedVersions.length} Versi Kompatibel`;
 
-    versionBadge.textContent = `${sortedVersions.length} Versi Tersedia`;
-
-    // 2. Render Kartu Pilihan Versi
+    // 2. Render Pilihan Versi
     renderVersionSelector(sortedVersions, recommendedVersion);
 
-    // 3. Render Daftar Patch Berdasarkan Kategori
+    // 3. Render Patch & Opsi Kustomisasi
     renderPatchCategories(rawPatches);
 
-    // Otomatis terapkan preset pengguna
+    // Terapkan Golden Preset secara default
     applyGoldenPreset();
 
   } catch (err) {
@@ -182,7 +215,7 @@ function renderVersionSelector(versions, recommended) {
     recommended = '21.13.164';
   }
 
-  versions.forEach((ver, idx) => {
+  versions.forEach((ver) => {
     const isRecommended = ver === recommended;
     const card = document.createElement('label');
     card.className = `version-card ${isRecommended ? 'selected' : ''}`;
@@ -208,11 +241,12 @@ function renderVersionSelector(versions, recommended) {
 }
 
 // =============================================================================
-// Kelompokkan & Render Patch Berdasarkan Kategori
+// Kelompokkan & Render Patch + Input Opsi Kustomisasi
 // =============================================================================
 function renderPatchCategories(patches) {
   const container = document.getElementById('patchCategoriesContainer');
   container.innerHTML = '';
+  STATE.selectedOptions = {};
 
   const categories = {
     'Ad-blocking & Sponsor': {
@@ -286,15 +320,25 @@ function renderPatchCategories(patches) {
       const isDefault = patch.use !== false;
       if (isDefault) STATE.selectedPatches.add(patch.name);
 
+      let optionsHtml = '';
+      if (Array.isArray(patch.options) && patch.options.length > 0) {
+        optionsHtml = renderPatchOptions(patch.options);
+      }
+
       item.innerHTML = `
-        <div class="patch-info">
-          <div class="patch-title">${escapeHtml(patch.name)}</div>
-          <div class="patch-desc">${escapeHtml(patch.description || 'Tidak ada deskripsi')}</div>
+        <div style="width: 100%;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+            <div class="patch-info">
+              <div class="patch-title">${escapeHtml(patch.name)}</div>
+              <div class="patch-desc">${escapeHtml(patch.description || 'Tidak ada deskripsi')}</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" data-name="${escapeHtml(patch.name)}" ${isDefault ? 'checked' : ''}>
+              <span class="slider"></span>
+            </label>
+          </div>
+          ${optionsHtml}
         </div>
-        <label class="switch">
-          <input type="checkbox" data-name="${escapeHtml(patch.name)}" ${isDefault ? 'checked' : ''}>
-          <span class="slider"></span>
-        </label>
       `;
 
       const checkbox = item.querySelector('input[type="checkbox"]');
@@ -305,6 +349,13 @@ function renderPatchCategories(patches) {
           STATE.selectedPatches.delete(patch.name);
         }
         updatePatchCount();
+      });
+
+      // Bind listener opsi
+      item.querySelectorAll('.patch-option-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          STATE.selectedOptions[e.target.dataset.optKey] = e.target.value;
+        });
       });
 
       body.appendChild(item);
@@ -321,6 +372,36 @@ function renderPatchCategories(patches) {
   });
 
   updatePatchCount();
+}
+
+function renderPatchOptions(options) {
+  let html = '<div class="patch-options-box" style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-subtle); display: flex; flex-direction: column; gap: 8px;">';
+
+  options.forEach(opt => {
+    const key = opt.key;
+    const title = opt.title || key;
+    const def = opt.default || '';
+
+    html += `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 0.85rem;">
+      <span style="color: var(--text-secondary);">${escapeHtml(title)}:</span>`;
+
+    if (opt.values && typeof opt.values === 'object') {
+      html += `<select class="form-control form-control-sm patch-option-input" data-opt-key="${escapeHtml(key)}" style="width: auto; min-height: 36px; padding: 4px 8px;">`;
+      Object.entries(opt.values).forEach(([label, val]) => {
+        html += `<option value="${escapeHtml(val)}" ${val === def ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+      });
+      html += `</select>`;
+    } else if (def.startsWith('#') || key.toLowerCase().includes('color')) {
+      html += `<input type="text" class="form-control form-control-sm patch-option-input" data-opt-key="${escapeHtml(key)}" value="${escapeHtml(def)}" style="width: 120px; min-height: 36px; padding: 4px 8px; font-family: monospace;">`;
+    } else {
+      html += `<input type="text" class="form-control form-control-sm patch-option-input" data-opt-key="${escapeHtml(key)}" value="${escapeHtml(def)}" placeholder="${escapeHtml(def)}" style="width: 180px; min-height: 36px; padding: 4px 8px;">`;
+    }
+
+    html += `</div>`;
+  });
+
+  html += '</div>';
+  return html;
 }
 
 // =============================================================================
@@ -344,6 +425,24 @@ function applyGoldenPreset() {
     }
   });
 
+  // Terapkan default options dari Golden Preset
+  STATE.selectedOptions = {
+    'iconType': 'cairo',
+    'appIcon': 'original',
+    'doubleTapLengthArrays': '3, 5, 10, 15, 20, 30, 60, 120, 180',
+    'rvxSettingsLabel': 'RVX',
+    'darkThemeColor': '#FF000000',
+    'lightThemeColor': '#FFFFFFFF',
+    'settingsMenuIcon': 'extension'
+  };
+
+  document.querySelectorAll('.patch-option-input').forEach(input => {
+    const k = input.dataset.optKey;
+    if (STATE.selectedOptions[k]) {
+      input.value = STATE.selectedOptions[k];
+    }
+  });
+
   updatePatchCount();
 }
 
@@ -353,7 +452,7 @@ function updatePatchCount() {
 }
 
 // =============================================================================
-// Trigger Cloud Build di GitHub Actions
+// Trigger Cloud Build dengan Payload Konfigurasi Lengkap
 // =============================================================================
 async function triggerCloudBuild() {
   if (!STATE.authToken) {
@@ -371,6 +470,11 @@ async function triggerCloudBuild() {
   linksBox.classList.add('hidden');
   statusMsg.textContent = `Menghubungkan ke GitHub Actions runner (${mode.toUpperCase()} mode)...`;
 
+  // Kumpulkan list excluded patches secara presisi
+  const allPatchNames = STATE.patches.map(p => p.name);
+  const excludedPatches = allPatchNames.filter(name => !STATE.selectedPatches.has(name));
+  const includedPatches = Array.from(STATE.selectedPatches);
+
   try {
     const payload = {
       event_type: 'build-rvx',
@@ -378,7 +482,10 @@ async function triggerCloudBuild() {
         youtube_version: STATE.currentVersion,
         patch_source: STATE.currentSource,
         patch_tag: 'dev',
-        build_mode: mode
+        build_mode: mode,
+        included_patches: includedPatches,
+        excluded_patches: excludedPatches,
+        options: STATE.selectedOptions
       }
     };
 
@@ -393,7 +500,7 @@ async function triggerCloudBuild() {
     });
 
     if (res.status === 204 || res.ok) {
-      statusMsg.textContent = `✅ Sinyal Build Berhasil Dikirim! GitHub Actions Runner sedang mem-patch YouTube v${STATE.currentVersion}.`;
+      statusMsg.textContent = `✅ Sinyal Build Berhasil Dikirim! Runner sedang mem-patch YouTube v${STATE.currentVersion} dengan ${includedPatches.length} patch dan kustomisasi dinamis Anda.`;
       linksBox.classList.remove('hidden');
       runLink.href = 'https://github.com/Zy0x/YouTube-Revanced/actions';
     } else {
@@ -409,7 +516,6 @@ async function triggerCloudBuild() {
 // Event Listeners & Modals
 // =============================================================================
 function initEventListeners() {
-  // Source Dropdown Change
   document.getElementById('selectSource').addEventListener('change', (e) => {
     STATE.currentSource = e.target.value;
     const s = STATE.sources.find(src => src.id === e.target.value);
@@ -417,7 +523,6 @@ function initEventListeners() {
     fetchAndRenderPatches(e.target.value);
   });
 
-  // Preset Buttons
   document.getElementById('btnLoadGoldenPreset').addEventListener('click', applyGoldenPreset);
   document.getElementById('btnResetPatches').addEventListener('click', () => {
     document.querySelectorAll('.patch-item input[type="checkbox"]').forEach(cb => {
@@ -427,7 +532,6 @@ function initEventListeners() {
     updatePatchCount();
   });
 
-  // Search Filter
   document.getElementById('inputSearchPatch').addEventListener('input', (e) => {
     const query = e.target.value.toLowerCase();
     document.querySelectorAll('.patch-item').forEach(item => {
@@ -436,10 +540,8 @@ function initEventListeners() {
     });
   });
 
-  // Build Trigger Button
   document.getElementById('btnTriggerBuild').addEventListener('click', triggerCloudBuild);
 
-  // Auth Modal Controls
   document.getElementById('btnAuthModal').addEventListener('click', openAuthModal);
   document.getElementById('btnCloseAuthModal').addEventListener('click', closeAuthModal);
   document.getElementById('btnCloseProgressModal').addEventListener('click', () => {
@@ -448,7 +550,6 @@ function initEventListeners() {
 
   document.getElementById('btnSaveAuth').addEventListener('click', async () => {
     const token = document.getElementById('inputGithubToken').value.trim();
-    const passcode = document.getElementById('inputPasscode').value.trim();
     const alertBox = document.getElementById('authAlert');
 
     if (!token) {
@@ -461,7 +562,6 @@ function initEventListeners() {
     const valid = await verifyGithubToken(token);
     if (valid) {
       localStorage.setItem('rvx_gh_pat', token);
-      if (passcode) localStorage.setItem('rvx_passcode', passcode);
       STATE.authToken = token;
       closeAuthModal();
     } else {
@@ -473,7 +573,6 @@ function initEventListeners() {
 
   document.getElementById('btnClearAuth').addEventListener('click', () => {
     localStorage.removeItem('rvx_gh_pat');
-    localStorage.removeItem('rvx_passcode');
     STATE.authToken = '';
     STATE.authUser = null;
     initSecurity();
@@ -498,9 +597,6 @@ function escapeHtml(str) {
   })[m]);
 }
 
-// =============================================================================
-// Progressive Web App (PWA) Service Worker
-// =============================================================================
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(err => {
