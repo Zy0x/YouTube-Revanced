@@ -133,6 +133,12 @@ def main():
 
     version = sys.argv[1].lstrip('v')
     output_path = sys.argv[2]
+    base_dir = os.path.realpath(os.getcwd())
+    resolved_output_path = os.path.realpath(os.path.join(base_dir, output_path))
+    if os.path.commonpath([base_dir, resolved_output_path]) != base_dir:
+        print(f"[-] output_path tidak valid, terdeteksi path traversal: {output_path}")
+        sys.exit(1)
+    output_path = resolved_output_path
     custom_url = sys.argv[3] if len(sys.argv) > 3 else None
 
     # 1. Custom URL jika disediakan
