@@ -7,12 +7,12 @@ on:
   workflow_dispatch:
     inputs:
       youtube_version:
-        description: 'Pilih Versi YouTube (recommended / versi spesifik seperti 21.13.164)'
+        description: 'Select YouTube Version (recommended or specific version like 21.13.164)'
         required: true
         default: 'recommended'
         type: string
       patch_source:
-        description: 'Sumber Patch'
+        description: 'Patch Source'
         required: true
         default: 'anddea'
         type: choice
@@ -22,17 +22,17 @@ on:
           - inotia00
           - revanced
       patch_tag:
-        description: 'Channel / Tag Versi Patch (dev, latest, atau tag seperti v4.3.0)'
+        description: 'Patch Channel / Release Tag (dev, latest, or specific tag like v4.3.0)'
         required: true
         default: 'dev'
         type: string
       arch:
-        description: 'Target Arsitektur APK (all / arm64-v8a)'
+        description: 'Target APK Architecture (all / arm64-v8a)'
         required: false
         default: 'all'
         type: string
       build_mode:
-        description: 'Mode Build (Uji Coba vs Publikasi Resmi)'
+        description: 'Build Execution Mode (Test Artifact vs Official Release)'
         required: true
         default: 'test'
         type: choice
@@ -84,7 +84,7 @@ jobs:
           mkdir -p build_out
 
           if [ "$EVENT_NAME" = "repository_dispatch" ]; then
-            echo "📥 Membaca konfigurasi dari Web Dashboard (repository_dispatch)..."
+            echo "📥 Reading configuration from Web Dashboard (repository_dispatch)..."
             printf '%s\n' "$EVENT_PAYLOAD" > "$CONFIG_FILE"
 
             VERSION=$(jq -r '.youtube_version // "recommended"' "$CONFIG_FILE")
@@ -92,13 +92,13 @@ jobs:
             TAG=$(jq -r '.patch_tag // "dev"' "$CONFIG_FILE")
             MODE=$(jq -r '.build_mode // "test"' "$CONFIG_FILE")
           else
-            echo "📥 Membaca konfigurasi dari Form GitHub (workflow_dispatch)..."
+            echo "📥 Reading configuration from GitHub Form (workflow_dispatch)..."
             VERSION="${INPUT_VERSION:-recommended}"
             SOURCE="${INPUT_SOURCE:-anddea}"
             TAG="${INPUT_TAG:-dev}"
             MODE="${INPUT_MODE:-test}"
             
-            # Gunakan config/golden-preset.json sebagai dasar
+            # Use config/golden-preset.json as default template
             cp config/golden-preset.json "$CONFIG_FILE"
           fi
 
@@ -107,19 +107,19 @@ jobs:
           TAG=${TAG:-dev}
           MODE=${MODE:-test}
 
-          # Validasi whitelist & format keamanan untuk mencegah shell injection / path traversal
+          # Security whitelist & regex validation
           if [[ ! "$VERSION" =~ ^(recommended|[vV]?[0-9]+(\.[0-9]+)*(-[a-zA-Z0-9.]+)?)$ ]]; then
-            echo "❌ Versi YouTube tidak valid / terdeteksi karakter berbahaya: $VERSION"
+            echo "❌ Invalid YouTube version format or suspicious character detected: $VERSION"
             exit 1
           fi
 
           if [[ ! "$SOURCE" =~ ^(anddea|morphe|inotia00|revanced)$ ]]; then
-            echo "❌ Sumber patch tidak valid: $SOURCE"
+            echo "❌ Invalid patch source: $SOURCE"
             exit 1
           fi
 
           if [[ ! "$MODE" =~ ^(test|release)$ ]]; then
-            echo "❌ Mode build tidak valid: $MODE"
+            echo "❌ Invalid build mode: $MODE"
             exit 1
           fi
 
@@ -139,7 +139,7 @@ jobs:
             "${{ steps.params.outputs.mode }}" \
             "${{ steps.params.outputs.config }}"
 
-      - name: Upload Test Artifacts (Mode Uji Coba)
+      - name: Upload Test Artifacts (Test Mode)
         if: steps.params.outputs.mode == 'test'
         uses: actions/upload-artifact@v4
         with:
@@ -151,7 +151,7 @@ jobs:
             build_out/*_args.txt
           retention-days: 7
 
-      - name: Publish Official Release (Mode Rilis)
+      - name: Publish Official Release (Release Mode)
         if: steps.params.outputs.mode == 'release'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -163,7 +163,7 @@ jobs:
           
           NOTES="### Update\n- YouTube RVX $VERSION_TAG\n- Patched with Morphe CLI & ${{ steps.params.outputs.source }} Patches\n- Root Module and Non-Root APK included\n\n### Fix & Problem\n- For Non-Root, use latest GmsCore/MicroG.\n- For Root, flash via Magisk / KernelSU / APatch."
 
-          echo "🚀 Menerbitkan rilis resmi: $VERSION_TAG"
+          echo "🚀 Publishing official release: $VERSION_TAG"
           gh release create "$VERSION_TAG" "$MODULE_ZIP" "$NONROOT_APK" \
             --title "$RELEASE_TITLE" \
             --notes "$NOTES"

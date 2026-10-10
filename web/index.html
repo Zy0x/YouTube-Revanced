@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <meta name="theme-color" content="#000000">
-  <meta name="description" content="Dashboard Interaktif Cloud Builder untuk YouTube ReVanced (RVX) berbasis Morphe CLI & Anddea Patches">
+  <meta name="description" content="Interactive Cloud Builder Dashboard for YouTube ReVanced (RVX) powered by Morphe CLI & Anddea Patches">
   <title>YouTube RVX Cloud Builder</title>
   
   <link rel="manifest" href="manifest.json">
@@ -24,9 +24,9 @@
         </div>
       </div>
       <div class="nav-actions">
-        <button id="btnAuthModal" class="btn-chip" aria-label="Pengaturan Keamanan dan Akses" title="Kelola Kunci Akses GitHub">
+        <button id="btnAuthModal" class="btn-chip" aria-label="Security & Access Settings" title="Manage GitHub Access Token">
           <span id="authStatusIcon">🔒</span>
-          <span id="authStatusText">Terkunci</span>
+          <span id="authStatusText">Locked</span>
         </button>
       </div>
     </div>
@@ -37,38 +37,38 @@
 
     <!-- Hero Card: Target & Source Selection -->
     <section class="card config-card" aria-labelledby="section-config">
-      <h2 id="section-config" class="card-title">1. Sumber Patch & Versi YouTube</h2>
+      <h2 id="section-config" class="card-title">1. Patch Source & YouTube Version</h2>
       
       <!-- Source Provider & Patch Release Tag Grid -->
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 16px;">
         <!-- Source Provider Selector -->
         <div class="form-group" style="margin-bottom: 0;">
-          <label for="selectSource" class="form-label">Sumber Patch:</label>
-          <select id="selectSource" class="form-control" aria-label="Pilih Sumber Patch">
-            <option value="anddea" selected>⭐ Anddea Patches (Default - Fitur Lengkap)</option>
+          <label for="selectSource" class="form-label">Patch Source:</label>
+          <select id="selectSource" class="form-control" aria-label="Select Patch Source">
+            <option value="anddea" selected>⭐ Anddea Patches (Default - Full Features)</option>
             <option value="morphe">Morphe Official (MorpheApp)</option>
             <option value="inotia00">Inotia00 (ReVanced Extended)</option>
             <option value="revanced">ReVanced Official</option>
           </select>
-          <p id="sourceDesc" class="form-hint">Patch utama dengan opsi kustomisasi mendalam.</p>
+          <p id="sourceDesc" class="form-hint">Primary patch source featuring full customization and rich features.</p>
         </div>
 
         <!-- Patch Release Version / Channel Selector -->
         <div class="form-group" style="margin-bottom: 0;">
           <div class="label-with-badge" style="margin-bottom: 6px;">
-            <label for="selectPatchRelease" class="form-label" style="margin-bottom: 0;">Versi / Channel Patch (.mpp):</label>
+            <label for="selectPatchRelease" class="form-label" style="margin-bottom: 0;">Patch Release / Channel (.mpp):</label>
             <span id="patchTagBadge" class="badge badge-warning">Prerelease</span>
           </div>
           <div style="display: flex; gap: 8px;">
-            <select id="selectPatchRelease" class="form-control" aria-label="Pilih Versi atau Channel Patch" style="flex: 1;">
-              <option value="dev" selected>⚡ Prerelease / Dev (Terkini)</option>
-              <option value="latest">🛡️ Stable / Latest (Stabil Resmi)</option>
+            <select id="selectPatchRelease" class="form-control" aria-label="Select Patch Release or Channel" style="flex: 1;">
+              <option value="dev" selected>⚡ Prerelease / Dev (Latest)</option>
+              <option value="latest">🛡️ Stable / Latest (Official)</option>
             </select>
-            <button type="button" id="btnViewPatchNotes" class="btn btn-secondary" title="Lihat Catatan Rilis Patch Ini" style="min-height: 48px; padding: 0 14px;" aria-label="Lihat Catatan Rilis Patch">
+            <button type="button" id="btnViewPatchNotes" class="btn btn-secondary" title="View Release Notes for This Patch" style="min-height: 48px; padding: 0 14px;" aria-label="View Patch Release Notes">
               ℹ️
             </button>
           </div>
-          <p id="patchReleaseHint" class="form-hint">Memuat riwayat rilis .mpp dari GitHub...</p>
+          <p id="patchReleaseHint" class="form-hint">Loading .mpp release history from GitHub...</p>
         </div>
       </div>
 
@@ -76,73 +76,73 @@
       <div class="form-group">
         <div class="label-with-badge" style="margin-bottom: 8px;">
           <div>
-            <label class="form-label" style="margin-bottom: 2px;">Pilih Versi YouTube Target:</label>
-            <p class="form-hint" style="margin: 0;">Didukung langsung dari katalog rilis lengkap APKMirror & patcher Morphe CLI</p>
+            <label class="form-label" style="margin-bottom: 2px;">Select Target YouTube Version:</label>
+            <p class="form-hint" style="margin: 0;">Directly supported from complete APKMirror releases & Morphe CLI patcher</p>
           </div>
-          <span id="versionLoadingBadge" class="badge badge-info">Memuat versi...</span>
+          <span id="versionLoadingBadge" class="badge badge-info">Loading versions...</span>
         </div>
 
-        <!-- Filter & Search Toolbar untuk Versi YouTube -->
+        <!-- Filter & Search Toolbar for YouTube Versions -->
         <div class="version-filter-bar" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; justify-content: space-between;">
-          <div class="filter-pills" style="display: flex; gap: 6px; flex-wrap: wrap;" role="tablist" aria-label="Filter Versi">
-            <button type="button" class="btn-filter-pill active" data-filter="all" id="filterVerAll">Semua</button>
-            <button type="button" class="btn-filter-pill" data-filter="recommended" id="filterVerRec">⭐ Rekomendasi</button>
-            <button type="button" class="btn-filter-pill" data-filter="stable" id="filterVerStable">🛡️ Stabil Saja</button>
+          <div class="filter-pills" style="display: flex; gap: 6px; flex-wrap: wrap;" role="tablist" aria-label="Version Filters">
+            <button type="button" class="btn-filter-pill active" data-filter="all" id="filterVerAll">All</button>
+            <button type="button" class="btn-filter-pill" data-filter="recommended" id="filterVerRec">⭐ Recommended</button>
+            <button type="button" class="btn-filter-pill" data-filter="stable" id="filterVerStable">🛡️ Stable Only</button>
             <button type="button" class="btn-filter-pill" data-filter="beta" id="filterVerBeta">⚡ Beta</button>
           </div>
           <div style="flex: 1; min-width: 180px; max-width: 260px;">
-            <input type="search" id="inputSearchVersion" class="form-control" placeholder="🔍 Cari nomor versi..." style="min-height: 40px; font-size: 0.88rem; padding: 6px 12px;">
+            <input type="search" id="inputSearchVersion" class="form-control" placeholder="🔍 Search version number..." style="min-height: 40px; font-size: 0.88rem; padding: 6px 12px;">
           </div>
         </div>
 
-        <div id="versionListContainer" class="version-list-grid" role="radiogroup" aria-label="Daftar Versi YouTube Kompatibel">
-          <!-- Diisi secara dinamis oleh JavaScript -->
+        <div id="versionListContainer" class="version-list-grid" role="radiogroup" aria-label="List of Compatible YouTube Versions">
+          <!-- Dynamically populated by JavaScript -->
         </div>
 
-        <!-- Opsi Tambahan: Lihat Semua Versi & Input Manual -->
+        <!-- Additional Toolbar: Show All Versions & Custom Input -->
         <div class="version-custom-toolbar" style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border-subtle); display: flex; flex-direction: column; gap: 12px;">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
               <button type="button" id="btnLoadMoreVersions" class="btn btn-secondary" style="min-height: 48px; padding: 10px 16px;">
                 <span>➕</span>
-                <span id="btnLoadMoreVersionsText">Muat 24 Versi Lagi</span>
+                <span id="btnLoadMoreVersionsText">Load 24 More</span>
               </button>
               <button type="button" id="btnToggleAllVersions" class="btn btn-secondary" style="min-height: 48px; padding: 10px 16px;">
                 <span id="btnToggleAllVersionsIcon">📋</span>
-                <span id="btnToggleAllVersionsText">Tampilkan Semua Versi</span>
+                <span id="btnToggleAllVersionsText">Show All Versions</span>
               </button>
             </div>
-            <span id="versionCounterHint" class="form-hint" style="margin: 0;">Menampilkan versi...</span>
+            <span id="versionCounterHint" class="form-hint" style="margin: 0;">Showing versions...</span>
           </div>
 
-          <!-- Input Versi Manual -->
+          <!-- Custom Version Input -->
           <div style="background-color: var(--bg-surface-2); padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-            <label for="inputCustomVersion" class="form-label" style="margin-bottom: 6px;">✍️ Gunakan Versi YouTube Lain (Kustom / Manual):</label>
+            <label for="inputCustomVersion" class="form-label" style="margin-bottom: 6px;">✍️ Use Custom YouTube Version (Manual):</label>
             <div style="display: flex; gap: 8px;">
-              <input type="text" id="inputCustomVersion" class="form-control" placeholder="Contoh: 21.07.247 atau 20.51.39" style="min-height: 48px; font-family: monospace;">
+              <input type="text" id="inputCustomVersion" class="form-control" placeholder="e.g. 21.07.247 or 20.51.39" style="min-height: 48px; font-family: monospace;">
               <button type="button" id="btnApplyCustomVersion" class="btn btn-primary" style="min-height: 48px; white-space: nowrap; padding: 0 18px;">
-                Terapkan
+                Apply
               </button>
             </div>
-            <p class="form-hint" style="margin-top: 6px;">Morphe CLI mendukung patching versi apa pun yang kompatibel secara otomatis.</p>
+            <p class="form-hint" style="margin-top: 6px;">Morphe CLI supports patching any compatible version automatically.</p>
           </div>
         </div>
       </div>
     </section>
 
     <!-- Preset Action Bar -->
-    <section class="preset-bar" aria-label="Aksi Preset">
-      <button id="btnLoadGoldenPreset" class="btn btn-primary" aria-label="Muat Racikan Saya (Golden Preset)">
-        <span aria-hidden="true">⚡</span> Racikan Saya (81 Patch)
+    <section class="preset-bar" aria-label="Preset Actions">
+      <button id="btnLoadGoldenPreset" class="btn btn-primary" aria-label="Load My Preset (Golden Preset)">
+        <span aria-hidden="true">⚡</span> My Preset (81 Patches)
       </button>
-      <button id="btnResetPatches" class="btn btn-secondary" aria-label="Reset Patch ke Standar">
-        <span aria-hidden="true">🔄</span> Reset Standar
+      <button id="btnResetPatches" class="btn btn-secondary" aria-label="Reset Patches to Default">
+        <span aria-hidden="true">🔄</span> Reset Defaults
       </button>
-      <button id="btnExportPreset" class="btn btn-secondary" aria-label="Ekspor Konfigurasi Racikan ke File JSON">
-        <span aria-hidden="true">💾</span> Ekspor Racikan
+      <button id="btnExportPreset" class="btn btn-secondary" aria-label="Export Custom Preset to JSON File">
+        <span aria-hidden="true">💾</span> Export Preset
       </button>
-      <button id="btnImportPreset" class="btn btn-secondary" aria-label="Impor Konfigurasi Racikan dari File JSON">
-        <span aria-hidden="true">📂</span> Impor Racikan
+      <button id="btnImportPreset" class="btn btn-secondary" aria-label="Import Custom Preset from JSON File">
+        <span aria-hidden="true">📂</span> Import Preset
       </button>
       <input type="file" id="inputImportPreset" accept=".json,application/json" style="display: none;" aria-hidden="true">
     </section>
@@ -151,17 +151,17 @@
     <section class="card" aria-labelledby="section-patches">
       <div class="patches-header">
         <div>
-          <h2 id="section-patches" class="card-title">2. Kustomisasi Patch</h2>
-          <p class="form-hint"><span id="activePatchCount">0</span> patch aktif dipilih</p>
+          <h2 id="section-patches" class="card-title">2. Patch Customization</h2>
+          <p class="form-hint"><span id="activePatchCount">0</span> active patches selected</p>
         </div>
         <div class="search-box">
-          <input type="search" id="inputSearchPatch" class="form-control search-input" placeholder="Cari nama atau fungsi patch..." aria-label="Cari nama atau fungsi patch">
+          <input type="search" id="inputSearchPatch" class="form-control search-input" placeholder="Search patch name or feature..." aria-label="Search patch name or feature">
         </div>
       </div>
 
       <!-- Accordion Categories Container -->
       <div id="patchCategoriesContainer" class="categories-list">
-        <!-- Diisi secara dinamis oleh JavaScript -->
+        <!-- Dynamically populated by JavaScript -->
       </div>
     </section>
 
@@ -171,16 +171,16 @@
   <footer class="bottom-bar" role="contentinfo">
     <div class="bottom-container">
       <div class="build-mode-selector" style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <select id="selectBuildMode" class="form-control form-control-sm" aria-label="Mode Eksekusi" style="min-width: 140px;">
-          <option value="test" selected>🧪 Uji Coba (Test)</option>
-          <option value="release">🚀 Publikasikan (Release)</option>
+        <select id="selectBuildMode" class="form-control form-control-sm" aria-label="Execution Mode" style="min-width: 140px;">
+          <option value="test" selected>🧪 Test Build (Artifact)</option>
+          <option value="release">🚀 Publish Release</option>
         </select>
-        <select id="selectArch" class="form-control form-control-sm" aria-label="Arsitektur Target" style="min-width: 130px;">
-          <option value="all" selected>📦 Universal (Semua HP)</option>
+        <select id="selectArch" class="form-control form-control-sm" aria-label="Target Architecture" style="min-width: 130px;">
+          <option value="all" selected>📦 Universal (All Devices)</option>
           <option value="arm64-v8a">⚡ arm64-v8a (64-bit)</option>
         </select>
       </div>
-      <button id="btnTriggerBuild" class="btn btn-build" aria-label="Jalankan Build di GitHub Cloud">
+      <button id="btnTriggerBuild" class="btn btn-build" aria-label="Trigger Cloud Build on GitHub">
         <span class="btn-icon">⚡</span>
         <span class="btn-text">Build on GitHub</span>
       </button>
@@ -191,32 +191,32 @@
   <div id="authModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalAuthTitle">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 id="modalAuthTitle" class="modal-title">🔐 Kunci Keamanan & Akses GitHub</h3>
-        <button id="btnCloseAuthModal" class="btn-close" aria-label="Tutup Dialog">&times;</button>
+        <h3 id="modalAuthTitle" class="modal-title">🔐 Security Gatekeeper & GitHub Access</h3>
+        <button id="btnCloseAuthModal" class="btn-close" aria-label="Close Dialog">&times;</button>
       </div>
       <div class="modal-body">
         <p class="text-secondary">
-          Untuk mencegah orang lain menjalankan build di repositori Anda, tombol <b>Build</b> dilindungi dengan Token GitHub Anda sendiri.
+          To prevent unauthorized users from running builds on your repository, the <b>Build</b> button is secured with your GitHub token.
         </p>
 
         <div class="form-group">
           <label for="inputGithubToken" class="form-label">GitHub Personal Access Token (PAT):</label>
           <input type="password" id="inputGithubToken" class="form-control" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
           <p class="form-hint">
-            Token <b>HANYA disimpan secara lokal</b> di browser Anda (localStorage) dan dikirim langsung ke <code>api.github.com</code> via HTTPS.
+            Token is <b>ONLY stored locally</b> in your browser (localStorage) and sent directly to <code>api.github.com</code> via HTTPS.
           </p>
         </div>
 
         <div class="form-group">
-          <label for="inputPasscode" class="form-label">PIN / Kunci Web Pribadi (Opsional):</label>
-          <input type="password" id="inputPasscode" class="form-control" placeholder="Masukkan 4-6 digit PIN" maxlength="12">
+          <label for="inputPasscode" class="form-label">Personal Web PIN / Passcode (Optional):</label>
+          <input type="password" id="inputPasscode" class="form-control" placeholder="Enter 4-6 digit PIN" maxlength="12">
         </div>
 
         <div id="authAlert" class="alert hidden" role="alert"></div>
       </div>
       <div class="modal-footer">
-        <button id="btnClearAuth" class="btn btn-danger">Hapus Token</button>
-        <button id="btnSaveAuth" class="btn btn-primary">Simpan & Buka Kunci</button>
+        <button id="btnClearAuth" class="btn btn-danger">Clear Token</button>
+        <button id="btnSaveAuth" class="btn btn-primary">Save & Unlock</button>
       </div>
     </div>
   </div>
@@ -225,17 +225,17 @@
   <div id="buildProgressModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalProgressTitle">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 id="modalProgressTitle" class="modal-title">🚀 Status Cloud Build</h3>
-        <button id="btnCloseProgressModal" class="btn-close" aria-label="Tutup Dialog">&times;</button>
+        <h3 id="modalProgressTitle" class="modal-title">🚀 Cloud Build Status</h3>
+        <button id="btnCloseProgressModal" class="btn-close" aria-label="Close Dialog">&times;</button>
       </div>
       <div class="modal-body">
         <div id="buildStatusBox" class="status-box">
           <div class="spinner"></div>
-          <p id="buildStatusMsg" class="status-msg">Mengirim sinyal build ke GitHub Actions...</p>
+          <p id="buildStatusMsg" class="status-msg">Dispatching build trigger to GitHub Actions...</p>
         </div>
         <div id="buildActionLinks" class="action-links hidden">
           <a id="linkActionsRun" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-block">
-            Lihat Proses di Tab GitHub Actions ↗
+            View Workflow Run in GitHub Actions ↗
           </a>
         </div>
       </div>
@@ -246,16 +246,16 @@
   <div id="patchNotesModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalPatchNotesTitle">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 id="modalPatchNotesTitle" class="modal-title">ℹ️ Catatan Rilis Patch (.mpp)</h3>
-        <button id="btnClosePatchNotesModal" class="btn-close" aria-label="Tutup Dialog">&times;</button>
+        <h3 id="modalPatchNotesTitle" class="modal-title">ℹ️ Patch Release Notes (.mpp)</h3>
+        <button id="btnClosePatchNotesModal" class="btn-close" aria-label="Close Dialog">&times;</button>
       </div>
       <div class="modal-body">
         <div id="patchNotesContent" style="white-space: pre-wrap; font-family: monospace; font-size: 0.88rem; max-height: 400px; overflow-y: auto; background-color: var(--bg-surface-2); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); color: var(--text-primary);">
-          Memuat catatan rilis...
+          Loading release notes...
         </div>
       </div>
       <div class="modal-footer">
-        <button id="btnClosePatchNotesBtn" class="btn btn-secondary">Tutup</button>
+        <button id="btnClosePatchNotesBtn" class="btn btn-secondary">Close</button>
       </div>
     </div>
   </div>

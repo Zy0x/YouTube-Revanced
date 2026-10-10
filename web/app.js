@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // =============================================================================
-// Keamanan & Autentikasi Gatekeeper
+// Security & Gatekeeper Authentication
 // =============================================================================
 function initSecurity() {
   const token = STATE.authToken;
@@ -50,8 +50,8 @@ function initSecurity() {
     verifyGithubToken(token);
   } else {
     statusIcon.textContent = '🔒';
-    statusText.textContent = 'Terkunci';
-    btnTrigger.title = 'Buka kunci dengan GitHub Token untuk memicu build';
+    statusText.textContent = 'Locked';
+    btnTrigger.title = 'Unlock with your GitHub Token to trigger build';
   }
 }
 
@@ -74,14 +74,14 @@ async function verifyGithubToken(token) {
       statusIcon.textContent = '🟢';
       statusText.textContent = `@${user.login}`;
       btnTrigger.disabled = false;
-      btnTrigger.title = 'Jalankan build di GitHub Runner';
+      btnTrigger.title = 'Trigger build on GitHub Runner';
       return true;
     } else {
-      throw new Error('Token tidak valid atau kedaluwarsa');
+      throw new Error('Token is invalid or expired');
     }
   } catch (err) {
     statusIcon.textContent = '⚠️';
-    statusText.textContent = 'Token Salah';
+    statusText.textContent = 'Invalid Token';
     btnTrigger.disabled = true;
     return false;
   }
@@ -90,12 +90,12 @@ async function verifyGithubToken(token) {
 const DEFAULT_SOURCES = [
   {
     id: "anddea",
-    name: "⭐ Anddea Patches (Default - Fitur Lengkap)",
+    name: "⭐ Anddea Patches (Default - Full Features)",
     repository: "anddea/revanced-patches",
     manifestUrl: "https://raw.githubusercontent.com/anddea/revanced-patches/refs/heads/main/patches-list.json",
     defaultReleaseType: "dev",
     isDefault: true,
-    description: "Sumber patch utama dengan fitur terlengkap dan kustomisasi mendalam untuk YouTube RVX."
+    description: "Primary patch source featuring full customization and rich features for YouTube RVX."
   },
   {
     id: "morphe",
@@ -104,7 +104,7 @@ const DEFAULT_SOURCES = [
     manifestUrl: "https://raw.githubusercontent.com/MorpheApp/morphe-patches/refs/heads/main/patches-list.json",
     defaultReleaseType: "latest",
     isDefault: false,
-    description: "Sumber patch resmi dari tim MorpheApp."
+    description: "Official patch source from the MorpheApp team."
   },
   {
     id: "inotia00",
@@ -113,7 +113,7 @@ const DEFAULT_SOURCES = [
     manifestUrl: "https://raw.githubusercontent.com/inotia00/revanced-patches/refs/heads/revanced-extended/patches.json",
     defaultReleaseType: "latest",
     isDefault: false,
-    description: "Sumber ReVanced Extended klasik dari developer inotia00."
+    description: "Classic ReVanced Extended patches by developer inotia00."
   },
   {
     id: "revanced",
@@ -122,18 +122,17 @@ const DEFAULT_SOURCES = [
     manifestUrl: "https://raw.githubusercontent.com/ReVanced/revanced-patches/refs/heads/main/patches.json",
     defaultReleaseType: "latest",
     isDefault: false,
-    description: "Sumber patch resmi dari ReVanced Team."
+    description: "Official patches from the ReVanced Team."
   }
 ];
 
 // =============================================================================
-// Helper Fetch dengan Multi-Mirror CDN (jsDelivr -> GitHub Raw)
+// Helper Fetch with Multi-Mirror CDN (jsDelivr -> GitHub Raw)
 // =============================================================================
 async function fetchManifestWithFallback(url) {
   const urlsToTry = [];
 
-  // Jika URL raw.githubusercontent.com, coba mirror jsDelivr terlebih dahulu
-  // jsDelivr jauh lebih cepat, stabil di ISP Indonesia, dan memiliki header CORS lengkap
+  // Try jsDelivr mirror first for speed and reliable CORS
   if (url.includes('raw.githubusercontent.com')) {
     const jsd = url
       .replace('https://raw.githubusercontent.com/', 'https://cdn.jsdelivr.net/gh/')
@@ -150,11 +149,11 @@ async function fetchManifestWithFallback(url) {
         return await res.json();
       }
     } catch (e) {
-      console.warn(`[RVX] Gagal fetch dari ${targetUrl}, mencoba mirror berikutnya...`, e);
+      console.warn(`[RVX] Failed to fetch from ${targetUrl}, trying next mirror...`, e);
     }
   }
 
-  throw new Error('Gagal menghubungi sumber patch dari semua mirror (jsDelivr & GitHub Raw)');
+  throw new Error('Failed to reach patch source from all mirrors (jsDelivr & GitHub Raw)');
 }
 
 // =============================================================================
@@ -420,16 +419,16 @@ function extractUniversalVersions(patches, pkgName = 'com.google.android.youtube
 }
 
 // =============================================================================
-// Fetch Manifest & Render Patches Secara Dinamis
+// Fetch Manifest & Render Patches Dynamically
 // =============================================================================
 async function fetchAndRenderPatches(sourceId) {
   const versionContainer = document.getElementById('versionListContainer');
   const versionBadge = document.getElementById('versionLoadingBadge');
   const patchContainer = document.getElementById('patchCategoriesContainer');
 
-  versionBadge.textContent = 'Memuat versi...';
+  versionBadge.textContent = 'Loading versions...';
   versionBadge.className = 'badge badge-info';
-  versionContainer.innerHTML = '<p class="form-hint">Menganalisis manifest patch & katalog versi APKMirror...</p>';
+  versionContainer.innerHTML = '<p class="form-hint">Analyzing patch manifest & APKMirror version catalog...</p>';
   patchContainer.innerHTML = '<div class="spinner"></div>';
 
   const sourceConfig = STATE.sources.find(s => s.id === sourceId) || STATE.sources[0] || {
@@ -441,7 +440,7 @@ async function fetchAndRenderPatches(sourceId) {
     const rawPatches = data.patches || [];
     STATE.patches = rawPatches;
 
-    // 1. Ekstraksi Universal Versi & Rekomendasi
+    // 1. Universal Version & Recommendation Extraction
     const { allVersions, recommendedVersion } = extractUniversalVersions(rawPatches);
     STATE.availableVersions = allVersions;
     STATE.recommendedVersion = recommendedVersion;
@@ -450,29 +449,29 @@ async function fetchAndRenderPatches(sourceId) {
       STATE.currentVersion = recommendedVersion;
     }
 
-    versionBadge.textContent = `${allVersions.length} Versi APKMirror`;
+    versionBadge.textContent = `${allVersions.length} APKMirror Versions`;
     versionBadge.className = 'badge badge-info';
 
-    // 2. Render Pilihan Versi
+    // 2. Render Version Selector
     renderVersionSelector();
 
-    // 3. Render Patch & Opsi Kustomisasi
+    // 3. Render Patches & Customization Options
     renderPatchCategories(rawPatches);
 
-    // Terapkan Golden Preset secara default
+    // Apply Golden Preset by default
     applyGoldenPreset();
 
   } catch (err) {
-    console.error('[RVX] Error memuat patch:', err);
-    versionBadge.textContent = 'Gagal';
+    console.error('[RVX] Error loading patches:', err);
+    versionBadge.textContent = 'Failed';
     versionBadge.className = 'badge badge-gold';
-    versionContainer.innerHTML = `<p class="form-hint text-danger">Gagal menghubungi sumber patch: ${escapeHtml(err.message)}</p>`;
-    patchContainer.innerHTML = '<p class="form-hint">Silakan periksa koneksi internet atau pilih sumber patch lain.</p>';
+    versionContainer.innerHTML = `<p class="form-hint text-danger">Failed to connect to patch source: ${escapeHtml(err.message)}</p>`;
+    patchContainer.innerHTML = '<p class="form-hint">Please check your internet connection or select a different patch source.</p>';
   }
 }
 
 // =============================================================================
-// Render Selector Versi YouTube Lengkap (Katalog APKMirror, Filter, Search & Pagination)
+// Render YouTube Version Selector (APKMirror Catalog, Filter, Search & Pagination)
 // =============================================================================
 function renderVersionSelector() {
   const container = document.getElementById('versionListContainer');
@@ -486,7 +485,7 @@ function renderVersionSelector() {
     STATE.currentVersion = recommended;
   }
 
-  // 1. Terapkan Filter Kategori (Semua, Rekomendasi, Stabil Saja, Beta)
+  // 1. Apply Category Filters (All, Recommended, Stable Only, Beta)
   let filtered = allList;
   if (STATE.versionFilter === 'recommended') {
     filtered = allList.filter(item => item.isRecommended || item.isManifest);
@@ -496,25 +495,25 @@ function renderVersionSelector() {
     filtered = allList.filter(item => item.isBeta);
   }
 
-  // 2. Terapkan Filter Pencarian
+  // 2. Apply Search Filter
   if (STATE.versionSearch) {
     const q = STATE.versionSearch.toLowerCase();
     filtered = filtered.filter(item => item.version.toLowerCase().includes(q));
   }
 
-  // 3. Tentukan Rentang Tampilan
+  // 3. Determine Display Range
   const limit = STATE.showAllVersions ? filtered.length : (STATE.versionDisplayLimit || 12);
   const displayList = filtered.slice(0, limit);
 
-  // Pastikan versi yang sedang aktif selalu tampak dalam list
+  // Ensure active version is always visible
   const activeObj = allList.find(x => x.version === STATE.currentVersion);
   if (activeObj && !displayList.some(x => x.version === STATE.currentVersion)) {
     displayList.unshift(activeObj);
   }
 
-  // 4. Render Kartu Versi
+  // 4. Render Version Cards
   if (displayList.length === 0) {
-    container.innerHTML = '<p class="form-hint" style="grid-column: 1 / -1; padding: 16px 0;">Tidak ada versi yang cocok dengan filter atau kata kunci pencarian Anda.</p>';
+    container.innerHTML = '<p class="form-hint" style="grid-column: 1 / -1; padding: 16px 0;">No versions match your search or filter.</p>';
   } else {
     displayList.forEach(item => {
       const ver = item.version;
@@ -524,7 +523,7 @@ function renderVersionSelector() {
 
       let tagHtml = '';
       if (item.isRecommended) {
-        tagHtml = '<span class="version-pill-tag version-tag-rec">⭐ REKOMENDASI</span>';
+        tagHtml = '<span class="version-pill-tag version-tag-rec">⭐ RECOMMENDED</span>';
       } else if (!item.isBeta) {
         tagHtml = '<span class="version-pill-tag version-tag-stable">STABLE</span>';
       } else {
@@ -552,15 +551,15 @@ function renderVersionSelector() {
     });
   }
 
-  // 5. Perbarui Status Teks Counter & Tombol Toolbar
+  // 5. Update Status Hints & Toolbar Buttons
   const counterHint = document.getElementById('versionCounterHint');
   if (counterHint) {
-    counterHint.textContent = `Menampilkan ${displayList.length} dari ${filtered.length} versi (${allList.length} total APKMirror)`;
+    counterHint.textContent = `Showing ${displayList.length} of ${filtered.length} versions (${allList.length} total APKMirror)`;
   }
 
   const badge = document.getElementById('versionLoadingBadge');
   if (badge) {
-    badge.textContent = `${allList.length} Versi APKMirror`;
+    badge.textContent = `${allList.length} APKMirror Versions`;
   }
 
   const btnLoadMore = document.getElementById('btnLoadMoreVersions');
@@ -572,17 +571,17 @@ function renderVersionSelector() {
   const toggleBtnIcon = document.getElementById('btnToggleAllVersionsIcon');
   if (toggleBtnText && toggleBtnIcon) {
     if (STATE.showAllVersions) {
-      toggleBtnText.textContent = 'Tampilkan Ringkas (12 Versi)';
+      toggleBtnText.textContent = 'Show Compact (12 Versions)';
       toggleBtnIcon.textContent = '▲';
     } else {
-      toggleBtnText.textContent = `Tampilkan Semua (${filtered.length} Versi)`;
+      toggleBtnText.textContent = `Show All (${filtered.length} Versions)`;
       toggleBtnIcon.textContent = '📋';
     }
   }
 }
 
 // =============================================================================
-// Kelompokkan & Render Patch + Input Opsi Kustomisasi
+// Group & Render Patches + Customization Options
 // =============================================================================
 function renderPatchCategories(patches) {
   const container = document.getElementById('patchCategoriesContainer');
@@ -594,15 +593,15 @@ function renderPatchCategories(patches) {
       icon: '🛡️',
       keywords: ['ads', 'sponsorblock', 'dislike', 'tracking', 'redirects']
     },
-    'Pemutar Video & Gestur': {
+    'Video Player & Gestures': {
       icon: '▶️',
       keywords: ['player', 'playback', 'swipe', 'audio', 'stream', 'speed', 'controls']
     },
-    'Tampilan & Tema': {
+    'Appearance & Themes': {
       icon: '🎨',
       keywords: ['theme', 'branding', 'overlay', 'icon', 'color', 'dpi', 'buttons']
     },
-    'Shorts & Navigasi': {
+    'Shorts & Navigation': {
       icon: '⚡',
       keywords: ['shorts', 'navigation', 'bar', 'feed', 'header']
     },
@@ -610,7 +609,7 @@ function renderPatchCategories(patches) {
       icon: '🔧',
       keywords: ['spoof', 'potoken', 'quic', 'version', 'wifi', 'certificate']
     },
-    'Fitur Lainnya': {
+    'Miscellaneous Features': {
       icon: '🧩',
       keywords: []
     }
@@ -633,7 +632,7 @@ function renderPatchCategories(patches) {
     }
 
     if (!assigned) {
-      grouped['Fitur Lainnya'].push(patch);
+      grouped['Miscellaneous Features'].push(patch);
     }
   });
 
@@ -672,7 +671,7 @@ function renderPatchCategories(patches) {
           <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
             <div class="patch-info">
               <div class="patch-title">${escapeHtml(patch.name)}</div>
-              <div class="patch-desc">${escapeHtml(patch.description || 'Tidak ada deskripsi')}</div>
+              <div class="patch-desc">${escapeHtml(patch.description || 'No description available')}</div>
             </div>
             <label class="switch">
               <input type="checkbox" data-name="${escapeHtml(patch.name)}" ${isDefault ? 'checked' : ''}>
@@ -848,7 +847,7 @@ function exportPreset() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `rvx-racikan-${STATE.currentSource}-v${STATE.currentVersion}.json`;
+  a.download = `rvx-preset-${STATE.currentSource}-v${STATE.currentVersion}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -862,10 +861,10 @@ function importPreset(file) {
     try {
       const data = JSON.parse(e.target.result);
       if (!data || typeof data !== 'object') {
-        throw new Error('Data bukan objek JSON yang valid');
+        throw new Error('Data is not a valid JSON object');
       }
 
-      // 1. Ganti Sumber Patch jika berbeda
+      // 1. Switch Patch Source if different
       if (data.source && data.source !== STATE.currentSource) {
         STATE.currentSource = data.source;
         const selectSrc = document.getElementById('selectPatchSource');
@@ -873,14 +872,14 @@ function importPreset(file) {
         await fetchAndRenderPatches(data.source);
       }
 
-      // 2. Pulihkan Tag Patch
+      // 2. Restore Patch Tag
       if (data.patchTag) {
         STATE.patchTag = data.patchTag;
         const selectTag = document.getElementById('selectPatchRelease');
         if (selectTag) selectTag.value = data.patchTag;
       }
 
-      // 3. Pulihkan Versi YouTube
+      // 3. Restore YouTube Version
       if (data.youtubeVersion) {
         STATE.currentVersion = data.youtubeVersion;
         const exists = STATE.availableVersions.find(x => x.version === data.youtubeVersion);
@@ -890,26 +889,26 @@ function importPreset(file) {
             isBeta: false,
             isRecommended: false,
             isManifest: false,
-            title: `YouTube ${data.youtubeVersion} (Impor)`
+            title: `YouTube ${data.youtubeVersion} (Imported)`
           });
         }
         renderVersionSelector();
       }
 
-      // 4. Pulihkan Arsitektur Target
+      // 4. Restore Target Architecture
       if (data.arch) {
         STATE.buildArch = data.arch;
         const selectArch = document.getElementById('selectArch');
         if (selectArch) selectArch.value = data.arch;
       }
 
-      // 5. Pulihkan Mode Build
+      // 5. Restore Build Mode
       if (data.buildMode) {
         const selectMode = document.getElementById('selectBuildMode');
         if (selectMode) selectMode.value = data.buildMode;
       }
 
-      // 6. Pulihkan Pemilihan Patch
+      // 6. Restore Patch Selection
       const includedSet = new Set(data.includedPatches || []);
       const excludedSet = new Set(data.excludedPatches || []);
 
@@ -933,17 +932,17 @@ function importPreset(file) {
         }
       });
 
-      // 7. Pulihkan Opsi Konfigurasi Dinamis
+      // 7. Restore Dynamic Configuration Options
       if (data.options && typeof data.options === 'object') {
         STATE.selectedOptions = { ...data.options };
         syncOptionsToDom();
       }
 
       updatePatchCount();
-      alert(`✅ Berhasil Mengimpor Racikan!\n• Versi YouTube: v${STATE.currentVersion}\n• Patch Aktif: ${STATE.selectedPatches.size}\n• Sumber: ${STATE.currentSource}`);
+      alert(`✅ Preset Imported Successfully!\n• YouTube Version: v${STATE.currentVersion}\n• Active Patches: ${STATE.selectedPatches.size}\n• Patch Source: ${STATE.currentSource}`);
     } catch (err) {
       console.error('Error importing preset:', err);
-      alert('❌ Gagal mengimpor preset: Format file JSON tidak valid!');
+      alert('❌ Failed to import preset: Invalid JSON file format!');
     }
   };
   reader.readAsText(file);
@@ -955,7 +954,7 @@ function updatePatchCount() {
 }
 
 // =============================================================================
-// Trigger Cloud Build dengan Payload Konfigurasi Lengkap
+// Trigger Cloud Build with Dynamic Configuration Payload
 // =============================================================================
 async function triggerCloudBuild() {
   if (!STATE.authToken) {
@@ -976,9 +975,9 @@ async function triggerCloudBuild() {
 
   progressModal.classList.remove('hidden');
   linksBox.classList.add('hidden');
-  statusMsg.textContent = `Menghubungkan ke GitHub Actions runner (${mode.toUpperCase()} mode, ${arch.toUpperCase()})...`;
+  statusMsg.textContent = `Connecting to GitHub Actions runner (${mode.toUpperCase()} mode, ${arch.toUpperCase()})...`;
 
-  // Kumpulkan list excluded patches secara presisi
+  // Collect precise excluded patches list
   const allPatchNames = STATE.patches.map(p => p.name);
   const excludedPatches = allPatchNames.filter(name => !STATE.selectedPatches.has(name));
   const includedPatches = Array.from(STATE.selectedPatches);
@@ -1009,15 +1008,15 @@ async function triggerCloudBuild() {
     });
 
     if (res.status === 204 || res.ok) {
-      statusMsg.textContent = `✅ Sinyal Build Berhasil Dikirim! Runner sedang mem-patch YouTube v${STATE.currentVersion} (${arch.toUpperCase()}) menggunakan bundle ${STATE.currentSource} (${patchTag}) dengan ${includedPatches.length} patch pilihan Anda.`;
+      statusMsg.textContent = `✅ Build Trigger Dispatched Successfully! Runner is now patching YouTube v${STATE.currentVersion} (${arch.toUpperCase()}) using ${STATE.currentSource} (${patchTag}) bundle with ${includedPatches.length} selected patches.`;
       linksBox.classList.remove('hidden');
       runLink.href = 'https://github.com/Zy0x/YouTube-Revanced/actions';
     } else {
       const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.message || `Kode respons: ${res.status}`);
+      throw new Error(errData.message || `Response code: ${res.status}`);
     }
   } catch (err) {
-    statusMsg.textContent = `❌ Gagal memicu build: ${err.message}. Pastikan token Anda memiliki izin 'repo' atau 'actions:write'.`;
+    statusMsg.textContent = `❌ Failed to trigger build: ${err.message}. Make sure your token has 'repo' or 'actions:write' permission.`;
   }
 }
 
@@ -1116,7 +1115,7 @@ function initEventListeners() {
     if (!customVer) return;
 
     if (!/^\d+(\.\d+)+$/.test(customVer)) {
-      alert('Format versi tidak valid. Contoh yang benar: 21.07.247 atau 20.51.39');
+      alert('Invalid version format. Correct format example: 21.07.247 or 20.51.39');
       return;
     }
 
@@ -1127,7 +1126,7 @@ function initEventListeners() {
         isBeta: false,
         isRecommended: false,
         isManifest: false,
-        title: `YouTube ${customVer} (Kustom)`
+        title: `YouTube ${customVer} (Custom)`
       });
     }
     STATE.currentVersion = customVer;
@@ -1159,7 +1158,7 @@ function initEventListeners() {
     updatePatchCount();
   });
 
-  // Ekspor & Impor Racikan Kustom (.json)
+  // Export & Import Custom Preset (.json)
   const btnExport = document.getElementById('btnExportPreset');
   if (btnExport) {
     btnExport.addEventListener('click', exportPreset);
@@ -1178,7 +1177,7 @@ function initEventListeners() {
     });
   }
 
-  // Pencarian Patch Cerdas (Mencari Nama Patch dan Deskripsi Fungsi)
+  // Smart Patch Search (Matches Patch Name & Feature Description)
   const inputSearchPatch = document.getElementById('inputSearchPatch');
   if (inputSearchPatch) {
     inputSearchPatch.addEventListener('input', (e) => {
@@ -1210,7 +1209,7 @@ function initEventListeners() {
     const alertBox = document.getElementById('authAlert');
 
     if (!token) {
-      alertBox.textContent = 'Token tidak boleh kosong!';
+      alertBox.textContent = 'Token cannot be empty!';
       alertBox.className = 'alert text-danger';
       alertBox.classList.remove('hidden');
       return;
@@ -1222,7 +1221,7 @@ function initEventListeners() {
       STATE.authToken = token;
       closeAuthModal();
     } else {
-      alertBox.textContent = 'Token ditolak oleh GitHub API. Periksa kembali token Anda.';
+      alertBox.textContent = 'Token was rejected by GitHub API. Please check your token permissions.';
       alertBox.className = 'alert text-danger';
       alertBox.classList.remove('hidden');
     }

@@ -27,23 +27,23 @@ def validate_and_fix_apk(file_path):
     try:
         with zipfile.ZipFile(file_path, 'r') as z:
             namelist = z.namelist()
-            # 1. Jika valid APK standar (memiliki AndroidManifest.xml)
+            # 1. Standalone valid APK (contains AndroidManifest.xml)
             if 'AndroidManifest.xml' in namelist:
-                print(f"[+] Verifikasi Berhasil: File adalah Standalone APK valid ({os.path.getsize(file_path) // (1024*1024)} MB).")
+                print(f"[+] Verification Successful: Valid Standalone APK detected ({os.path.getsize(file_path) // (1024*1024)} MB).")
                 return True
 
-            # 2. Jika file adalah APKM / Split bundle (memiliki base.apk di dalamnya)
+            # 2. APKM / Split bundle (contains base.apk inside)
             if 'base.apk' in namelist:
-                print("[*] Terdeteksi bundle APKM. Mengekstrak base.apk...")
+                print("[*] Detected APKM bundle. Extracting base.apk...")
                 temp_extract = file_path + ".base.apk"
                 with z.open('base.apk') as src, open(temp_extract, 'wb') as dst:
                     while chunk := src.read(1024 * 1024):
                         dst.write(chunk)
                 os.replace(temp_extract, file_path)
-                print(f"[+] Berhasil mengekstrak base.apk ({os.path.getsize(file_path) // (1024*1024)} MB).")
+                print(f"[+] Successfully extracted base.apk ({os.path.getsize(file_path) // (1024*1024)} MB).")
                 return True
     except Exception as e:
-        print(f"[-] Validasi file zip/apk gagal: {e}")
+        print(f"[-] ZIP/APK validation failed: {e}")
 
     return False
 
@@ -114,7 +114,7 @@ def scrape_apkmirror(version, output_path):
             return False
 
         file_url = "https://www.apkmirror.com" + raw_link['href']
-        print(f"[*] Mengunduh file dari: {file_url}")
+        print(f"[*] Downloading file from: {file_url}")
         with s.get(file_url, stream=True, timeout=90) as r:
             r.raise_for_status()
             with open(output_path, 'wb') as f:
@@ -123,7 +123,7 @@ def scrape_apkmirror(version, output_path):
 
         return validate_and_fix_apk(output_path)
     except Exception as e:
-        print(f"[-] Scraper gagal: {e}")
+        print(f"[-] Scraper failed: {e}")
         return False
 
 def main():
@@ -132,28 +132,28 @@ def main():
         sys.exit(1)
 
     version = sys.argv[1].lstrip('v')
-    # Validasi format versi untuk mencegah path traversal atau injeksi karakter
+    # Validate version format to prevent path traversal or special character injection
     if not re.match(r'^[0-9]+(\.[0-9]+)*(-[a-zA-Z0-9.]+)?$', version):
-        print(f"[-] Format versi YouTube tidak valid atau terdeteksi karakter mencurigakan: {version}")
+        print(f"[-] Invalid YouTube version format or suspicious character detected: {version}")
         sys.exit(1)
 
     output_path = sys.argv[2]
     base_dir = os.path.realpath(os.getcwd())
     resolved_output_path = os.path.realpath(os.path.join(base_dir, output_path))
     if os.path.commonpath([base_dir, resolved_output_path]) != base_dir:
-        print(f"[-] output_path tidak valid, terdeteksi path traversal: {output_path}")
+        print(f"[-] Invalid output_path, path traversal detected: {output_path}")
         sys.exit(1)
     output_path = resolved_output_path
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     custom_url = sys.argv[3] if len(sys.argv) > 3 else None
 
-    # 1. Custom URL jika disediakan
+    # 1. Custom URL if provided
     if custom_url:
-        print(f"[*] Mengunduh dari custom URL: {custom_url}")
+        print(f"[*] Downloading from custom URL: {custom_url}")
         if try_download(custom_url, output_path):
             sys.exit(0)
 
-    # 2. Coba mirror GitHub Release & Archive resmi
+    # 2. Official GitHub Release & Archive mirrors
     mirrors = [
         f"https://github.com/Zy0x/YouTube-Revanced/releases/download/v{version}/youtube-{version}.apk",
         f"https://github.com/revanced-apks/builds/releases/download/v{version}/youtube.apk",
@@ -164,11 +164,11 @@ def main():
         if try_download(m, output_path):
             sys.exit(0)
 
-    # 3. APKMirror Scraper (memprioritaskan Standalone APK, auto-extract base.apk jika bundle)
+    # 3. APKMirror Scraper (prioritizes Standalone APK, auto-extracts base.apk if bundle)
     if scrape_apkmirror(version, output_path):
         sys.exit(0)
 
-    print("❌ Gagal mengunduh Stock APK yang valid.")
+    print("❌ Failed to download a valid Stock APK.")
     sys.exit(1)
 
 if __name__ == '__main__':

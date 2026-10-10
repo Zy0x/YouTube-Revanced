@@ -12,12 +12,12 @@ BUILD_MODE="${4:-test}"
 CONFIG_JSON_PATH="${5:-config/golden-preset.json}"
 
 echo "=========================================================="
-echo "🚀 Memulai Build YouTube RVX Dinamis"
-echo "  Target Versi : $TARGET_VERSION"
-echo "  Sumber Patch : $PATCH_SOURCE"
-echo "  Patch Tag    : $PATCH_TAG"
-echo "  Mode Build   : $BUILD_MODE"
-echo "  Config File  : $CONFIG_JSON_PATH"
+echo "🚀 Starting Dynamic YouTube RVX Build"
+echo "  Target Version : $TARGET_VERSION"
+echo "  Patch Source   : $PATCH_SOURCE"
+echo "  Patch Tag      : $PATCH_TAG"
+echo "  Build Mode     : $BUILD_MODE"
+echo "  Config File    : $CONFIG_JSON_PATH"
 echo "=========================================================="
 
 WORKDIR="$(pwd)"
@@ -25,9 +25,9 @@ BUILD_DIR="$WORKDIR/build_out"
 mkdir -p "$BUILD_DIR"
 
 # ------------------------------------------------------------------------------
-# 1. Unduh Morphe CLI
+# 1. Download Morphe CLI
 # ------------------------------------------------------------------------------
-echo "📦 Mengunduh Morphe CLI..."
+echo "📦 Downloading Morphe CLI..."
 CLI_JAR="$BUILD_DIR/morphe-cli.jar"
 if [ ! -f "$CLI_JAR" ]; then
     CLI_RELEASE_URL="https://api.github.com/repos/MorpheApp/morphe-cli/releases"
@@ -35,18 +35,18 @@ if [ ! -f "$CLI_JAR" ]; then
     if [ -z "$CLI_ASSET_URL" ] || [ "$CLI_ASSET_URL" = "null" ]; then
         CLI_ASSET_URL="https://github.com/MorpheApp/morphe-cli/releases/download/v1.18.0/morphe-desktop-1.18.0-all.jar"
     fi
-    echo "  Download CLI dari: $CLI_ASSET_URL"
+    echo "  Downloading CLI from: $CLI_ASSET_URL"
     curl -sL -o "$CLI_JAR" "$CLI_ASSET_URL"
 fi
 
 # ------------------------------------------------------------------------------
-# 2. Unduh Patch Bundle (.mpp) & Manifest Sesuai Sumber
+# 2. Download Patch Bundle (.mpp) & Manifest According to Source
 # ------------------------------------------------------------------------------
-echo "📦 Mengunduh Patch Bundle ($PATCH_SOURCE)..."
+echo "📦 Downloading Patch Bundle ($PATCH_SOURCE)..."
 PATCH_MPP="$BUILD_DIR/patches.mpp"
 MANIFEST_JSON="$BUILD_DIR/patches-list.json"
 
-# Baca metadata sumber dari config/sources.json
+# Read source metadata from config/sources.json
 SOURCE_REPO=$(jq -r --arg src "$PATCH_SOURCE" '.[] | select(.id == $src) | .repository' "$WORKDIR/config/sources.json")
 SOURCE_MANIFEST_URL=$(jq -r --arg src "$PATCH_SOURCE" '.[] | select(.id == $src) | .manifestUrl' "$WORKDIR/config/sources.json")
 
@@ -55,72 +55,72 @@ if [ -z "$SOURCE_REPO" ] || [ "$SOURCE_REPO" = "null" ]; then
     SOURCE_MANIFEST_URL="https://raw.githubusercontent.com/anddea/revanced-patches/refs/heads/main/patches-list.json"
 fi
 
-echo "  Repository Sumber: $SOURCE_REPO"
-echo "  Mengunduh Manifest: $SOURCE_MANIFEST_URL"
+echo "  Source Repository: $SOURCE_REPO"
+echo "  Downloading Manifest: $SOURCE_MANIFEST_URL"
 curl -sL -o "$MANIFEST_JSON" "$SOURCE_MANIFEST_URL"
 
 if [ "$PATCH_TAG" = "dev" ] || [ "$PATCH_TAG" = "prerelease" ]; then
-    echo "  Channel Patch: Prerelease (Dev)..."
+    echo "  Patch Channel: Prerelease (Dev)..."
     PATCH_RELEASE_URL="https://api.github.com/repos/$SOURCE_REPO/releases"
     PATCH_ASSET_URL=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.[] | select(.prerelease == true) | .assets[] | select(.name | (endswith(".mpp") or endswith(".jar") or endswith(".rvp"))) | .browser_download_url' | head -n 1)
     TAG_NAME=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
 elif [ "$PATCH_TAG" = "latest" ] || [ "$PATCH_TAG" = "stable" ] || [ -z "$PATCH_TAG" ]; then
-    echo "  Channel Patch: Stable (Latest)..."
+    echo "  Patch Channel: Stable (Latest)..."
     PATCH_RELEASE_URL="https://api.github.com/repos/$SOURCE_REPO/releases/latest"
     PATCH_ASSET_URL=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.assets[] | select(.name | (endswith(".mpp") or endswith(".jar") or endswith(".rvp"))) | .browser_download_url' | head -n 1)
     TAG_NAME=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.tag_name')
 else
-    # Tag rilis spesifik yang dipilih pengguna (misal: v4.3.0, v4.3.1-dev.1)
-    echo "  Mengambil tag rilis spesifik: $PATCH_TAG..."
+    # Specific release tag selected by user (e.g. v4.3.0, v4.3.1-dev.1)
+    echo "  Fetching specific release tag: $PATCH_TAG..."
     PATCH_RELEASE_URL="https://api.github.com/repos/$SOURCE_REPO/releases/tags/$PATCH_TAG"
     PATCH_ASSET_URL=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.assets[] | select(.name | (endswith(".mpp") or endswith(".jar") or endswith(".rvp"))) | .browser_download_url' | head -n 1)
     TAG_NAME="$PATCH_TAG"
 fi
 
-# Fallback ke latest jika tag tidak ditemukan atau null
+# Fallback to latest if tag asset is not found or null
 if [ -z "$PATCH_ASSET_URL" ] || [ "$PATCH_ASSET_URL" = "null" ]; then
-    echo "  ⚠️ Asset patch tidak ditemukan pada tag '$PATCH_TAG', beralih ke rilis latest..."
+    echo "  ⚠️ Patch asset not found for tag '$PATCH_TAG', falling back to latest release..."
     PATCH_RELEASE_URL="https://api.github.com/repos/$SOURCE_REPO/releases/latest"
     PATCH_ASSET_URL=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.assets[] | select(.name | (endswith(".mpp") or endswith(".jar") or endswith(".rvp"))) | .browser_download_url' | head -n 1)
     TAG_NAME=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.tag_name')
 fi
 
 echo "  Patch Release Tag: $TAG_NAME"
-echo "  Mengunduh file bundle patch dari: $PATCH_ASSET_URL..."
+echo "  Downloading patch bundle file from: $PATCH_ASSET_URL..."
 curl -sL -o "$PATCH_MPP" "$PATCH_ASSET_URL"
 
 # ------------------------------------------------------------------------------
-# 3. Resolusi Versi YouTube Cerdas (Universal Parser)
+# 3. Dynamic YouTube Version Resolution
 # ------------------------------------------------------------------------------
 if [ "$TARGET_VERSION" = "recommended" ] || [ -z "$TARGET_VERSION" ]; then
-    echo "🔍 Mendeteksi versi YouTube rekomendasi secara dinamis..."
+    echo "🔍 Dynamically detecting recommended YouTube version..."
     python3 -m pip install -q packaging
     TARGET_VERSION=$(python3 "$WORKDIR/tools/patch_orchestrator.py" detect_version "$MANIFEST_JSON" "21.13.164")
-    echo "  ✅ Versi terdeteksi: $TARGET_VERSION"
+    echo "  ✅ Detected version: $TARGET_VERSION"
 fi
 
-echo "🎯 Target Versi Final: $TARGET_VERSION"
+echo "🎯 Final Target Version: $TARGET_VERSION"
 TODAY_CODE=$(date +"%Y%m%d")
 
 # ------------------------------------------------------------------------------
-# 4. Unduh Stock APK YouTube (Multi-Fallback)
+# 4. Download Stock YouTube APK (Multi-Fallback)
 # ------------------------------------------------------------------------------
 STOCK_APK="$BUILD_DIR/youtube-$TARGET_VERSION.apk"
 if [ ! -f "$STOCK_APK" ]; then
     if [ -f "$WORKDIR/stock-youtube.apk" ]; then
-        echo "📂 Menggunakan stock APK lokal yang disediakan..."
+        echo "📂 Using local stock APK provided..."
         cp "$WORKDIR/stock-youtube.apk" "$STOCK_APK"
     else
-        echo "📥 Mengunduh Stock APK YouTube v$TARGET_VERSION..."
+        echo "📥 Downloading Stock YouTube APK v$TARGET_VERSION..."
         python3 "$WORKDIR/tools/download-stock.py" "$TARGET_VERSION" "$STOCK_APK" || {
-            echo "❌ Error: Gagal mengunduh Stock APK."
+            echo "❌ Error: Failed to download Stock APK."
             exit 1
         }
     fi
 fi
 
 # ------------------------------------------------------------------------------
-# 5. Bangun Argumen Morphe CLI Secara Dinamis dari Config
+# 5. Build Dynamic Morphe CLI Arguments from Config
 # ------------------------------------------------------------------------------
 NONROOT_ARGS_FILE="$BUILD_DIR/nonroot_args.txt"
 ROOT_ARGS_FILE="$BUILD_DIR/root_args.txt"
@@ -140,12 +140,12 @@ python3 "$WORKDIR/tools/patch_orchestrator.py" generate_args \
     "$ROOT_ARGS_FILE"
 
 # ------------------------------------------------------------------------------
-# 6. Eksekusi Patching Non-Root & Root
+# 6. Execute Patching for Non-Root & Root
 # ------------------------------------------------------------------------------
 NONROOT_OUT="$BUILD_DIR/YouTube.RVX.v$TARGET_VERSION-NonRoot.apk"
 ROOT_PATCHED_APK="$BUILD_DIR/$TARGET_VERSION-Anddea.apk"
 
-echo "⚡ Memulai proses patching Non-Root..."
+echo "⚡ Starting Non-Root patching process..."
 mapfile -t NONROOT_ARGS < "$NONROOT_ARGS_FILE"
 java -jar "$CLI_JAR" \
     patch \
@@ -154,13 +154,13 @@ java -jar "$CLI_JAR" \
     -o "$NONROOT_OUT" \
     "${NONROOT_ARGS[@]}" \
     "$STOCK_APK" > "$BUILD_DIR/patch_nonroot.log" 2>&1 || {
-        echo "❌ Gagal mem-patch Non-Root. Log:"
+        echo "❌ Non-Root patch failed. Log:"
         cat "$BUILD_DIR/patch_nonroot.log"
         exit 1
     }
-echo "✅ Non-Root APK selesai: $NONROOT_OUT"
+echo "✅ Non-Root APK completed: $NONROOT_OUT"
 
-echo "⚡ Memulai proses patching Root..."
+echo "⚡ Starting Root patching process..."
 mapfile -t ROOT_ARGS < "$ROOT_ARGS_FILE"
 java -jar "$CLI_JAR" \
     patch \
@@ -169,16 +169,16 @@ java -jar "$CLI_JAR" \
     -o "$ROOT_PATCHED_APK" \
     "${ROOT_ARGS[@]}" \
     "$STOCK_APK" > "$BUILD_DIR/patch_root.log" 2>&1 || {
-        echo "❌ Gagal mem-patch Root. Log:"
+        echo "❌ Root patch failed. Log:"
         cat "$BUILD_DIR/patch_root.log"
         exit 1
     }
-echo "✅ Root APK selesai: $ROOT_PATCHED_APK"
+echo "✅ Root APK completed: $ROOT_PATCHED_APK"
 
 # ------------------------------------------------------------------------------
-# 7. Packaging Modul Magisk/KernelSU/APatch .zip
+# 7. Package Flashable Magisk/KernelSU/APatch .zip Module
 # ------------------------------------------------------------------------------
-echo "📦 Merakit Modul Flashable Magisk/KernelSU/APatch .zip..."
+echo "📦 Packaging Flashable Magisk/KernelSU/APatch .zip module..."
 MODULE_DIR="$BUILD_DIR/magisk_package"
 rm -rf "$MODULE_DIR"
 mkdir -p "$MODULE_DIR/youtube"
@@ -208,10 +208,10 @@ MODULE_ZIP="$BUILD_DIR/YouTube.RVX.v$TARGET_VERSION.zip"
 rm -f "$MODULE_ZIP"
 (cd "$MODULE_DIR" && zip -r9 -q "$MODULE_ZIP" .)
 
-echo "✅ Modul Flashable selesai: $MODULE_ZIP"
+echo "✅ Flashable Module completed: $MODULE_ZIP"
 
 echo "=========================================================="
-echo "🎉 Build Berhasil Selesai!"
+echo "🎉 Build Successfully Completed!"
 echo "  Non-Root APK: $(ls -lh "$NONROOT_OUT" | awk '{print $5}')"
 echo "  Root Module : $(ls -lh "$MODULE_ZIP" | awk '{print $5}')"
 echo "=========================================================="
