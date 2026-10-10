@@ -39,16 +39,37 @@
     <section class="card config-card" aria-labelledby="section-config">
       <h2 id="section-config" class="card-title">1. Sumber Patch & Versi YouTube</h2>
       
-      <!-- Source Provider Selector -->
-      <div class="form-group">
-        <label for="selectSource" class="form-label">Sumber Patch (.mpp):</label>
-        <select id="selectSource" class="form-control" aria-label="Pilih Sumber Patch">
-          <option value="anddea" selected>⭐ Anddea Patches (Default - Fitur Lengkap)</option>
-          <option value="morphe">Morphe Official (MorpheApp)</option>
-          <option value="inotia00">Inotia00 (ReVanced Extended)</option>
-          <option value="revanced">ReVanced Official</option>
-        </select>
-        <p id="sourceDesc" class="form-hint">Patch utama dengan opsi kustomisasi mendalam.</p>
+      <!-- Source Provider & Patch Release Tag Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 16px;">
+        <!-- Source Provider Selector -->
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="selectSource" class="form-label">Sumber Patch:</label>
+          <select id="selectSource" class="form-control" aria-label="Pilih Sumber Patch">
+            <option value="anddea" selected>⭐ Anddea Patches (Default - Fitur Lengkap)</option>
+            <option value="morphe">Morphe Official (MorpheApp)</option>
+            <option value="inotia00">Inotia00 (ReVanced Extended)</option>
+            <option value="revanced">ReVanced Official</option>
+          </select>
+          <p id="sourceDesc" class="form-hint">Patch utama dengan opsi kustomisasi mendalam.</p>
+        </div>
+
+        <!-- Patch Release Version / Channel Selector -->
+        <div class="form-group" style="margin-bottom: 0;">
+          <div class="label-with-badge" style="margin-bottom: 6px;">
+            <label for="selectPatchRelease" class="form-label" style="margin-bottom: 0;">Versi / Channel Patch (.mpp):</label>
+            <span id="patchTagBadge" class="badge badge-warning">Prerelease</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <select id="selectPatchRelease" class="form-control" aria-label="Pilih Versi atau Channel Patch" style="flex: 1;">
+              <option value="dev" selected>⚡ Prerelease / Dev (Terkini)</option>
+              <option value="latest">🛡️ Stable / Latest (Stabil Resmi)</option>
+            </select>
+            <button type="button" id="btnViewPatchNotes" class="btn btn-secondary" title="Lihat Catatan Rilis Patch Ini" style="min-height: 48px; padding: 0 14px;" aria-label="Lihat Catatan Rilis Patch">
+              ℹ️
+            </button>
+          </div>
+          <p id="patchReleaseHint" class="form-hint">Memuat riwayat rilis .mpp dari GitHub...</p>
+        </div>
       </div>
 
       <!-- Version Selector -->
@@ -142,11 +163,14 @@
   <!-- Sticky Bottom Build Bar -->
   <footer class="bottom-bar" role="contentinfo">
     <div class="bottom-container">
-      <div class="build-mode-selector">
-        <label for="selectBuildMode" class="sr-only">Mode Build</label>
-        <select id="selectBuildMode" class="form-control form-control-sm" aria-label="Mode Eksekusi">
-          <option value="test" selected>🧪 Uji Coba (Artifact Test)</option>
-          <option value="release">🚀 Publikasikan (Release Resmi)</option>
+      <div class="build-mode-selector" style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <select id="selectBuildMode" class="form-control form-control-sm" aria-label="Mode Eksekusi" style="min-width: 140px;">
+          <option value="test" selected>🧪 Uji Coba (Test)</option>
+          <option value="release">🚀 Publikasikan (Release)</option>
+        </select>
+        <select id="selectArch" class="form-control form-control-sm" aria-label="Arsitektur Target" style="min-width: 130px;">
+          <option value="all" selected>📦 Universal (Semua HP)</option>
+          <option value="arm64-v8a">⚡ arm64-v8a (64-bit)</option>
         </select>
       </div>
       <button id="btnTriggerBuild" class="btn btn-build" aria-label="Jalankan Build di GitHub Cloud">
@@ -207,6 +231,24 @@
             Lihat Proses di Tab GitHub Actions ↗
           </a>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Patch Notes Modal -->
+  <div id="patchNotesModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalPatchNotesTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalPatchNotesTitle" class="modal-title">ℹ️ Catatan Rilis Patch (.mpp)</h3>
+        <button id="btnClosePatchNotesModal" class="btn-close" aria-label="Tutup Dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="patchNotesContent" style="white-space: pre-wrap; font-family: monospace; font-size: 0.88rem; max-height: 400px; overflow-y: auto; background-color: var(--bg-surface-2); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); color: var(--text-primary);">
+          Memuat catatan rilis...
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnClosePatchNotesBtn" class="btn btn-secondary">Tutup</button>
       </div>
     </div>
   </div>

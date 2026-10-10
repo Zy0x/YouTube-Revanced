@@ -6,6 +6,9 @@
 const STATE = {
   sources: [],
   currentSource: 'anddea',
+  patchTag: 'dev',
+  patchReleases: [],
+  buildArch: 'all',
   currentVersion: 'recommended',
   showAllVersions: false,
   recommendedVersion: '21.13.164',
@@ -194,10 +197,13 @@ async function loadSourcesAndPresets() {
   }
 
   renderSourceSelector();
+  const currentSrcConfig = STATE.sources.find(s => s.id === STATE.currentSource) || STATE.sources[0];
+  await loadPatchReleases(currentSrcConfig);
 }
 
 function renderSourceSelector() {
   const select = document.getElementById('selectSource');
+  if (!select) return;
   select.innerHTML = '';
   STATE.sources.forEach(s => {
     const opt = document.createElement('option');
@@ -206,6 +212,128 @@ function renderSourceSelector() {
     if (s.id === STATE.currentSource) opt.selected = true;
     select.appendChild(opt);
   });
+}
+
+// =============================================================================
+// Mengambil Daftar Rilis Versi Patch (.mpp) dari GitHub API Secara Dinamis
+// =============================================================================
+async function loadPatchReleases(sourceConfig) {
+  if (!sourceConfig) return;
+  const repo = sourceConfig.repository || 'anddea/revanced-patches';
+  const select = document.getElementById('selectPatchRelease');
+  const hint = document.getElementById('patchReleaseHint');
+  if (!select) return;
+
+  hint.textContent = `Menghubungkan ke GitHub Releases (${repo})...`;
+
+  try {
+    const headers = { 'Accept': 'application/vnd.github.v3+json' };
+    if (STATE.authToken) {
+      headers['Authorization'] = `Bearer ${STATE.authToken}`;
+    }
+    const res = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=15`, { headers });
+    if (res.ok) {
+      const releases = await res.json();
+      STATE.patchReleases = releases;
+
+      const latestPre = releases.find(r => r.prerelease);
+      const latestStable = releases.find(r => !r.prerelease);
+
+      select.innerHTML = '';
+
+      // Opsi 1: Channel Dev / Prerelease
+      const optDev = document.createElement('option');
+      optDev.value = 'dev';
+      optDev.textContent = `⚡ Prerelease / Dev ${latestPre ? `(${latestPre.tag_name})` : '(Terkini)'}`;
+      if (sourceConfig.defaultReleaseType === 'dev' || !latestStable) optDev.selected = true;
+      select.appendChild(optDev);
+
+      // Opsi 2: Channel Stable / Latest
+      const optStable = document.createElement('option');
+      optStable.value = 'latest';
+      optStable.textContent = `🛡️ Stable / Latest ${latestStable ? `(${latestStable.tag_name})` : '(Stabil Resmi)'}`;
+      if (sourceConfig.defaultReleaseType === 'latest' && latestStable) optStable.selected = true;
+      select.appendChild(optStable);
+
+      // Opsi 3: Tag Rilis Spesifik
+      if (releases.length > 0) {
+        const optGroup = document.createElement('optgroup');
+        optGroup.label = '── Tag Rilis Spesifik (.mpp) ──';
+
+        releases.forEach(rel => {
+          const opt = document.createElement('option');
+          opt.value = rel.tag_name;
+          const typeLabel = rel.prerelease ? '[DEV]' : '[STABLE]';
+          opt.textContent = `🏷️ ${rel.tag_name} ${typeLabel}`;
+          optGroup.appendChild(opt);
+        });
+
+        select.appendChild(optGroup);
+      }
+
+      hint.textContent = `Tersedia ${releases.length} rilis di GitHub (${latestPre?.tag_name || 'dev'} & ${latestStable?.tag_name || 'latest'})`;
+      updatePatchTagBadge(select.value);
+      return;
+    }
+  } catch (err) {
+    console.warn('[RVX] Gagal fetch releases dari GitHub API:', err);
+  }
+
+  // Fallback standar jika offline / rate limit API
+  select.innerHTML = `
+    <option value="dev" ${sourceConfig.defaultReleaseType === 'dev' ? 'selected' : ''}>⚡ Prerelease / Dev (Terkini)</option>
+    <option value="latest" ${sourceConfig.defaultReleaseType === 'latest' ? 'selected' : ''}>🛡️ Stable / Latest (Stabil Resmi)</option>
+  `;
+  hint.textContent = 'Channel default: Dev (Prerelease) dan Latest (Stabil).';
+  updatePatchTagBadge(select.value);
+}
+
+function updatePatchTagBadge(val) {
+  const badge = document.getElementById('patchTagBadge');
+  if (!badge) return;
+  STATE.patchTag = val;
+
+  if (val === 'dev') {
+    badge.textContent = 'Prerelease';
+    badge.className = 'badge badge-warning';
+  } else if (val === 'latest') {
+    badge.textContent = 'Stable';
+    badge.className = 'badge badge-success';
+  } else {
+    badge.textContent = val;
+    badge.className = 'badge badge-info';
+  }
+}
+
+function showPatchNotesModal() {
+  const modal = document.getElementById('patchNotesModal');
+  const content = document.getElementById('patchNotesContent');
+  const title = document.getElementById('modalPatchNotesTitle');
+  if (!modal || !content) return;
+
+  const currentTag = STATE.patchTag || 'dev';
+  const releases = STATE.patchReleases || [];
+  let foundRelease = null;
+
+  if (currentTag === 'dev') {
+    foundRelease = releases.find(r => r.prerelease) || releases[0];
+  } else if (currentTag === 'latest') {
+    foundRelease = releases.find(r => !r.prerelease) || releases[0];
+  } else {
+    foundRelease = releases.find(r => r.tag_name === currentTag);
+  }
+
+  if (foundRelease) {
+    title.textContent = `ℹ️ Catatan Rilis: ${foundRelease.name || foundRelease.tag_name}`;
+    const pubDate = foundRelease.published_at ? new Date(foundRelease.published_at).toLocaleString('id-ID') : '-';
+    const tagType = foundRelease.prerelease ? 'PRERELEASE / DEV' : 'STABLE';
+    content.textContent = `📌 Versi Tag: ${foundRelease.tag_name} (${tagType})\n📅 Tanggal Rilis: ${pubDate}\n\n=== CATATAN RILIS ===\n\n${foundRelease.body || 'Tidak ada catatan rilis khusus.'}`;
+  } else {
+    title.textContent = `ℹ️ Catatan Rilis: ${currentTag.toUpperCase()}`;
+    content.textContent = `Channel aktif: ${currentTag.toUpperCase()}\n\nMorphe CLI akan mengunduh bundle patch .mpp terbaru dari repositori ${STATE.currentSource} saat proses build dijalankan di GitHub Actions.`;
+  }
+
+  modal.classList.remove('hidden');
 }
 
 const FALLBACK_YOUTUBE_VERSIONS = [
@@ -696,6 +824,11 @@ async function triggerCloudBuild() {
   }
 
   const mode = document.getElementById('selectBuildMode').value;
+  const arch = document.getElementById('selectArch')?.value || STATE.buildArch || 'all';
+  const patchTag = document.getElementById('selectPatchRelease')?.value || STATE.patchTag || 'dev';
+  STATE.buildArch = arch;
+  STATE.patchTag = patchTag;
+
   const progressModal = document.getElementById('buildProgressModal');
   const statusMsg = document.getElementById('buildStatusMsg');
   const linksBox = document.getElementById('buildActionLinks');
@@ -703,7 +836,7 @@ async function triggerCloudBuild() {
 
   progressModal.classList.remove('hidden');
   linksBox.classList.add('hidden');
-  statusMsg.textContent = `Menghubungkan ke GitHub Actions runner (${mode.toUpperCase()} mode)...`;
+  statusMsg.textContent = `Menghubungkan ke GitHub Actions runner (${mode.toUpperCase()} mode, ${arch.toUpperCase()})...`;
 
   // Kumpulkan list excluded patches secara presisi
   const allPatchNames = STATE.patches.map(p => p.name);
@@ -716,7 +849,8 @@ async function triggerCloudBuild() {
       client_payload: {
         youtube_version: STATE.currentVersion,
         patch_source: STATE.currentSource,
-        patch_tag: 'dev',
+        patch_tag: patchTag,
+        arch: arch,
         build_mode: mode,
         included_patches: includedPatches,
         excluded_patches: excludedPatches,
@@ -735,7 +869,7 @@ async function triggerCloudBuild() {
     });
 
     if (res.status === 204 || res.ok) {
-      statusMsg.textContent = `✅ Sinyal Build Berhasil Dikirim! Runner sedang mem-patch YouTube v${STATE.currentVersion} dengan ${includedPatches.length} patch dan kustomisasi dinamis Anda.`;
+      statusMsg.textContent = `✅ Sinyal Build Berhasil Dikirim! Runner sedang mem-patch YouTube v${STATE.currentVersion} (${arch.toUpperCase()}) menggunakan bundle ${STATE.currentSource} (${patchTag}) dengan ${includedPatches.length} patch pilihan Anda.`;
       linksBox.classList.remove('hidden');
       runLink.href = 'https://github.com/Zy0x/YouTube-Revanced/actions';
     } else {
@@ -751,12 +885,46 @@ async function triggerCloudBuild() {
 // Event Listeners & Modals
 // =============================================================================
 function initEventListeners() {
-  document.getElementById('selectSource').addEventListener('change', (e) => {
+  document.getElementById('selectSource').addEventListener('change', async (e) => {
     STATE.currentSource = e.target.value;
     const s = STATE.sources.find(src => src.id === e.target.value);
     document.getElementById('sourceDesc').textContent = s?.description || '';
+    await loadPatchReleases(s);
     fetchAndRenderPatches(e.target.value);
   });
+
+  const selectPatch = document.getElementById('selectPatchRelease');
+  if (selectPatch) {
+    selectPatch.addEventListener('change', (e) => {
+      updatePatchTagBadge(e.target.value);
+    });
+  }
+
+  const selectArch = document.getElementById('selectArch');
+  if (selectArch) {
+    selectArch.addEventListener('change', (e) => {
+      STATE.buildArch = e.target.value;
+    });
+  }
+
+  const btnNotes = document.getElementById('btnViewPatchNotes');
+  if (btnNotes) {
+    btnNotes.addEventListener('click', showPatchNotesModal);
+  }
+
+  const btnCloseNotes = document.getElementById('btnClosePatchNotesModal');
+  if (btnCloseNotes) {
+    btnCloseNotes.addEventListener('click', () => {
+      document.getElementById('patchNotesModal').classList.add('hidden');
+    });
+  }
+
+  const btnCloseNotesBtn = document.getElementById('btnClosePatchNotesBtn');
+  if (btnCloseNotesBtn) {
+    btnCloseNotesBtn.addEventListener('click', () => {
+      document.getElementById('patchNotesModal').classList.add('hidden');
+    });
+  }
 
   // Filter Kategori Versi (Semua, Rekomendasi, Stabil Saja, Beta)
   document.querySelectorAll('.btn-filter-pill').forEach(btn => {

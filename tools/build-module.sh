@@ -59,25 +59,34 @@ echo "  Repository Sumber: $SOURCE_REPO"
 echo "  Mengunduh Manifest: $SOURCE_MANIFEST_URL"
 curl -sL -o "$MANIFEST_JSON" "$SOURCE_MANIFEST_URL"
 
-if [ "$PATCH_TAG" = "dev" ]; then
+if [ "$PATCH_TAG" = "dev" ] || [ "$PATCH_TAG" = "prerelease" ]; then
+    echo "  Channel Patch: Prerelease (Dev)..."
     PATCH_RELEASE_URL="https://api.github.com/repos/$SOURCE_REPO/releases"
-    PATCH_ASSET_URL=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.[] | select(.prerelease == true) | .assets[] | select(.name | endswith(".mpp")) | .browser_download_url' | head -n 1)
+    PATCH_ASSET_URL=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.[] | select(.prerelease == true) | .assets[] | select(.name | (endswith(".mpp") or endswith(".jar") or endswith(".rvp"))) | .browser_download_url' | head -n 1)
     TAG_NAME=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.[] | select(.prerelease == true) | .tag_name' | head -n 1)
-else
+elif [ "$PATCH_TAG" = "latest" ] || [ "$PATCH_TAG" = "stable" ] || [ -z "$PATCH_TAG" ]; then
+    echo "  Channel Patch: Stable (Latest)..."
     PATCH_RELEASE_URL="https://api.github.com/repos/$SOURCE_REPO/releases/latest"
-    PATCH_ASSET_URL=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.assets[] | select(.name | endswith(".mpp")) | .browser_download_url' | head -n 1)
+    PATCH_ASSET_URL=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.assets[] | select(.name | (endswith(".mpp") or endswith(".jar") or endswith(".rvp"))) | .browser_download_url' | head -n 1)
     TAG_NAME=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.tag_name')
+else
+    # Tag rilis spesifik yang dipilih pengguna (misal: v4.3.0, v4.3.1-dev.1)
+    echo "  Mengambil tag rilis spesifik: $PATCH_TAG..."
+    PATCH_RELEASE_URL="https://api.github.com/repos/$SOURCE_REPO/releases/tags/$PATCH_TAG"
+    PATCH_ASSET_URL=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.assets[] | select(.name | (endswith(".mpp") or endswith(".jar") or endswith(".rvp"))) | .browser_download_url' | head -n 1)
+    TAG_NAME="$PATCH_TAG"
 fi
 
-# Fallback jika tidak ada prerelease
+# Fallback ke latest jika tag tidak ditemukan atau null
 if [ -z "$PATCH_ASSET_URL" ] || [ "$PATCH_ASSET_URL" = "null" ]; then
+    echo "  ⚠️ Asset patch tidak ditemukan pada tag '$PATCH_TAG', beralih ke rilis latest..."
     PATCH_RELEASE_URL="https://api.github.com/repos/$SOURCE_REPO/releases/latest"
-    PATCH_ASSET_URL=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.assets[] | select(.name | endswith(".mpp")) | .browser_download_url' | head -n 1)
+    PATCH_ASSET_URL=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.assets[] | select(.name | (endswith(".mpp") or endswith(".jar") or endswith(".rvp"))) | .browser_download_url' | head -n 1)
     TAG_NAME=$(curl -sL "$PATCH_RELEASE_URL" | jq -r '.tag_name')
 fi
 
 echo "  Patch Release Tag: $TAG_NAME"
-echo "  Mengunduh file .mpp..."
+echo "  Mengunduh file bundle patch dari: $PATCH_ASSET_URL..."
 curl -sL -o "$PATCH_MPP" "$PATCH_ASSET_URL"
 
 # ------------------------------------------------------------------------------

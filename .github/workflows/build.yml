@@ -22,13 +22,15 @@ on:
           - inotia00
           - revanced
       patch_tag:
-        description: 'Channel / Tipe Rilis Patch'
+        description: 'Channel / Tag Versi Patch (dev, latest, atau tag seperti v4.3.0)'
         required: true
         default: 'dev'
-        type: choice
-        options:
-          - dev
-          - latest
+        type: string
+      arch:
+        description: 'Target Arsitektur APK (all / arm64-v8a)'
+        required: false
+        default: 'all'
+        type: string
       build_mode:
         description: 'Mode Build (Uji Coba vs Publikasi Resmi)'
         required: true
