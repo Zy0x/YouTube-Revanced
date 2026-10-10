@@ -11,15 +11,6 @@
 
 ‎
 
-## ⚡ Cloud Builder & Dashboard Interaktif
-Proyek ini kini dilengkapi dengan **Automated Cloud Builder** (berjalan via GitHub Actions) dan **Web Dashboard Interaktif** yang mobile-first:
-- 📱 **Web Dashboard**: Buka folder `/web/index.html` (atau aktifkan GitHub Pages) untuk memilih patch secara visual dengan toggle, tombol versi dinamis, dan 1-klik *Golden Preset*.
-- 🔒 **Keamanan Akses**: Dilindungi dengan autentikasi GitHub Personal Access Token (PAT) lokal di browser Anda untuk mencegah pihak luar memicu build.
-- 🚀 **Manual Build via GitHub Tab**: Kunjungi tab **Actions** > **Build & Package YouTube RVX** > **Run workflow** untuk menjalankan build secara langsung dari GitHub.
-- 🧪 **Mode Uji Coba**: Hasil build otomatis diunggah sebagai *Artifacts* untuk Anda unduh dan uji coba di HP terlebih dahulu sebelum dirilis resmi.
-
-‎
-
 ## 📌 About  
 This project provides a **YouTube ReVanced** patch that enables an ad-free experience and premium features **without a subscription**.  
 Supports both **ROOT** and **NON-ROOT** versions! 🚀  
