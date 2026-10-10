@@ -7,6 +7,8 @@ const STATE = {
   sources: [],
   currentSource: 'anddea',
   currentVersion: 'recommended',
+  showAllVersions: false,
+  recommendedVersion: '21.13.164',
   availableVersions: [],
   patches: [],
   selectedPatches: new Set(),
@@ -187,35 +189,73 @@ function renderSourceSelector() {
   });
 }
 
+const POPULAR_YOUTUBE_VERSIONS = [
+  '21.13.164',
+  '21.12.39',
+  '21.11.37',
+  '21.10.40',
+  '21.09.38',
+  '21.08.35',
+  '21.07.247',
+  '21.06.37',
+  '21.05.37',
+  '21.04.38',
+  '21.03.35',
+  '21.02.34',
+  '21.01.38',
+  '20.51.39',
+  '20.45.36',
+  '20.40.36',
+  '20.35.39',
+  '20.30.38',
+  '20.25.37',
+  '20.23.40',
+  '20.20.36',
+  '20.15.39',
+  '20.10.40',
+  '20.05.46',
+  '19.44.39'
+];
+
 // =============================================================================
-// Universal Parser: Mengekstrak Versi YouTube dari Format Apa Pun
+// Universal Parser: Mengekstrak Versi YouTube dari Format Apa Pun + Katalog Populer
 // =============================================================================
 function extractUniversalVersions(patches, pkgName = 'com.google.android.youtube') {
-  const versions = new Set();
+  const manifestVersions = new Set();
 
   patches.forEach(p => {
     const compat = p.compatiblePackages;
     if (!compat) return;
 
-    // Format 1: Anddea / Morphe (Object: { "com.google.android.youtube": ["21.13.164", ...] })
     if (typeof compat === 'object' && !Array.isArray(compat)) {
       if (Array.isArray(compat[pkgName])) {
-        compat[pkgName].forEach(v => versions.add(String(v).trim()));
+        compat[pkgName].forEach(v => manifestVersions.add(String(v).trim()));
       }
-    }
-    // Format 2: ReVanced / Inotia00 (Array of objects: [ { name: "...", versions: [...] } ])
-    else if (Array.isArray(compat)) {
+    } else if (Array.isArray(compat)) {
       compat.forEach(entry => {
         if (entry && entry.name === pkgName && Array.isArray(entry.versions)) {
-          entry.versions.forEach(v => versions.add(String(v).trim()));
+          entry.versions.forEach(v => manifestVersions.add(String(v).trim()));
         }
       });
     }
   });
 
-  return Array.from(versions).sort((a, b) => {
+  const sortedManifest = Array.from(manifestVersions).sort((a, b) => {
     return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
   }).reverse();
+
+  const recommended = sortedManifest[0] || '21.13.164';
+
+  // Gabungkan versi dari manifest dengan katalog versi YouTube populer yang didukung patcher
+  const allSet = new Set([...sortedManifest, ...POPULAR_YOUTUBE_VERSIONS]);
+  const sortedAll = Array.from(allSet).sort((a, b) => {
+    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  }).reverse();
+
+  return {
+    allVersions: sortedAll,
+    recommendedVersion: recommended
+  };
 }
 
 // =============================================================================
@@ -228,7 +268,7 @@ async function fetchAndRenderPatches(sourceId) {
 
   versionBadge.textContent = 'Memuat versi...';
   versionBadge.className = 'badge badge-info';
-  versionContainer.innerHTML = '<p class="form-hint">Menganalisis manifest patch...</p>';
+  versionContainer.innerHTML = '<p class="form-hint">Menganalisis manifest patch & katalog versi...</p>';
   patchContainer.innerHTML = '<div class="spinner"></div>';
 
   const sourceConfig = STATE.sources.find(s => s.id === sourceId) || STATE.sources[0] || {
@@ -240,16 +280,20 @@ async function fetchAndRenderPatches(sourceId) {
     const rawPatches = data.patches || [];
     STATE.patches = rawPatches;
 
-    // 1. Ekstraksi Universal Versi
-    const sortedVersions = extractUniversalVersions(rawPatches);
-    STATE.availableVersions = sortedVersions;
+    // 1. Ekstraksi Universal Versi & Rekomendasi
+    const { allVersions, recommendedVersion } = extractUniversalVersions(rawPatches);
+    STATE.availableVersions = allVersions;
+    STATE.recommendedVersion = recommendedVersion;
 
-    const recommendedVersion = sortedVersions[0] || '21.13.164';
-    versionBadge.textContent = `${sortedVersions.length} Versi Kompatibel`;
+    if (!STATE.currentVersion || STATE.currentVersion === 'recommended') {
+      STATE.currentVersion = recommendedVersion;
+    }
+
+    versionBadge.textContent = `${allVersions.length} Versi Kompatibel`;
     versionBadge.className = 'badge badge-info';
 
     // 2. Render Pilihan Versi
-    renderVersionSelector(sortedVersions, recommendedVersion);
+    renderVersionSelector();
 
     // 3. Render Patch & Opsi Kustomisasi
     renderPatchCategories(rawPatches);
@@ -269,26 +313,46 @@ async function fetchAndRenderPatches(sourceId) {
 // =============================================================================
 // Render Selector Versi YouTube
 // =============================================================================
-function renderVersionSelector(versions, recommended) {
+function renderVersionSelector() {
   const container = document.getElementById('versionListContainer');
   container.innerHTML = '';
 
-  if (versions.length === 0) {
-    versions = ['21.13.164', '20.51.39'];
-    recommended = '21.13.164';
+  const versions = STATE.availableVersions || POPULAR_YOUTUBE_VERSIONS;
+  const recommended = STATE.recommendedVersion || '21.13.164';
+
+  if (!STATE.currentVersion) {
+    STATE.currentVersion = recommended;
   }
 
-  versions.forEach((ver) => {
+  // Tampilkan 6 versi teratas jika belum menekan "Tampilkan Semua"
+  const displayList = STATE.showAllVersions ? [...versions] : versions.slice(0, 6);
+
+  // Pastikan versi yang sedang aktif selalu tampak dalam list
+  if (!displayList.includes(STATE.currentVersion) && STATE.currentVersion) {
+    displayList.unshift(STATE.currentVersion);
+  }
+
+  displayList.forEach((ver) => {
     const isRecommended = ver === recommended;
+    const isSelected = ver === STATE.currentVersion;
     const card = document.createElement('label');
-    card.className = `version-card ${isRecommended ? 'selected' : ''}`;
+    card.className = `version-card ${isSelected ? 'selected' : ''}`;
+
+    let labelText = 'Versi Kompatibel';
+    if (isRecommended) {
+      labelText = '⭐ Versi Rekomendasi Resmi';
+    } else if (ver === '21.07.247') {
+      labelText = 'Rilis Stabil Sebelumnya';
+    } else if (ver === '20.51.39') {
+      labelText = 'Favorit Magisk / KSU';
+    }
 
     card.innerHTML = `
       <div>
         <div style="font-weight: 700; font-size: 1rem;">v${ver}</div>
-        <div class="form-hint" style="margin: 0;">${isRecommended ? '⭐ Versi Rekomendasi Resmi' : 'Versi Kompatibel'}</div>
+        <div class="form-hint" style="margin: 0;">${labelText}</div>
       </div>
-      <input type="radio" name="youtube_version" value="${ver}" ${isRecommended ? 'checked' : ''}>
+      <input type="radio" name="youtube_version" value="${ver}" ${isSelected ? 'checked' : ''}>
     `;
 
     card.addEventListener('click', () => {
@@ -300,7 +364,18 @@ function renderVersionSelector(versions, recommended) {
     container.appendChild(card);
   });
 
-  STATE.currentVersion = recommended;
+  // Perbarui status dan teks tombol toggle
+  const toggleBtnText = document.getElementById('btnToggleAllVersionsText');
+  const toggleBtnIcon = document.getElementById('btnToggleAllVersionsIcon');
+  if (toggleBtnText && toggleBtnIcon) {
+    if (STATE.showAllVersions) {
+      toggleBtnText.textContent = 'Tampilkan Versi Populer Saja';
+      toggleBtnIcon.textContent = '▲';
+    } else {
+      toggleBtnText.textContent = `Tampilkan Semua Versi (${versions.length} Versi)`;
+      toggleBtnIcon.textContent = '📋';
+    }
+  }
 }
 
 // =============================================================================
@@ -607,6 +682,50 @@ function initEventListeners() {
     document.getElementById('sourceDesc').textContent = s?.description || '';
     fetchAndRenderPatches(e.target.value);
   });
+
+  // Toggle Menampilkan Seluruh Katalog Versi vs 6 Versi Populer
+  const btnToggleVersions = document.getElementById('btnToggleAllVersions');
+  if (btnToggleVersions) {
+    btnToggleVersions.addEventListener('click', () => {
+      STATE.showAllVersions = !STATE.showAllVersions;
+      renderVersionSelector();
+    });
+  }
+
+  // Terapkan Versi Manual / Custom
+  const applyCustomVer = () => {
+    const input = document.getElementById('inputCustomVersion');
+    if (!input) return;
+    const customVer = input.value.trim().replace(/^v/i, '');
+    if (!customVer) return;
+
+    if (!/^\d+(\.\d+)+$/.test(customVer)) {
+      alert('Format versi tidak valid. Contoh yang benar: 21.07.247 atau 20.51.39');
+      return;
+    }
+
+    if (!STATE.availableVersions.includes(customVer)) {
+      STATE.availableVersions.unshift(customVer);
+    }
+    STATE.currentVersion = customVer;
+    renderVersionSelector();
+    input.value = '';
+  };
+
+  const btnApplyVer = document.getElementById('btnApplyCustomVersion');
+  if (btnApplyVer) {
+    btnApplyVer.addEventListener('click', applyCustomVer);
+  }
+
+  const inputCustomVer = document.getElementById('inputCustomVersion');
+  if (inputCustomVer) {
+    inputCustomVer.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        applyCustomVer();
+      }
+    });
+  }
 
   document.getElementById('btnLoadGoldenPreset').addEventListener('click', applyGoldenPreset);
   document.getElementById('btnResetPatches').addEventListener('click', () => {

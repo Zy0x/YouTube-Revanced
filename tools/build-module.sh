@@ -140,6 +140,7 @@ echo "⚡ Memulai proses patching Non-Root..."
 mapfile -t NONROOT_ARGS < "$NONROOT_ARGS_FILE"
 java -jar "$CLI_JAR" \
     patch \
+    -f \
     -p "$PATCH_MPP" \
     -o "$NONROOT_OUT" \
     "${NONROOT_ARGS[@]}" \
@@ -154,6 +155,7 @@ echo "⚡ Memulai proses patching Root..."
 mapfile -t ROOT_ARGS < "$ROOT_ARGS_FILE"
 java -jar "$CLI_JAR" \
     patch \
+    -f \
     -p "$PATCH_MPP" \
     -o "$ROOT_PATCHED_APK" \
     "${ROOT_ARGS[@]}" \

@@ -46,20 +46,19 @@ def build_cli_arguments(patches_manifest, target_version, config_payload, is_roo
             continue
         
         compat = p.get('compatiblePackages')
-        is_compatible = True
-        if compat:
-            p_versions = []
-            if isinstance(compat, dict):
-                p_versions = compat.get("com.google.android.youtube", [])
-            elif isinstance(compat, list):
-                for entry in compat:
-                    if entry.get('name') == "com.google.android.youtube":
-                        p_versions = entry.get('versions', [])
-            
-            if p_versions and target_version not in p_versions:
-                is_compatible = False
+        supports_target = False
+        if not compat:
+            supports_target = True
+        elif isinstance(compat, dict):
+            if "com.google.android.youtube" in compat:
+                supports_target = True
+        elif isinstance(compat, list):
+            for entry in compat:
+                if isinstance(entry, dict) and entry.get('name') == "com.google.android.youtube":
+                    supports_target = True
+                    break
 
-        if is_compatible:
+        if supports_target:
             valid_patch_names.add(p_name)
 
     excluded_from_payload = set(
