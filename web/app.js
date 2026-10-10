@@ -9,7 +9,11 @@ const STATE = {
   currentVersion: 'recommended',
   showAllVersions: false,
   recommendedVersion: '21.13.164',
+  catalogVersions: [],
   availableVersions: [],
+  versionFilter: 'all',
+  versionSearch: '',
+  versionDisplayLimit: 12,
   patches: [],
   selectedPatches: new Set(),
   selectedOptions: {},
@@ -151,13 +155,14 @@ async function fetchManifestWithFallback(url) {
 }
 
 // =============================================================================
-// Load Sumber & Preset
+// Load Sumber, Preset, & Katalog Versi APKMirror Lengkap
 // =============================================================================
 async function loadSourcesAndPresets() {
   try {
-    const [sourcesRes, presetRes] = await Promise.all([
+    const [sourcesRes, presetRes, versionsRes] = await Promise.all([
       fetch('config/sources.json').catch(() => null) || fetch('../config/sources.json').catch(() => null),
-      fetch('config/golden-preset.json').catch(() => null) || fetch('../config/golden-preset.json').catch(() => null)
+      fetch('config/golden-preset.json').catch(() => null) || fetch('../config/golden-preset.json').catch(() => null),
+      fetch('config/youtube-versions.json').catch(() => null) || fetch('../config/youtube-versions.json').catch(() => null)
     ]);
 
     if (sourcesRes && sourcesRes.ok) {
@@ -168,6 +173,20 @@ async function loadSourcesAndPresets() {
 
     if (presetRes && presetRes.ok) {
       STATE.goldenPreset = await presetRes.json();
+    }
+
+    if (versionsRes && versionsRes.ok) {
+      STATE.catalogVersions = await versionsRes.json();
+    } else {
+      // Fallback ke CDN jsDelivr jika file lokal belum tersedia
+      try {
+        const cdnRes = await fetch('https://cdn.jsdelivr.net/gh/Zy0x/YouTube-Revanced@main/config/youtube-versions.json');
+        if (cdnRes.ok) {
+          STATE.catalogVersions = await cdnRes.json();
+        }
+      } catch (e) {
+        console.warn('Gagal memuat katalog versi dari CDN mirror:', e);
+      }
     }
   } catch (err) {
     console.warn('Menggunakan konfigurasi default internal:', err);
@@ -189,36 +208,20 @@ function renderSourceSelector() {
   });
 }
 
-const POPULAR_YOUTUBE_VERSIONS = [
-  '21.13.164',
-  '21.12.39',
-  '21.11.37',
-  '21.10.40',
-  '21.09.38',
-  '21.08.35',
-  '21.07.247',
-  '21.06.37',
-  '21.05.37',
-  '21.04.38',
-  '21.03.35',
-  '21.02.34',
-  '21.01.38',
-  '20.51.39',
-  '20.45.36',
-  '20.40.36',
-  '20.35.39',
-  '20.30.38',
-  '20.25.37',
-  '20.23.40',
-  '20.20.36',
-  '20.15.39',
-  '20.10.40',
-  '20.05.46',
-  '19.44.39'
+const FALLBACK_YOUTUBE_VERSIONS = [
+  { version: '21.13.164', isBeta: false, title: 'YouTube 21.13.164' },
+  { version: '21.12.39', isBeta: false, title: 'YouTube 21.12.39' },
+  { version: '21.11.37', isBeta: false, title: 'YouTube 21.11.37' },
+  { version: '21.10.40', isBeta: false, title: 'YouTube 21.10.40' },
+  { version: '21.09.38', isBeta: false, title: 'YouTube 21.09.38' },
+  { version: '21.08.35', isBeta: false, title: 'YouTube 21.08.35' },
+  { version: '21.07.247', isBeta: false, title: 'YouTube 21.07.247' },
+  { version: '20.51.39', isBeta: false, title: 'YouTube 20.51.39' },
+  { version: '20.05.46', isBeta: false, title: 'YouTube 20.05.46' }
 ];
 
 // =============================================================================
-// Universal Parser: Mengekstrak Versi YouTube dari Format Apa Pun + Katalog Populer
+// Universal Parser: Integrasi Versi Manifest + Sumber Katalog Lengkap APKMirror
 // =============================================================================
 function extractUniversalVersions(patches, pkgName = 'com.google.android.youtube') {
   const manifestVersions = new Set();
@@ -245,15 +248,45 @@ function extractUniversalVersions(patches, pkgName = 'com.google.android.youtube
   }).reverse();
 
   const recommended = sortedManifest[0] || '21.13.164';
+  const versionsMap = new Map();
 
-  // Gabungkan versi dari manifest dengan katalog versi YouTube populer yang didukung patcher
-  const allSet = new Set([...sortedManifest, ...POPULAR_YOUTUBE_VERSIONS]);
-  const sortedAll = Array.from(allSet).sort((a, b) => {
-    return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  // 1. Prioritaskan versi manifest patch
+  sortedManifest.forEach(ver => {
+    versionsMap.set(ver, {
+      version: ver,
+      isBeta: false,
+      isRecommended: ver === recommended,
+      isManifest: true,
+      title: `YouTube ${ver}`
+    });
+  });
+
+  // 2. Gabungkan seluruh katalog versi dari APKMirror (700+ versi)
+  const catalog = (STATE.catalogVersions && STATE.catalogVersions.length > 0)
+    ? STATE.catalogVersions
+    : FALLBACK_YOUTUBE_VERSIONS;
+
+  catalog.forEach(item => {
+    const ver = typeof item === 'string' ? item : item.version;
+    if (!ver) return;
+    if (!versionsMap.has(ver)) {
+      versionsMap.set(ver, {
+        version: ver,
+        isBeta: Boolean(item.isBeta),
+        isRecommended: ver === recommended,
+        isManifest: manifestVersions.has(ver),
+        title: item.title || `YouTube ${ver}`
+      });
+    }
+  });
+
+  // Urutkan versi secara semver menurun
+  const allVersions = Array.from(versionsMap.values()).sort((a, b) => {
+    return a.version.localeCompare(b.version, undefined, { numeric: true, sensitivity: 'base' });
   }).reverse();
 
   return {
-    allVersions: sortedAll,
+    allVersions,
     recommendedVersion: recommended
   };
 }
@@ -268,7 +301,7 @@ async function fetchAndRenderPatches(sourceId) {
 
   versionBadge.textContent = 'Memuat versi...';
   versionBadge.className = 'badge badge-info';
-  versionContainer.innerHTML = '<p class="form-hint">Menganalisis manifest patch & katalog versi...</p>';
+  versionContainer.innerHTML = '<p class="form-hint">Menganalisis manifest patch & katalog versi APKMirror...</p>';
   patchContainer.innerHTML = '<div class="spinner"></div>';
 
   const sourceConfig = STATE.sources.find(s => s.id === sourceId) || STATE.sources[0] || {
@@ -289,7 +322,7 @@ async function fetchAndRenderPatches(sourceId) {
       STATE.currentVersion = recommendedVersion;
     }
 
-    versionBadge.textContent = `${allVersions.length} Versi Kompatibel`;
+    versionBadge.textContent = `${allVersions.length} Versi APKMirror`;
     versionBadge.className = 'badge badge-info';
 
     // 2. Render Pilihan Versi
@@ -311,68 +344,110 @@ async function fetchAndRenderPatches(sourceId) {
 }
 
 // =============================================================================
-// Render Selector Versi YouTube
+// Render Selector Versi YouTube Lengkap (Katalog APKMirror, Filter, Search & Pagination)
 // =============================================================================
 function renderVersionSelector() {
   const container = document.getElementById('versionListContainer');
+  if (!container) return;
   container.innerHTML = '';
 
-  const versions = STATE.availableVersions || POPULAR_YOUTUBE_VERSIONS;
+  const allList = STATE.availableVersions || [];
   const recommended = STATE.recommendedVersion || '21.13.164';
 
-  if (!STATE.currentVersion) {
+  if (!STATE.currentVersion || STATE.currentVersion === 'recommended') {
     STATE.currentVersion = recommended;
   }
 
-  // Tampilkan 6 versi teratas jika belum menekan "Tampilkan Semua"
-  const displayList = STATE.showAllVersions ? [...versions] : versions.slice(0, 6);
-
-  // Pastikan versi yang sedang aktif selalu tampak dalam list
-  if (!displayList.includes(STATE.currentVersion) && STATE.currentVersion) {
-    displayList.unshift(STATE.currentVersion);
+  // 1. Terapkan Filter Kategori (Semua, Rekomendasi, Stabil Saja, Beta)
+  let filtered = allList;
+  if (STATE.versionFilter === 'recommended') {
+    filtered = allList.filter(item => item.isRecommended || item.isManifest);
+  } else if (STATE.versionFilter === 'stable') {
+    filtered = allList.filter(item => !item.isBeta);
+  } else if (STATE.versionFilter === 'beta') {
+    filtered = allList.filter(item => item.isBeta);
   }
 
-  displayList.forEach((ver) => {
-    const isRecommended = ver === recommended;
-    const isSelected = ver === STATE.currentVersion;
-    const card = document.createElement('label');
-    card.className = `version-card ${isSelected ? 'selected' : ''}`;
+  // 2. Terapkan Filter Pencarian
+  if (STATE.versionSearch) {
+    const q = STATE.versionSearch.toLowerCase();
+    filtered = filtered.filter(item => item.version.toLowerCase().includes(q));
+  }
 
-    let labelText = 'Versi Kompatibel';
-    if (isRecommended) {
-      labelText = '⭐ Versi Rekomendasi Resmi';
-    } else if (ver === '21.07.247') {
-      labelText = 'Rilis Stabil Sebelumnya';
-    } else if (ver === '20.51.39') {
-      labelText = 'Favorit Magisk / KSU';
-    }
+  // 3. Tentukan Rentang Tampilan
+  const limit = STATE.showAllVersions ? filtered.length : (STATE.versionDisplayLimit || 12);
+  const displayList = filtered.slice(0, limit);
 
-    card.innerHTML = `
-      <div>
-        <div style="font-weight: 700; font-size: 1rem;">v${ver}</div>
-        <div class="form-hint" style="margin: 0;">${labelText}</div>
-      </div>
-      <input type="radio" name="youtube_version" value="${ver}" ${isSelected ? 'checked' : ''}>
-    `;
+  // Pastikan versi yang sedang aktif selalu tampak dalam list
+  const activeObj = allList.find(x => x.version === STATE.currentVersion);
+  if (activeObj && !displayList.some(x => x.version === STATE.currentVersion)) {
+    displayList.unshift(activeObj);
+  }
 
-    card.addEventListener('click', () => {
-      document.querySelectorAll('.version-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-      STATE.currentVersion = ver;
+  // 4. Render Kartu Versi
+  if (displayList.length === 0) {
+    container.innerHTML = '<p class="form-hint" style="grid-column: 1 / -1; padding: 16px 0;">Tidak ada versi yang cocok dengan filter atau kata kunci pencarian Anda.</p>';
+  } else {
+    displayList.forEach(item => {
+      const ver = item.version;
+      const isSelected = ver === STATE.currentVersion;
+      const card = document.createElement('label');
+      card.className = `version-card ${isSelected ? 'selected' : ''}`;
+
+      let tagHtml = '';
+      if (item.isRecommended) {
+        tagHtml = '<span class="version-pill-tag version-tag-rec">⭐ REKOMENDASI</span>';
+      } else if (!item.isBeta) {
+        tagHtml = '<span class="version-pill-tag version-tag-stable">STABLE</span>';
+      } else {
+        tagHtml = '<span class="version-pill-tag version-tag-beta">BETA</span>';
+      }
+
+      card.innerHTML = `
+        <div>
+          <div style="font-weight: 700; font-size: 1rem;">v${ver}</div>
+          <div class="version-card-meta">
+            ${tagHtml}
+            ${item.isManifest ? '<span class="form-hint" style="margin: 0; font-size: 0.75rem;">(Pinned)</span>' : ''}
+          </div>
+        </div>
+        <input type="radio" name="youtube_version" value="${ver}" ${isSelected ? 'checked' : ''}>
+      `;
+
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.version-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        STATE.currentVersion = ver;
+      });
+
+      container.appendChild(card);
     });
+  }
 
-    container.appendChild(card);
-  });
+  // 5. Perbarui Status Teks Counter & Tombol Toolbar
+  const counterHint = document.getElementById('versionCounterHint');
+  if (counterHint) {
+    counterHint.textContent = `Menampilkan ${displayList.length} dari ${filtered.length} versi (${allList.length} total APKMirror)`;
+  }
 
-  // Perbarui status dan teks tombol toggle
+  const badge = document.getElementById('versionLoadingBadge');
+  if (badge) {
+    badge.textContent = `${allList.length} Versi APKMirror`;
+  }
+
+  const btnLoadMore = document.getElementById('btnLoadMoreVersions');
+  if (btnLoadMore) {
+    btnLoadMore.style.display = (displayList.length >= filtered.length) ? 'none' : 'inline-flex';
+  }
+
   const toggleBtnText = document.getElementById('btnToggleAllVersionsText');
   const toggleBtnIcon = document.getElementById('btnToggleAllVersionsIcon');
   if (toggleBtnText && toggleBtnIcon) {
     if (STATE.showAllVersions) {
-      toggleBtnText.textContent = 'Tampilkan Versi Populer Saja';
+      toggleBtnText.textContent = 'Tampilkan Ringkas (12 Versi)';
       toggleBtnIcon.textContent = '▲';
     } else {
-      toggleBtnText.textContent = `Tampilkan Semua Versi (${versions.length} Versi)`;
+      toggleBtnText.textContent = `Tampilkan Semua (${filtered.length} Versi)`;
       toggleBtnIcon.textContent = '📋';
     }
   }
@@ -683,11 +758,44 @@ function initEventListeners() {
     fetchAndRenderPatches(e.target.value);
   });
 
-  // Toggle Menampilkan Seluruh Katalog Versi vs 6 Versi Populer
+  // Filter Kategori Versi (Semua, Rekomendasi, Stabil Saja, Beta)
+  document.querySelectorAll('.btn-filter-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.btn-filter-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      STATE.versionFilter = btn.dataset.filter;
+      STATE.versionDisplayLimit = 12;
+      renderVersionSelector();
+    });
+  });
+
+  // Pencarian Versi YouTube
+  const inputSearchVer = document.getElementById('inputSearchVersion');
+  if (inputSearchVer) {
+    inputSearchVer.addEventListener('input', (e) => {
+      STATE.versionSearch = e.target.value.trim();
+      STATE.versionDisplayLimit = 12;
+      renderVersionSelector();
+    });
+  }
+
+  // Tombol Muat Lebih Banyak Versi Bertahap (+24)
+  const btnLoadMore = document.getElementById('btnLoadMoreVersions');
+  if (btnLoadMore) {
+    btnLoadMore.addEventListener('click', () => {
+      STATE.versionDisplayLimit = (STATE.versionDisplayLimit || 12) + 24;
+      renderVersionSelector();
+    });
+  }
+
+  // Toggle Menampilkan Seluruh Katalog Versi vs Ringkas
   const btnToggleVersions = document.getElementById('btnToggleAllVersions');
   if (btnToggleVersions) {
     btnToggleVersions.addEventListener('click', () => {
       STATE.showAllVersions = !STATE.showAllVersions;
+      if (!STATE.showAllVersions) {
+        STATE.versionDisplayLimit = 12;
+      }
       renderVersionSelector();
     });
   }
@@ -704,8 +812,15 @@ function initEventListeners() {
       return;
     }
 
-    if (!STATE.availableVersions.includes(customVer)) {
-      STATE.availableVersions.unshift(customVer);
+    const exists = STATE.availableVersions.find(x => x.version === customVer);
+    if (!exists) {
+      STATE.availableVersions.unshift({
+        version: customVer,
+        isBeta: false,
+        isRecommended: false,
+        isManifest: false,
+        title: `YouTube ${customVer} (Kustom)`
+      });
     }
     STATE.currentVersion = customVer;
     renderVersionSelector();

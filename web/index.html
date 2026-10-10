@@ -53,10 +53,27 @@
 
       <!-- Version Selector -->
       <div class="form-group">
-        <div class="label-with-badge">
-          <label class="form-label">Pilih Versi YouTube Target:</label>
+        <div class="label-with-badge" style="margin-bottom: 8px;">
+          <div>
+            <label class="form-label" style="margin-bottom: 2px;">Pilih Versi YouTube Target:</label>
+            <p class="form-hint" style="margin: 0;">Didukung langsung dari katalog rilis lengkap APKMirror & patcher Morphe CLI</p>
+          </div>
           <span id="versionLoadingBadge" class="badge badge-info">Memuat versi...</span>
         </div>
+
+        <!-- Filter & Search Toolbar untuk Versi YouTube -->
+        <div class="version-filter-bar" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; justify-content: space-between;">
+          <div class="filter-pills" style="display: flex; gap: 6px; flex-wrap: wrap;" role="tablist" aria-label="Filter Versi">
+            <button type="button" class="btn-filter-pill active" data-filter="all" id="filterVerAll">Semua</button>
+            <button type="button" class="btn-filter-pill" data-filter="recommended" id="filterVerRec">⭐ Rekomendasi</button>
+            <button type="button" class="btn-filter-pill" data-filter="stable" id="filterVerStable">🛡️ Stabil Saja</button>
+            <button type="button" class="btn-filter-pill" data-filter="beta" id="filterVerBeta">⚡ Beta</button>
+          </div>
+          <div style="flex: 1; min-width: 180px; max-width: 260px;">
+            <input type="search" id="inputSearchVersion" class="form-control" placeholder="🔍 Cari nomor versi..." style="min-height: 40px; font-size: 0.88rem; padding: 6px 12px;">
+          </div>
+        </div>
+
         <div id="versionListContainer" class="version-list-grid" role="radiogroup" aria-label="Daftar Versi YouTube Kompatibel">
           <!-- Diisi secara dinamis oleh JavaScript -->
         </div>
@@ -64,11 +81,17 @@
         <!-- Opsi Tambahan: Lihat Semua Versi & Input Manual -->
         <div class="version-custom-toolbar" style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border-subtle); display: flex; flex-direction: column; gap: 12px;">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-            <button type="button" id="btnToggleAllVersions" class="btn btn-secondary" style="min-height: 48px; padding: 10px 16px;">
-              <span id="btnToggleAllVersionsIcon">📋</span>
-              <span id="btnToggleAllVersionsText">Tampilkan Semua Versi (+20 Versi Lain)</span>
-            </button>
-            <span class="form-hint" style="margin: 0;">Pilih dari rilis populer atau tentukan versi sendiri</span>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" id="btnLoadMoreVersions" class="btn btn-secondary" style="min-height: 48px; padding: 10px 16px;">
+                <span>➕</span>
+                <span id="btnLoadMoreVersionsText">Muat 24 Versi Lagi</span>
+              </button>
+              <button type="button" id="btnToggleAllVersions" class="btn btn-secondary" style="min-height: 48px; padding: 10px 16px;">
+                <span id="btnToggleAllVersionsIcon">📋</span>
+                <span id="btnToggleAllVersionsText">Tampilkan Semua Versi</span>
+              </button>
+            </div>
+            <span id="versionCounterHint" class="form-hint" style="margin: 0;">Menampilkan versi...</span>
           </div>
 
           <!-- Input Versi Manual -->

@@ -211,6 +211,74 @@ body {
   color: var(--accent-gold);
 }
 
+.badge-success {
+  background-color: rgba(46, 204, 113, 0.2);
+  color: #2ecc71;
+}
+
+.badge-warning {
+  background-color: rgba(243, 156, 18, 0.2);
+  color: #f39c12;
+}
+
+.btn-filter-pill {
+  min-height: 40px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface-2);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-filter-pill:hover {
+  background-color: var(--bg-surface-3);
+  color: var(--text-primary);
+}
+
+.btn-filter-pill.active {
+  background-color: var(--accent-red);
+  color: #ffffff;
+  border-color: var(--accent-red);
+}
+
+.version-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.version-pill-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.5px;
+}
+
+.version-tag-stable {
+  background-color: rgba(46, 204, 113, 0.15);
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.version-tag-beta {
+  background-color: rgba(243, 156, 18, 0.15);
+  color: #f39c12;
+  border: 1px solid rgba(243, 156, 18, 0.3);
+}
+
+.version-tag-rec {
+  background-color: rgba(255, 0, 51, 0.15);
+  color: #ff3355;
+  border: 1px solid rgba(255, 0, 51, 0.3);
+}
+
 .version-list-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

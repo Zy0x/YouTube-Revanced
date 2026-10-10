@@ -1,0 +1,3637 @@
+[
+  {
+    "version": "21.40.163",
+    "isBeta": false,
+    "title": "YouTube 21.40.163"
+  },
+  {
+    "version": "21.41.525",
+    "isBeta": true,
+    "title": "YouTube 21.41.525 beta"
+  },
+  {
+    "version": "21.41.524",
+    "isBeta": true,
+    "title": "YouTube 21.41.524 beta"
+  },
+  {
+    "version": "21.40.165",
+    "isBeta": false,
+    "title": "YouTube 21.40.165"
+  },
+  {
+    "version": "21.41.523",
+    "isBeta": true,
+    "title": "YouTube 21.41.523 beta"
+  },
+  {
+    "version": "21.40.162",
+    "isBeta": false,
+    "title": "YouTube 21.40.162"
+  },
+  {
+    "version": "21.41.522",
+    "isBeta": true,
+    "title": "YouTube 21.41.522 beta"
+  },
+  {
+    "version": "21.40.161",
+    "isBeta": false,
+    "title": "YouTube 21.40.161"
+  },
+  {
+    "version": "21.39.524",
+    "isBeta": false,
+    "title": "YouTube 21.39.524"
+  },
+  {
+    "version": "21.39.525",
+    "isBeta": false,
+    "title": "YouTube 21.39.525"
+  },
+  {
+    "version": "21.39.523",
+    "isBeta": false,
+    "title": "YouTube 21.39.523"
+  },
+  {
+    "version": "21.39.527",
+    "isBeta": false,
+    "title": "YouTube 21.39.527"
+  },
+  {
+    "version": "21.39.528",
+    "isBeta": false,
+    "title": "YouTube 21.39.528"
+  },
+  {
+    "version": "21.40.160",
+    "isBeta": true,
+    "title": "YouTube 21.40.160 beta"
+  },
+  {
+    "version": "21.39.522",
+    "isBeta": false,
+    "title": "YouTube 21.39.522"
+  },
+  {
+    "version": "21.38.132",
+    "isBeta": false,
+    "title": "YouTube 21.38.132"
+  },
+  {
+    "version": "21.38.125",
+    "isBeta": false,
+    "title": "YouTube 21.38.125"
+  },
+  {
+    "version": "21.38.130",
+    "isBeta": false,
+    "title": "YouTube 21.38.130-SECONDARY"
+  },
+  {
+    "version": "21.37.46",
+    "isBeta": false,
+    "title": "YouTube 21.37.46"
+  },
+  {
+    "version": "21.39.521",
+    "isBeta": true,
+    "title": "YouTube 21.39.521 beta"
+  },
+  {
+    "version": "21.39.520",
+    "isBeta": true,
+    "title": "YouTube 21.39.520 beta"
+  },
+  {
+    "version": "21.37.44",
+    "isBeta": false,
+    "title": "YouTube 21.37.44"
+  },
+  {
+    "version": "21.38.124",
+    "isBeta": false,
+    "title": "YouTube 21.38.124"
+  },
+  {
+    "version": "21.37.43",
+    "isBeta": false,
+    "title": "YouTube 21.37.43"
+  },
+  {
+    "version": "21.37.47",
+    "isBeta": false,
+    "title": "YouTube 21.37.47"
+  },
+  {
+    "version": "21.38.123",
+    "isBeta": true,
+    "title": "YouTube 21.38.123 beta"
+  },
+  {
+    "version": "21.36.47",
+    "isBeta": false,
+    "title": "YouTube 21.36.47"
+  },
+  {
+    "version": "21.38.122",
+    "isBeta": true,
+    "title": "YouTube 21.38.122 beta"
+  },
+  {
+    "version": "21.38.121",
+    "isBeta": true,
+    "title": "YouTube 21.38.121 beta"
+  },
+  {
+    "version": "21.37.42",
+    "isBeta": false,
+    "title": "YouTube 21.37.42-SECONDARY"
+  },
+  {
+    "version": "21.36.46",
+    "isBeta": false,
+    "title": "YouTube 21.36.46"
+  },
+  {
+    "version": "21.37.40",
+    "isBeta": true,
+    "title": "YouTube 21.37.40 beta"
+  },
+  {
+    "version": "21.35.448",
+    "isBeta": false,
+    "title": "YouTube 21.35.448"
+  },
+  {
+    "version": "21.36.45",
+    "isBeta": false,
+    "title": "YouTube 21.36.45"
+  },
+  {
+    "version": "21.35.443",
+    "isBeta": false,
+    "title": "YouTube 21.35.443"
+  },
+  {
+    "version": "21.35.444",
+    "isBeta": false,
+    "title": "YouTube 21.35.444"
+  },
+  {
+    "version": "21.35.447",
+    "isBeta": false,
+    "title": "YouTube 21.35.447"
+  },
+  {
+    "version": "21.35.446",
+    "isBeta": false,
+    "title": "YouTube 21.35.446"
+  },
+  {
+    "version": "21.36.42",
+    "isBeta": true,
+    "title": "YouTube 21.36.42 beta"
+  },
+  {
+    "version": "21.36.40",
+    "isBeta": true,
+    "title": "YouTube 21.36.40 beta"
+  },
+  {
+    "version": "21.34.248",
+    "isBeta": false,
+    "title": "YouTube 21.34.248"
+  },
+  {
+    "version": "21.33.323",
+    "isBeta": false,
+    "title": "YouTube 21.33.323"
+  },
+  {
+    "version": "21.33.324",
+    "isBeta": false,
+    "title": "YouTube 21.33.324"
+  },
+  {
+    "version": "21.34.245",
+    "isBeta": false,
+    "title": "YouTube 21.34.245"
+  },
+  {
+    "version": "21.35.442",
+    "isBeta": false,
+    "title": "YouTube 21.35.442-SECONDARY"
+  },
+  {
+    "version": "21.34.244",
+    "isBeta": false,
+    "title": "YouTube 21.34.244"
+  },
+  {
+    "version": "21.35.441",
+    "isBeta": true,
+    "title": "YouTube 21.35.441 beta"
+  },
+  {
+    "version": "21.34.247",
+    "isBeta": false,
+    "title": "YouTube 21.34.247"
+  },
+  {
+    "version": "21.34.246",
+    "isBeta": false,
+    "title": "YouTube 21.34.246"
+  },
+  {
+    "version": "21.35.440",
+    "isBeta": true,
+    "title": "YouTube 21.35.440 beta"
+  },
+  {
+    "version": "21.34.243",
+    "isBeta": false,
+    "title": "YouTube 21.34.243"
+  },
+  {
+    "version": "21.33.330",
+    "isBeta": false,
+    "title": "YouTube 21.33.330"
+  },
+  {
+    "version": "21.32.9",
+    "isBeta": false,
+    "title": "YouTube 21.32.9"
+  },
+  {
+    "version": "21.34.242",
+    "isBeta": true,
+    "title": "YouTube 21.34.242 beta"
+  },
+  {
+    "version": "21.34.240",
+    "isBeta": true,
+    "title": "YouTube 21.34.240 beta"
+  },
+  {
+    "version": "21.33.325",
+    "isBeta": false,
+    "title": "YouTube 21.33.325"
+  },
+  {
+    "version": "21.33.326",
+    "isBeta": false,
+    "title": "YouTube 21.33.326"
+  },
+  {
+    "version": "21.32.5",
+    "isBeta": false,
+    "title": "YouTube 21.32.5"
+  },
+  {
+    "version": "21.32.6",
+    "isBeta": false,
+    "title": "YouTube 21.32.6"
+  },
+  {
+    "version": "21.33.322",
+    "isBeta": false,
+    "title": "YouTube 21.33.322-SECONDARY"
+  },
+  {
+    "version": "21.33.321",
+    "isBeta": true,
+    "title": "YouTube 21.33.321 beta"
+  },
+  {
+    "version": "21.31.529",
+    "isBeta": false,
+    "title": "YouTube 21.31.529"
+  },
+  {
+    "version": "21.32.4",
+    "isBeta": false,
+    "title": "YouTube 21.32.4-SECONDARY"
+  },
+  {
+    "version": "21.31.528",
+    "isBeta": false,
+    "title": "YouTube 21.31.528"
+  },
+  {
+    "version": "21.31.526",
+    "isBeta": false,
+    "title": "YouTube 21.31.526"
+  },
+  {
+    "version": "21.32.3",
+    "isBeta": false,
+    "title": "YouTube 21.32.3"
+  },
+  {
+    "version": "21.31.527",
+    "isBeta": false,
+    "title": "YouTube 21.31.527"
+  },
+  {
+    "version": "21.32.2",
+    "isBeta": true,
+    "title": "YouTube 21.32.2 beta"
+  },
+  {
+    "version": "21.32.0",
+    "isBeta": true,
+    "title": "YouTube 21.32.0 beta"
+  },
+  {
+    "version": "21.30.215",
+    "isBeta": false,
+    "title": "YouTube 21.30.215"
+  },
+  {
+    "version": "21.31.525",
+    "isBeta": false,
+    "title": "YouTube 21.31.525"
+  },
+  {
+    "version": "21.30.216",
+    "isBeta": false,
+    "title": "YouTube 21.30.216"
+  },
+  {
+    "version": "21.31.524",
+    "isBeta": false,
+    "title": "YouTube 21.31.524-SECONDARY"
+  },
+  {
+    "version": "21.30.211",
+    "isBeta": false,
+    "title": "YouTube 21.30.211"
+  },
+  {
+    "version": "21.30.210",
+    "isBeta": false,
+    "title": "YouTube 21.30.210"
+  },
+  {
+    "version": "21.31.523",
+    "isBeta": true,
+    "title": "YouTube 21.31.523 beta"
+  },
+  {
+    "version": "21.31.522",
+    "isBeta": true,
+    "title": "YouTube 21.31.522 beta"
+  },
+  {
+    "version": "21.30.209",
+    "isBeta": false,
+    "title": "YouTube 21.30.209"
+  },
+  {
+    "version": "21.30.206",
+    "isBeta": false,
+    "title": "YouTube 21.30.206-SECONDARY"
+  },
+  {
+    "version": "21.29.368",
+    "isBeta": false,
+    "title": "YouTube 21.29.368"
+  },
+  {
+    "version": "21.30.205",
+    "isBeta": true,
+    "title": "YouTube 21.30.205 beta"
+  },
+  {
+    "version": "21.30.200",
+    "isBeta": true,
+    "title": "YouTube 21.30.200 beta"
+  },
+  {
+    "version": "21.30.201",
+    "isBeta": true,
+    "title": "YouTube 21.30.201 beta"
+  },
+  {
+    "version": "21.29.366",
+    "isBeta": false,
+    "title": "YouTube 21.29.366-SECONDARY"
+  },
+  {
+    "version": "21.28.207",
+    "isBeta": false,
+    "title": "YouTube 21.28.207"
+  },
+  {
+    "version": "21.28.208",
+    "isBeta": false,
+    "title": "YouTube 21.28.208"
+  },
+  {
+    "version": "21.28.206",
+    "isBeta": false,
+    "title": "YouTube 21.28.206"
+  },
+  {
+    "version": "21.29.363",
+    "isBeta": false,
+    "title": "YouTube 21.29.363-SECONDARY"
+  },
+  {
+    "version": "21.29.360",
+    "isBeta": true,
+    "title": "YouTube 21.29.360 beta"
+  },
+  {
+    "version": "21.28.205",
+    "isBeta": false,
+    "title": "YouTube 21.28.205"
+  },
+  {
+    "version": "21.28.204",
+    "isBeta": false,
+    "title": "YouTube 21.28.204-SECONDARY"
+  },
+  {
+    "version": "21.26.366",
+    "isBeta": false,
+    "title": "YouTube 21.26.366"
+  },
+  {
+    "version": "21.26.365",
+    "isBeta": false,
+    "title": "YouTube 21.26.365"
+  },
+  {
+    "version": "21.28.200",
+    "isBeta": true,
+    "title": "YouTube 21.28.200 beta"
+  },
+  {
+    "version": "21.28.201",
+    "isBeta": true,
+    "title": "YouTube 21.28.201 beta"
+  },
+  {
+    "version": "21.26.364",
+    "isBeta": false,
+    "title": "YouTube 21.26.364-SECONDARY"
+  },
+  {
+    "version": "21.25.526",
+    "isBeta": false,
+    "title": "YouTube 21.25.526"
+  },
+  {
+    "version": "21.25.524",
+    "isBeta": false,
+    "title": "YouTube 21.25.524"
+  },
+  {
+    "version": "21.26.363",
+    "isBeta": true,
+    "title": "YouTube 21.26.363 beta"
+  },
+  {
+    "version": "21.26.361",
+    "isBeta": true,
+    "title": "YouTube 21.26.361 beta"
+  },
+  {
+    "version": "21.26.360",
+    "isBeta": true,
+    "title": "YouTube 21.26.360 beta"
+  },
+  {
+    "version": "21.25.529",
+    "isBeta": false,
+    "title": "YouTube 21.25.529"
+  },
+  {
+    "version": "21.25.530",
+    "isBeta": false,
+    "title": "YouTube 21.25.530"
+  },
+  {
+    "version": "21.25.528",
+    "isBeta": false,
+    "title": "YouTube 21.25.528"
+  },
+  {
+    "version": "21.25.527",
+    "isBeta": false,
+    "title": "YouTube 21.25.527"
+  },
+  {
+    "version": "21.24.368",
+    "isBeta": false,
+    "title": "YouTube 21.24.368"
+  },
+  {
+    "version": "21.25.523",
+    "isBeta": false,
+    "title": "YouTube 21.25.523-SECONDARY"
+  },
+  {
+    "version": "21.24.367",
+    "isBeta": false,
+    "title": "YouTube 21.24.367"
+  },
+  {
+    "version": "21.25.521",
+    "isBeta": true,
+    "title": "YouTube 21.25.521 beta"
+  },
+  {
+    "version": "21.23.485",
+    "isBeta": false,
+    "title": "YouTube 21.23.485"
+  },
+  {
+    "version": "21.24.366",
+    "isBeta": false,
+    "title": "YouTube 21.24.366"
+  },
+  {
+    "version": "21.23.487",
+    "isBeta": false,
+    "title": "YouTube 21.23.487"
+  },
+  {
+    "version": "21.24.361",
+    "isBeta": true,
+    "title": "YouTube 21.24.361 beta"
+  },
+  {
+    "version": "21.23.484",
+    "isBeta": false,
+    "title": "YouTube 21.23.484"
+  },
+  {
+    "version": "21.24.362",
+    "isBeta": true,
+    "title": "YouTube 21.24.362 beta"
+  },
+  {
+    "version": "21.24.363",
+    "isBeta": false,
+    "title": "YouTube 21.24.363"
+  },
+  {
+    "version": "21.23.488",
+    "isBeta": false,
+    "title": "YouTube 21.23.488"
+  },
+  {
+    "version": "21.23.490",
+    "isBeta": false,
+    "title": "YouTube 21.23.490"
+  },
+  {
+    "version": "21.23.492",
+    "isBeta": false,
+    "title": "YouTube 21.23.492"
+  },
+  {
+    "version": "21.24.360",
+    "isBeta": true,
+    "title": "YouTube 21.24.360 beta"
+  },
+  {
+    "version": "21.23.489",
+    "isBeta": false,
+    "title": "YouTube 21.23.489"
+  },
+  {
+    "version": "21.23.486",
+    "isBeta": false,
+    "title": "YouTube 21.23.486"
+  },
+  {
+    "version": "21.23.483",
+    "isBeta": false,
+    "title": "YouTube 21.23.483-SECONDARY"
+  },
+  {
+    "version": "21.22.167",
+    "isBeta": false,
+    "title": "YouTube 21.22.167"
+  },
+  {
+    "version": "21.22.166",
+    "isBeta": false,
+    "title": "YouTube 21.22.166"
+  },
+  {
+    "version": "21.23.481",
+    "isBeta": true,
+    "title": "YouTube 21.23.481 beta"
+  },
+  {
+    "version": "21.23.480",
+    "isBeta": true,
+    "title": "YouTube 21.23.480 beta"
+  },
+  {
+    "version": "21.22.165",
+    "isBeta": false,
+    "title": "YouTube 21.22.165-SECONDARY"
+  },
+  {
+    "version": "21.21.89",
+    "isBeta": false,
+    "title": "YouTube 21.21.89"
+  },
+  {
+    "version": "21.21.88",
+    "isBeta": false,
+    "title": "YouTube 21.21.88"
+  },
+  {
+    "version": "21.21.91",
+    "isBeta": false,
+    "title": "YouTube 21.21.91"
+  },
+  {
+    "version": "21.21.90",
+    "isBeta": false,
+    "title": "YouTube 21.21.90"
+  },
+  {
+    "version": "21.22.164",
+    "isBeta": true,
+    "title": "YouTube 21.22.164 beta"
+  },
+  {
+    "version": "21.22.163",
+    "isBeta": true,
+    "title": "YouTube 21.22.163 beta"
+  },
+  {
+    "version": "21.20.405",
+    "isBeta": false,
+    "title": "YouTube 21.20.405"
+  },
+  {
+    "version": "21.21.83",
+    "isBeta": false,
+    "title": "YouTube 21.21.83-SECONDARY"
+  },
+  {
+    "version": "21.21.87",
+    "isBeta": false,
+    "title": "YouTube 21.21.87"
+  },
+  {
+    "version": "21.20.404",
+    "isBeta": false,
+    "title": "YouTube 21.20.404"
+  },
+  {
+    "version": "21.20.403",
+    "isBeta": false,
+    "title": "YouTube 21.20.403"
+  },
+  {
+    "version": "21.21.82",
+    "isBeta": true,
+    "title": "YouTube 21.21.82 beta"
+  },
+  {
+    "version": "21.21.81",
+    "isBeta": true,
+    "title": "YouTube 21.21.81 beta"
+  },
+  {
+    "version": "21.21.80",
+    "isBeta": true,
+    "title": "YouTube 21.21.80 beta"
+  },
+  {
+    "version": "21.19.288",
+    "isBeta": false,
+    "title": "YouTube 21.19.288"
+  },
+  {
+    "version": "21.19.287",
+    "isBeta": false,
+    "title": "YouTube 21.19.287"
+  },
+  {
+    "version": "21.20.402",
+    "isBeta": false,
+    "title": "YouTube 21.20.402-SECONDARY"
+  },
+  {
+    "version": "21.20.401",
+    "isBeta": true,
+    "title": "YouTube 21.20.401 beta"
+  },
+  {
+    "version": "21.20.400",
+    "isBeta": true,
+    "title": "YouTube 21.20.400 beta"
+  },
+  {
+    "version": "20.10.41",
+    "isBeta": false,
+    "title": "YouTube 20.10.41"
+  },
+  {
+    "version": "21.18.168",
+    "isBeta": false,
+    "title": "YouTube 21.18.168"
+  },
+  {
+    "version": "21.18.165",
+    "isBeta": false,
+    "title": "YouTube 21.18.165"
+  },
+  {
+    "version": "21.19.286",
+    "isBeta": false,
+    "title": "YouTube 21.19.286"
+  },
+  {
+    "version": "21.19.282",
+    "isBeta": true,
+    "title": "YouTube 21.19.282 beta"
+  },
+  {
+    "version": "21.18.169",
+    "isBeta": false,
+    "title": "YouTube 21.18.169"
+  },
+  {
+    "version": "21.19.280",
+    "isBeta": true,
+    "title": "YouTube 21.19.280 beta"
+  },
+  {
+    "version": "21.17.483",
+    "isBeta": false,
+    "title": "YouTube 21.17.483"
+  },
+  {
+    "version": "21.18.164",
+    "isBeta": false,
+    "title": "YouTube 21.18.164"
+  },
+  {
+    "version": "21.17.482",
+    "isBeta": false,
+    "title": "YouTube 21.17.482"
+  },
+  {
+    "version": "21.18.163",
+    "isBeta": true,
+    "title": "YouTube 21.18.163 beta"
+  },
+  {
+    "version": "21.18.161",
+    "isBeta": true,
+    "title": "YouTube 21.18.161 beta"
+  },
+  {
+    "version": "21.16.253",
+    "isBeta": false,
+    "title": "YouTube 21.16.253"
+  },
+  {
+    "version": "21.16.254",
+    "isBeta": false,
+    "title": "YouTube 21.16.254"
+  },
+  {
+    "version": "21.16.246",
+    "isBeta": false,
+    "title": "YouTube 21.16.246"
+  },
+  {
+    "version": "21.17.481",
+    "isBeta": false,
+    "title": "YouTube 21.17.481"
+  },
+  {
+    "version": "21.16.255",
+    "isBeta": false,
+    "title": "YouTube 21.16.255"
+  },
+  {
+    "version": "21.16.256",
+    "isBeta": false,
+    "title": "YouTube 21.16.256"
+  },
+  {
+    "version": "21.16.251",
+    "isBeta": false,
+    "title": "YouTube 21.16.251"
+  },
+  {
+    "version": "21.16.249",
+    "isBeta": false,
+    "title": "YouTube 21.16.249"
+  },
+  {
+    "version": "21.15.293",
+    "isBeta": false,
+    "title": "YouTube 21.15.293"
+  },
+  {
+    "version": "21.15.292",
+    "isBeta": false,
+    "title": "YouTube 21.15.292"
+  },
+  {
+    "version": "21.17.480",
+    "isBeta": true,
+    "title": "YouTube 21.17.480 beta"
+  },
+  {
+    "version": "21.16.245",
+    "isBeta": false,
+    "title": "YouTube 21.16.245"
+  },
+  {
+    "version": "21.16.242",
+    "isBeta": true,
+    "title": "YouTube 21.16.242 beta"
+  },
+  {
+    "version": "21.15.291",
+    "isBeta": false,
+    "title": "YouTube 21.15.291"
+  },
+  {
+    "version": "21.14.488",
+    "isBeta": false,
+    "title": "YouTube 21.14.488"
+  },
+  {
+    "version": "21.16.241",
+    "isBeta": true,
+    "title": "YouTube 21.16.241 beta"
+  },
+  {
+    "version": "21.16.240",
+    "isBeta": true,
+    "title": "YouTube 21.16.240 beta"
+  },
+  {
+    "version": "21.15.288",
+    "isBeta": false,
+    "title": "YouTube 21.15.288"
+  },
+  {
+    "version": "21.14.486",
+    "isBeta": false,
+    "title": "YouTube 21.14.486"
+  },
+  {
+    "version": "21.14.485",
+    "isBeta": false,
+    "title": "YouTube 21.14.485"
+  },
+  {
+    "version": "21.15.285",
+    "isBeta": true,
+    "title": "YouTube 21.15.285 beta"
+  },
+  {
+    "version": "21.15.284",
+    "isBeta": true,
+    "title": "YouTube 21.15.284 beta"
+  },
+  {
+    "version": "21.15.283",
+    "isBeta": true,
+    "title": "YouTube 21.15.283 beta"
+  },
+  {
+    "version": "21.15.282",
+    "isBeta": true,
+    "title": "YouTube 21.15.282 beta"
+  },
+  {
+    "version": "21.15.281",
+    "isBeta": true,
+    "title": "YouTube 21.15.281 beta"
+  },
+  {
+    "version": "21.13.164",
+    "isBeta": false,
+    "title": "YouTube 21.13.164"
+  },
+  {
+    "version": "21.14.484",
+    "isBeta": false,
+    "title": "YouTube 21.14.484"
+  },
+  {
+    "version": "21.14.483",
+    "isBeta": true,
+    "title": "YouTube 21.14.483 beta"
+  },
+  {
+    "version": "21.14.482",
+    "isBeta": true,
+    "title": "YouTube 21.14.482 beta"
+  },
+  {
+    "version": "21.14.481",
+    "isBeta": true,
+    "title": "YouTube 21.14.481 beta"
+  },
+  {
+    "version": "21.12.525",
+    "isBeta": false,
+    "title": "YouTube 21.12.525"
+  },
+  {
+    "version": "21.13.163",
+    "isBeta": false,
+    "title": "YouTube 21.13.163"
+  },
+  {
+    "version": "21.13.162",
+    "isBeta": false,
+    "title": "YouTube 21.13.162"
+  },
+  {
+    "version": "21.13.160",
+    "isBeta": true,
+    "title": "YouTube 21.13.160 beta"
+  },
+  {
+    "version": "21.11.484",
+    "isBeta": false,
+    "title": "YouTube 21.11.484"
+  },
+  {
+    "version": "21.12.524",
+    "isBeta": false,
+    "title": "YouTube 21.12.524"
+  },
+  {
+    "version": "21.12.522",
+    "isBeta": true,
+    "title": "YouTube 21.12.522 beta"
+  },
+  {
+    "version": "21.11.486",
+    "isBeta": false,
+    "title": "YouTube 21.11.486"
+  },
+  {
+    "version": "21.11.487",
+    "isBeta": false,
+    "title": "YouTube 21.11.487"
+  },
+  {
+    "version": "21.12.521",
+    "isBeta": false,
+    "title": "YouTube 21.12.521"
+  },
+  {
+    "version": "21.12.520",
+    "isBeta": false,
+    "title": "YouTube 21.12.520"
+  },
+  {
+    "version": "21.10.494",
+    "isBeta": false,
+    "title": "YouTube 21.10.494"
+  },
+  {
+    "version": "21.11.483",
+    "isBeta": true,
+    "title": "YouTube 21.11.483 beta"
+  },
+  {
+    "version": "21.11.481",
+    "isBeta": true,
+    "title": "YouTube 21.11.481 beta"
+  },
+  {
+    "version": "21.10.499",
+    "isBeta": false,
+    "title": "YouTube 21.10.499"
+  },
+  {
+    "version": "21.10.500",
+    "isBeta": false,
+    "title": "YouTube 21.10.500"
+  },
+  {
+    "version": "21.11.480",
+    "isBeta": true,
+    "title": "YouTube 21.11.480 beta"
+  },
+  {
+    "version": "21.10.496",
+    "isBeta": false,
+    "title": "YouTube 21.10.496"
+  },
+  {
+    "version": "21.09.268",
+    "isBeta": false,
+    "title": "YouTube 21.09.268"
+  },
+  {
+    "version": "21.10.493",
+    "isBeta": false,
+    "title": "YouTube 21.10.493"
+  },
+  {
+    "version": "21.09.267",
+    "isBeta": false,
+    "title": "YouTube 21.09.267"
+  },
+  {
+    "version": "21.09.269",
+    "isBeta": false,
+    "title": "YouTube 21.09.269"
+  },
+  {
+    "version": "21.09.270",
+    "isBeta": false,
+    "title": "YouTube 21.09.270"
+  },
+  {
+    "version": "21.10.492",
+    "isBeta": true,
+    "title": "YouTube 21.10.492 beta"
+  },
+  {
+    "version": "21.09.266",
+    "isBeta": false,
+    "title": "YouTube 21.09.266"
+  },
+  {
+    "version": "21.08.266",
+    "isBeta": false,
+    "title": "YouTube 21.08.266"
+  },
+  {
+    "version": "21.08.270",
+    "isBeta": false,
+    "title": "YouTube 21.08.270"
+  },
+  {
+    "version": "21.09.261",
+    "isBeta": true,
+    "title": "YouTube 21.09.261 beta"
+  },
+  {
+    "version": "21.08.268",
+    "isBeta": false,
+    "title": "YouTube 21.08.268"
+  },
+  {
+    "version": "21.08.269",
+    "isBeta": false,
+    "title": "YouTube 21.08.269"
+  },
+  {
+    "version": "21.08.271",
+    "isBeta": false,
+    "title": "YouTube 21.08.271"
+  },
+  {
+    "version": "21.09.260",
+    "isBeta": true,
+    "title": "YouTube 21.09.260 beta"
+  },
+  {
+    "version": "21.07.247",
+    "isBeta": false,
+    "title": "YouTube 21.07.247"
+  },
+  {
+    "version": "21.08.265",
+    "isBeta": false,
+    "title": "YouTube 21.08.265"
+  },
+  {
+    "version": "21.08.263",
+    "isBeta": true,
+    "title": "YouTube 21.08.263 beta"
+  },
+  {
+    "version": "21.06.261",
+    "isBeta": false,
+    "title": "YouTube 21.06.261"
+  },
+  {
+    "version": "21.08.261",
+    "isBeta": true,
+    "title": "YouTube 21.08.261 beta"
+  },
+  {
+    "version": "21.07.246",
+    "isBeta": false,
+    "title": "YouTube 21.07.246"
+  },
+  {
+    "version": "21.08.260",
+    "isBeta": true,
+    "title": "YouTube 21.08.260 beta"
+  },
+  {
+    "version": "21.06.260",
+    "isBeta": false,
+    "title": "YouTube 21.06.260"
+  },
+  {
+    "version": "21.07.243",
+    "isBeta": false,
+    "title": "YouTube 21.07.243"
+  },
+  {
+    "version": "21.06.254",
+    "isBeta": false,
+    "title": "YouTube 21.06.254"
+  },
+  {
+    "version": "21.07.241",
+    "isBeta": true,
+    "title": "YouTube 21.07.241 beta"
+  },
+  {
+    "version": "21.06.258",
+    "isBeta": false,
+    "title": "YouTube 21.06.258"
+  },
+  {
+    "version": "21.06.259",
+    "isBeta": false,
+    "title": "YouTube 21.06.259"
+  },
+  {
+    "version": "21.07.240",
+    "isBeta": true,
+    "title": "YouTube 21.07.240 beta"
+  },
+  {
+    "version": "21.06.257",
+    "isBeta": false,
+    "title": "YouTube 21.06.257"
+  },
+  {
+    "version": "21.06.256",
+    "isBeta": false,
+    "title": "YouTube 21.06.256"
+  },
+  {
+    "version": "21.05.265",
+    "isBeta": false,
+    "title": "YouTube 21.05.265"
+  },
+  {
+    "version": "21.06.252",
+    "isBeta": false,
+    "title": "YouTube 21.06.252"
+  },
+  {
+    "version": "21.06.251",
+    "isBeta": true,
+    "title": "YouTube 21.06.251 beta"
+  },
+  {
+    "version": "21.04.223",
+    "isBeta": false,
+    "title": "YouTube 21.04.223"
+  },
+  {
+    "version": "21.05.263",
+    "isBeta": true,
+    "title": "YouTube 21.05.263 beta"
+  },
+  {
+    "version": "21.05.264",
+    "isBeta": true,
+    "title": "YouTube 21.05.264 beta"
+  },
+  {
+    "version": "21.05.261",
+    "isBeta": true,
+    "title": "YouTube 21.05.261 beta"
+  },
+  {
+    "version": "21.05.260",
+    "isBeta": true,
+    "title": "YouTube 21.05.260 beta"
+  },
+  {
+    "version": "21.04.222",
+    "isBeta": false,
+    "title": "YouTube 21.04.222"
+  },
+  {
+    "version": "21.04.221",
+    "isBeta": true,
+    "title": "YouTube 21.04.221 beta"
+  },
+  {
+    "version": "21.03.36",
+    "isBeta": false,
+    "title": "YouTube 21.03.36"
+  },
+  {
+    "version": "21.03.34",
+    "isBeta": true,
+    "title": "YouTube 21.03.34 beta"
+  },
+  {
+    "version": "21.03.33",
+    "isBeta": true,
+    "title": "YouTube 21.03.33 beta"
+  },
+  {
+    "version": "21.02.33",
+    "isBeta": false,
+    "title": "YouTube 21.02.33"
+  },
+  {
+    "version": "21.02.35",
+    "isBeta": false,
+    "title": "YouTube 21.02.35"
+  },
+  {
+    "version": "21.02.32",
+    "isBeta": false,
+    "title": "YouTube 21.02.32"
+  },
+  {
+    "version": "20.51.39",
+    "isBeta": false,
+    "title": "YouTube 20.51.39"
+  },
+  {
+    "version": "20.51.38",
+    "isBeta": false,
+    "title": "YouTube 20.51.38"
+  },
+  {
+    "version": "20.51.34",
+    "isBeta": false,
+    "title": "YouTube 20.51.34"
+  },
+  {
+    "version": "20.47.60",
+    "isBeta": false,
+    "title": "YouTube 20.47.60"
+  },
+  {
+    "version": "20.50.40",
+    "isBeta": false,
+    "title": "YouTube 20.50.40"
+  },
+  {
+    "version": "20.47.62",
+    "isBeta": false,
+    "title": "YouTube 20.47.62"
+  },
+  {
+    "version": "20.50.39",
+    "isBeta": false,
+    "title": "YouTube 20.50.39"
+  },
+  {
+    "version": "20.50.38",
+    "isBeta": true,
+    "title": "YouTube 20.50.38 beta"
+  },
+  {
+    "version": "20.49.44",
+    "isBeta": false,
+    "title": "YouTube 20.49.44"
+  },
+  {
+    "version": "20.50.36",
+    "isBeta": true,
+    "title": "YouTube 20.50.36 beta"
+  },
+  {
+    "version": "20.38.37",
+    "isBeta": false,
+    "title": "YouTube 20.38.37"
+  },
+  {
+    "version": "20.50.33",
+    "isBeta": true,
+    "title": "YouTube 20.50.33 beta"
+  },
+  {
+    "version": "20.47.49",
+    "isBeta": false,
+    "title": "YouTube 20.47.49"
+  },
+  {
+    "version": "20.49.38",
+    "isBeta": true,
+    "title": "YouTube 20.49.38 beta"
+  },
+  {
+    "version": "20.49.37",
+    "isBeta": true,
+    "title": "YouTube 20.49.37 beta"
+  },
+  {
+    "version": "20.49.34",
+    "isBeta": true,
+    "title": "YouTube 20.49.34 beta"
+  },
+  {
+    "version": "20.49.33",
+    "isBeta": true,
+    "title": "YouTube 20.49.33 beta"
+  },
+  {
+    "version": "20.47.46",
+    "isBeta": false,
+    "title": "YouTube 20.47.46"
+  },
+  {
+    "version": "20.47.45",
+    "isBeta": false,
+    "title": "YouTube 20.47.45"
+  },
+  {
+    "version": "20.47.42",
+    "isBeta": false,
+    "title": "YouTube 20.47.42"
+  },
+  {
+    "version": "20.47.41",
+    "isBeta": false,
+    "title": "YouTube 20.47.41"
+  },
+  {
+    "version": "20.46.41",
+    "isBeta": false,
+    "title": "YouTube 20.46.41"
+  },
+  {
+    "version": "20.47.38",
+    "isBeta": true,
+    "title": "YouTube 20.47.38 beta"
+  },
+  {
+    "version": "20.46.40",
+    "isBeta": false,
+    "title": "YouTube 20.46.40"
+  },
+  {
+    "version": "20.47.34",
+    "isBeta": true,
+    "title": "YouTube 20.47.34 beta"
+  },
+  {
+    "version": "20.46.39",
+    "isBeta": false,
+    "title": "YouTube 20.46.39"
+  },
+  {
+    "version": "20.47.32",
+    "isBeta": true,
+    "title": "YouTube 20.47.32 beta"
+  },
+  {
+    "version": "20.46.37",
+    "isBeta": false,
+    "title": "YouTube 20.46.37"
+  },
+  {
+    "version": "20.46.35",
+    "isBeta": true,
+    "title": "YouTube 20.46.35 beta"
+  },
+  {
+    "version": "20.46.33",
+    "isBeta": true,
+    "title": "YouTube 20.46.33 beta"
+  },
+  {
+    "version": "20.44.38",
+    "isBeta": false,
+    "title": "YouTube 20.44.38"
+  },
+  {
+    "version": "20.45.36",
+    "isBeta": false,
+    "title": "YouTube 20.45.36"
+  },
+  {
+    "version": "20.45.34",
+    "isBeta": true,
+    "title": "YouTube 20.45.34 beta"
+  },
+  {
+    "version": "20.45.32",
+    "isBeta": true,
+    "title": "YouTube 20.45.32 beta"
+  },
+  {
+    "version": "20.44.36",
+    "isBeta": false,
+    "title": "YouTube 20.44.36"
+  },
+  {
+    "version": "20.25.35",
+    "isBeta": false,
+    "title": "YouTube 20.25.35"
+  },
+  {
+    "version": "20.43.43",
+    "isBeta": false,
+    "title": "YouTube 20.43.43"
+  },
+  {
+    "version": "20.44.34",
+    "isBeta": true,
+    "title": "YouTube 20.44.34 beta"
+  },
+  {
+    "version": "20.44.33",
+    "isBeta": true,
+    "title": "YouTube 20.44.33 beta"
+  },
+  {
+    "version": "20.43.37",
+    "isBeta": false,
+    "title": "YouTube 20.43.37"
+  },
+  {
+    "version": "20.42.42",
+    "isBeta": false,
+    "title": "YouTube 20.42.42"
+  },
+  {
+    "version": "20.43.35",
+    "isBeta": true,
+    "title": "YouTube 20.43.35 beta"
+  },
+  {
+    "version": "20.42.43",
+    "isBeta": false,
+    "title": "YouTube 20.42.43"
+  },
+  {
+    "version": "20.43.34",
+    "isBeta": true,
+    "title": "YouTube 20.43.34 beta"
+  },
+  {
+    "version": "20.43.32",
+    "isBeta": true,
+    "title": "YouTube 20.43.32 beta"
+  },
+  {
+    "version": "20.41.42",
+    "isBeta": false,
+    "title": "YouTube 20.41.42"
+  },
+  {
+    "version": "20.42.40",
+    "isBeta": false,
+    "title": "YouTube 20.42.40"
+  },
+  {
+    "version": "20.42.38",
+    "isBeta": false,
+    "title": "YouTube 20.42.38"
+  },
+  {
+    "version": "20.42.36",
+    "isBeta": true,
+    "title": "YouTube 20.42.36 beta"
+  },
+  {
+    "version": "20.42.35",
+    "isBeta": true,
+    "title": "YouTube 20.42.35 beta"
+  },
+  {
+    "version": "20.41.40",
+    "isBeta": false,
+    "title": "YouTube 20.41.40"
+  },
+  {
+    "version": "20.42.34",
+    "isBeta": true,
+    "title": "YouTube 20.42.34 beta"
+  },
+  {
+    "version": "20.42.33",
+    "isBeta": true,
+    "title": "YouTube 20.42.33 beta"
+  },
+  {
+    "version": "20.41.38",
+    "isBeta": true,
+    "title": "YouTube 20.41.38 beta"
+  },
+  {
+    "version": "20.41.34",
+    "isBeta": true,
+    "title": "YouTube 20.41.34 beta"
+  },
+  {
+    "version": "20.40.45",
+    "isBeta": false,
+    "title": "YouTube 20.40.45"
+  },
+  {
+    "version": "20.41.33",
+    "isBeta": true,
+    "title": "YouTube 20.41.33 beta"
+  },
+  {
+    "version": "20.41.32",
+    "isBeta": true,
+    "title": "YouTube 20.41.32 beta"
+  },
+  {
+    "version": "20.39.41",
+    "isBeta": false,
+    "title": "YouTube 20.39.41"
+  },
+  {
+    "version": "20.40.43",
+    "isBeta": false,
+    "title": "YouTube 20.40.43"
+  },
+  {
+    "version": "20.40.41",
+    "isBeta": false,
+    "title": "YouTube 20.40.41"
+  },
+  {
+    "version": "20.40.36",
+    "isBeta": true,
+    "title": "YouTube 20.40.36 beta"
+  },
+  {
+    "version": "20.40.35",
+    "isBeta": true,
+    "title": "YouTube 20.40.35 beta"
+  },
+  {
+    "version": "20.39.37",
+    "isBeta": false,
+    "title": "YouTube 20.39.37"
+  },
+  {
+    "version": "20.40.33",
+    "isBeta": true,
+    "title": "YouTube 20.40.33 beta"
+  },
+  {
+    "version": "20.39.35",
+    "isBeta": true,
+    "title": "YouTube 20.39.35 beta"
+  },
+  {
+    "version": "20.37.46",
+    "isBeta": false,
+    "title": "YouTube 20.37.46"
+  },
+  {
+    "version": "20.39.32",
+    "isBeta": true,
+    "title": "YouTube 20.39.32 beta"
+  },
+  {
+    "version": "20.37.48",
+    "isBeta": false,
+    "title": "YouTube 20.37.48"
+  },
+  {
+    "version": "20.38.35",
+    "isBeta": true,
+    "title": "YouTube 20.38.35 beta"
+  },
+  {
+    "version": "20.37.47",
+    "isBeta": false,
+    "title": "YouTube 20.37.47"
+  },
+  {
+    "version": "20.38.33",
+    "isBeta": true,
+    "title": "YouTube 20.38.33 beta"
+  },
+  {
+    "version": "20.38.32",
+    "isBeta": true,
+    "title": "YouTube 20.38.32 beta"
+  },
+  {
+    "version": "20.37.45",
+    "isBeta": false,
+    "title": "YouTube 20.37.45"
+  },
+  {
+    "version": "20.37.43",
+    "isBeta": true,
+    "title": "YouTube 20.37.43 beta"
+  },
+  {
+    "version": "20.36.48",
+    "isBeta": false,
+    "title": "YouTube 20.36.48"
+  },
+  {
+    "version": "20.37.40",
+    "isBeta": true,
+    "title": "YouTube 20.37.40 beta"
+  },
+  {
+    "version": "20.37.38",
+    "isBeta": true,
+    "title": "YouTube 20.37.38 beta"
+  },
+  {
+    "version": "20.37.33",
+    "isBeta": true,
+    "title": "YouTube 20.37.33 beta"
+  },
+  {
+    "version": "20.36.46",
+    "isBeta": false,
+    "title": "YouTube 20.36.46"
+  },
+  {
+    "version": "20.34.40",
+    "isBeta": false,
+    "title": "YouTube 20.34.40"
+  },
+  {
+    "version": "20.36.41",
+    "isBeta": true,
+    "title": "YouTube 20.36.41 beta"
+  },
+  {
+    "version": "20.36.35",
+    "isBeta": true,
+    "title": "YouTube 20.36.35 beta"
+  },
+  {
+    "version": "20.36.34",
+    "isBeta": true,
+    "title": "YouTube 20.36.34 beta"
+  },
+  {
+    "version": "20.36.32",
+    "isBeta": true,
+    "title": "YouTube 20.36.32 beta"
+  },
+  {
+    "version": "20.34.39",
+    "isBeta": false,
+    "title": "YouTube 20.34.39"
+  },
+  {
+    "version": "20.35.34",
+    "isBeta": true,
+    "title": "YouTube 20.35.34 beta"
+  },
+  {
+    "version": "20.34.37",
+    "isBeta": false,
+    "title": "YouTube 20.34.37"
+  },
+  {
+    "version": "20.35.32",
+    "isBeta": true,
+    "title": "YouTube 20.35.32 beta"
+  },
+  {
+    "version": "20.33.40",
+    "isBeta": false,
+    "title": "YouTube 20.33.40"
+  },
+  {
+    "version": "20.34.35",
+    "isBeta": true,
+    "title": "YouTube 20.34.35 beta"
+  },
+  {
+    "version": "20.34.34",
+    "isBeta": true,
+    "title": "YouTube 20.34.34 beta"
+  },
+  {
+    "version": "20.34.33",
+    "isBeta": true,
+    "title": "YouTube 20.34.33 beta"
+  },
+  {
+    "version": "20.34.32",
+    "isBeta": true,
+    "title": "YouTube 20.34.32 beta"
+  },
+  {
+    "version": "20.33.38",
+    "isBeta": false,
+    "title": "YouTube 20.33.38"
+  },
+  {
+    "version": "20.31.40",
+    "isBeta": false,
+    "title": "YouTube 20.31.40"
+  },
+  {
+    "version": "20.32.43",
+    "isBeta": false,
+    "title": "YouTube 20.32.43"
+  },
+  {
+    "version": "20.33.36",
+    "isBeta": true,
+    "title": "YouTube 20.33.36 beta"
+  },
+  {
+    "version": "20.32.41",
+    "isBeta": false,
+    "title": "YouTube 20.32.41"
+  },
+  {
+    "version": "20.33.34",
+    "isBeta": true,
+    "title": "YouTube 20.33.34 beta"
+  },
+  {
+    "version": "20.32.39",
+    "isBeta": false,
+    "title": "YouTube 20.32.39"
+  },
+  {
+    "version": "20.33.33",
+    "isBeta": true,
+    "title": "YouTube 20.33.33 beta"
+  },
+  {
+    "version": "20.33.32",
+    "isBeta": true,
+    "title": "YouTube 20.33.32 beta"
+  },
+  {
+    "version": "20.31.42",
+    "isBeta": false,
+    "title": "YouTube 20.31.42"
+  },
+  {
+    "version": "20.32.36",
+    "isBeta": true,
+    "title": "YouTube 20.32.36 beta"
+  },
+  {
+    "version": "20.32.35",
+    "isBeta": true,
+    "title": "YouTube 20.32.35 beta"
+  },
+  {
+    "version": "20.32.34",
+    "isBeta": true,
+    "title": "YouTube 20.32.34 beta"
+  },
+  {
+    "version": "20.32.33",
+    "isBeta": true,
+    "title": "YouTube 20.32.33 beta"
+  },
+  {
+    "version": "20.31.39",
+    "isBeta": false,
+    "title": "YouTube 20.31.39"
+  },
+  {
+    "version": "20.32.32",
+    "isBeta": true,
+    "title": "YouTube 20.32.32 beta"
+  },
+  {
+    "version": "20.31.37",
+    "isBeta": true,
+    "title": "YouTube 20.31.37 beta"
+  },
+  {
+    "version": "20.30.40",
+    "isBeta": false,
+    "title": "YouTube 20.30.40"
+  },
+  {
+    "version": "20.30.38",
+    "isBeta": false,
+    "title": "YouTube 20.30.38"
+  },
+  {
+    "version": "20.31.35",
+    "isBeta": true,
+    "title": "YouTube 20.31.35 beta"
+  },
+  {
+    "version": "20.31.34",
+    "isBeta": true,
+    "title": "YouTube 20.31.34 beta"
+  },
+  {
+    "version": "20.31.32",
+    "isBeta": true,
+    "title": "YouTube 20.31.32 beta"
+  },
+  {
+    "version": "20.29.42",
+    "isBeta": false,
+    "title": "YouTube 20.29.42"
+  },
+  {
+    "version": "20.14.41",
+    "isBeta": false,
+    "title": "YouTube 20.14.41"
+  },
+  {
+    "version": "20.29.41",
+    "isBeta": false,
+    "title": "YouTube 20.29.41"
+  },
+  {
+    "version": "20.30.35",
+    "isBeta": true,
+    "title": "YouTube 20.30.35 beta"
+  },
+  {
+    "version": "20.30.34",
+    "isBeta": true,
+    "title": "YouTube 20.30.34 beta"
+  },
+  {
+    "version": "20.30.32",
+    "isBeta": true,
+    "title": "YouTube 20.30.32 beta"
+  },
+  {
+    "version": "20.29.39",
+    "isBeta": false,
+    "title": "YouTube 20.29.39"
+  },
+  {
+    "version": "20.28.41",
+    "isBeta": false,
+    "title": "YouTube 20.28.41"
+  },
+  {
+    "version": "20.28.40",
+    "isBeta": false,
+    "title": "YouTube 20.28.40"
+  },
+  {
+    "version": "20.29.37",
+    "isBeta": true,
+    "title": "YouTube 20.29.37 beta"
+  },
+  {
+    "version": "19.20.33",
+    "isBeta": false,
+    "title": "YouTube 19.20.33"
+  },
+  {
+    "version": "20.29.36",
+    "isBeta": true,
+    "title": "YouTube 20.29.36 beta"
+  },
+  {
+    "version": "20.28.37",
+    "isBeta": false,
+    "title": "YouTube 20.28.37"
+  },
+  {
+    "version": "20.29.34",
+    "isBeta": true,
+    "title": "YouTube 20.29.34 beta"
+  },
+  {
+    "version": "20.26.46",
+    "isBeta": false,
+    "title": "YouTube 20.26.46"
+  },
+  {
+    "version": "20.26.45",
+    "isBeta": false,
+    "title": "YouTube 20.26.45"
+  },
+  {
+    "version": "20.28.35",
+    "isBeta": true,
+    "title": "YouTube 20.28.35 beta"
+  },
+  {
+    "version": "20.28.34",
+    "isBeta": true,
+    "title": "YouTube 20.28.34 beta"
+  },
+  {
+    "version": "20.28.33",
+    "isBeta": true,
+    "title": "YouTube 20.28.33 beta"
+  },
+  {
+    "version": "20.26.44",
+    "isBeta": false,
+    "title": "YouTube 20.26.44"
+  },
+  {
+    "version": "20.28.32",
+    "isBeta": true,
+    "title": "YouTube 20.28.32 beta"
+  },
+  {
+    "version": "20.26.40",
+    "isBeta": false,
+    "title": "YouTube 20.26.40"
+  },
+  {
+    "version": "20.26.38",
+    "isBeta": true,
+    "title": "YouTube 20.26.38 beta"
+  },
+  {
+    "version": "20.25.37",
+    "isBeta": false,
+    "title": "YouTube 20.25.37"
+  },
+  {
+    "version": "20.24.40",
+    "isBeta": false,
+    "title": "YouTube 20.24.40"
+  },
+  {
+    "version": "20.26.35",
+    "isBeta": true,
+    "title": "YouTube 20.26.35 beta"
+  },
+  {
+    "version": "20.26.34",
+    "isBeta": true,
+    "title": "YouTube 20.26.34 beta"
+  },
+  {
+    "version": "20.26.32",
+    "isBeta": true,
+    "title": "YouTube 20.26.32 beta"
+  },
+  {
+    "version": "20.25.33",
+    "isBeta": true,
+    "title": "YouTube 20.25.33 beta"
+  },
+  {
+    "version": "20.25.32",
+    "isBeta": true,
+    "title": "YouTube 20.25.32 beta"
+  },
+  {
+    "version": "20.24.39",
+    "isBeta": false,
+    "title": "YouTube 20.24.39"
+  },
+  {
+    "version": "20.24.37",
+    "isBeta": true,
+    "title": "YouTube 20.24.37 beta"
+  },
+  {
+    "version": "20.23.40",
+    "isBeta": false,
+    "title": "YouTube 20.23.40"
+  },
+  {
+    "version": "20.23.39",
+    "isBeta": false,
+    "title": "YouTube 20.23.39"
+  },
+  {
+    "version": "20.24.34",
+    "isBeta": true,
+    "title": "YouTube 20.24.34 beta"
+  },
+  {
+    "version": "20.24.33",
+    "isBeta": true,
+    "title": "YouTube 20.24.33 beta"
+  },
+  {
+    "version": "20.23.37",
+    "isBeta": false,
+    "title": "YouTube 20.23.37"
+  },
+  {
+    "version": "20.23.35",
+    "isBeta": true,
+    "title": "YouTube 20.23.35 beta"
+  },
+  {
+    "version": "20.23.34",
+    "isBeta": true,
+    "title": "YouTube 20.23.34 beta"
+  },
+  {
+    "version": "20.22.36",
+    "isBeta": false,
+    "title": "YouTube 20.22.36"
+  },
+  {
+    "version": "20.21.37",
+    "isBeta": false,
+    "title": "YouTube 20.21.37"
+  },
+  {
+    "version": "20.22.34",
+    "isBeta": true,
+    "title": "YouTube 20.22.34 beta"
+  },
+  {
+    "version": "20.20.42",
+    "isBeta": false,
+    "title": "YouTube 20.20.42"
+  },
+  {
+    "version": "20.21.35",
+    "isBeta": false,
+    "title": "YouTube 20.21.35"
+  },
+  {
+    "version": "20.21.33",
+    "isBeta": true,
+    "title": "YouTube 20.21.33 beta"
+  },
+  {
+    "version": "20.20.41",
+    "isBeta": false,
+    "title": "YouTube 20.20.41"
+  },
+  {
+    "version": "20.21.32",
+    "isBeta": true,
+    "title": "YouTube 20.21.32 beta"
+  },
+  {
+    "version": "20.20.39",
+    "isBeta": true,
+    "title": "YouTube 20.20.39 beta"
+  },
+  {
+    "version": "20.19.43",
+    "isBeta": false,
+    "title": "YouTube 20.19.43"
+  },
+  {
+    "version": "20.20.36",
+    "isBeta": true,
+    "title": "YouTube 20.20.36 beta"
+  },
+  {
+    "version": "20.20.35",
+    "isBeta": true,
+    "title": "YouTube 20.20.35 beta"
+  },
+  {
+    "version": "20.20.34",
+    "isBeta": true,
+    "title": "YouTube 20.20.34 beta"
+  },
+  {
+    "version": "20.20.33",
+    "isBeta": true,
+    "title": "YouTube 20.20.33 beta"
+  },
+  {
+    "version": "20.19.37",
+    "isBeta": false,
+    "title": "YouTube 20.19.37"
+  },
+  {
+    "version": "20.18.36",
+    "isBeta": false,
+    "title": "YouTube 20.18.36"
+  },
+  {
+    "version": "20.19.35",
+    "isBeta": true,
+    "title": "YouTube 20.19.35 beta"
+  },
+  {
+    "version": "20.19.33",
+    "isBeta": true,
+    "title": "YouTube 20.19.33 beta"
+  },
+  {
+    "version": "20.19.32",
+    "isBeta": true,
+    "title": "YouTube 20.19.32 beta"
+  },
+  {
+    "version": "20.18.34",
+    "isBeta": false,
+    "title": "YouTube 20.18.34"
+  },
+  {
+    "version": "20.17.41",
+    "isBeta": false,
+    "title": "YouTube 20.17.41"
+  },
+  {
+    "version": "20.17.39",
+    "isBeta": false,
+    "title": "YouTube 20.17.39"
+  },
+  {
+    "version": "20.18.32",
+    "isBeta": true,
+    "title": "YouTube 20.18.32 beta"
+  },
+  {
+    "version": "20.16.40",
+    "isBeta": false,
+    "title": "YouTube 20.16.40"
+  },
+  {
+    "version": "20.17.36",
+    "isBeta": true,
+    "title": "YouTube 20.17.36 beta"
+  },
+  {
+    "version": "20.17.34",
+    "isBeta": true,
+    "title": "YouTube 20.17.34 beta"
+  },
+  {
+    "version": "20.17.33",
+    "isBeta": true,
+    "title": "YouTube 20.17.33 beta"
+  },
+  {
+    "version": "20.16.38",
+    "isBeta": false,
+    "title": "YouTube 20.16.38"
+  },
+  {
+    "version": "20.15.40",
+    "isBeta": false,
+    "title": "YouTube 20.15.40"
+  },
+  {
+    "version": "20.16.37",
+    "isBeta": false,
+    "title": "YouTube 20.16.37"
+  },
+  {
+    "version": "20.16.36",
+    "isBeta": true,
+    "title": "YouTube 20.16.36 beta"
+  },
+  {
+    "version": "20.16.35",
+    "isBeta": true,
+    "title": "YouTube 20.16.35 beta"
+  },
+  {
+    "version": "20.16.34",
+    "isBeta": true,
+    "title": "YouTube 20.16.34 beta"
+  },
+  {
+    "version": "20.15.38",
+    "isBeta": false,
+    "title": "YouTube 20.15.38"
+  },
+  {
+    "version": "20.14.43",
+    "isBeta": false,
+    "title": "YouTube 20.14.43"
+  },
+  {
+    "version": "20.13.41",
+    "isBeta": false,
+    "title": "YouTube 20.13.41"
+  },
+  {
+    "version": "20.15.36",
+    "isBeta": true,
+    "title": "YouTube 20.15.36 beta"
+  },
+  {
+    "version": "20.15.32",
+    "isBeta": true,
+    "title": "YouTube 20.15.32 beta"
+  },
+  {
+    "version": "20.13.39",
+    "isBeta": false,
+    "title": "YouTube 20.13.39"
+  },
+  {
+    "version": "20.14.36",
+    "isBeta": true,
+    "title": "YouTube 20.14.36 beta"
+  },
+  {
+    "version": "20.14.35",
+    "isBeta": true,
+    "title": "YouTube 20.14.35 beta"
+  },
+  {
+    "version": "20.14.33",
+    "isBeta": true,
+    "title": "YouTube 20.14.33 beta"
+  },
+  {
+    "version": "20.14.32",
+    "isBeta": true,
+    "title": "YouTube 20.14.32 beta"
+  },
+  {
+    "version": "20.13.37",
+    "isBeta": false,
+    "title": "YouTube 20.13.37"
+  },
+  {
+    "version": "20.12.46",
+    "isBeta": false,
+    "title": "YouTube 20.12.46"
+  },
+  {
+    "version": "20.13.36",
+    "isBeta": false,
+    "title": "YouTube 20.13.36"
+  },
+  {
+    "version": "20.13.35",
+    "isBeta": false,
+    "title": "YouTube 20.13.35"
+  },
+  {
+    "version": "20.13.34",
+    "isBeta": true,
+    "title": "YouTube 20.13.34 beta"
+  },
+  {
+    "version": "20.13.32",
+    "isBeta": true,
+    "title": "YouTube 20.13.32 beta"
+  },
+  {
+    "version": "20.12.38",
+    "isBeta": false,
+    "title": "YouTube 20.12.38"
+  },
+  {
+    "version": "20.12.36",
+    "isBeta": true,
+    "title": "YouTube 20.12.36 beta"
+  },
+  {
+    "version": "20.11.43",
+    "isBeta": false,
+    "title": "YouTube 20.11.43"
+  },
+  {
+    "version": "20.12.34",
+    "isBeta": true,
+    "title": "YouTube 20.12.34 beta"
+  },
+  {
+    "version": "20.11.41",
+    "isBeta": false,
+    "title": "YouTube 20.11.41"
+  },
+  {
+    "version": "20.12.33",
+    "isBeta": true,
+    "title": "YouTube 20.12.33 beta"
+  },
+  {
+    "version": "20.11.37",
+    "isBeta": false,
+    "title": "YouTube 20.11.37"
+  },
+  {
+    "version": "20.10.40",
+    "isBeta": false,
+    "title": "YouTube 20.10.40"
+  },
+  {
+    "version": "20.11.35",
+    "isBeta": true,
+    "title": "YouTube 20.11.35 beta"
+  },
+  {
+    "version": "19.17.42",
+    "isBeta": false,
+    "title": "YouTube 19.17.42"
+  },
+  {
+    "version": "20.11.33",
+    "isBeta": true,
+    "title": "YouTube 20.11.33 beta"
+  },
+  {
+    "version": "20.11.32",
+    "isBeta": true,
+    "title": "YouTube 20.11.32 beta"
+  },
+  {
+    "version": "20.10.38",
+    "isBeta": true,
+    "title": "YouTube 20.10.38 beta"
+  },
+  {
+    "version": "20.09.41",
+    "isBeta": false,
+    "title": "YouTube 20.09.41"
+  },
+  {
+    "version": "20.09.40",
+    "isBeta": false,
+    "title": "YouTube 20.09.40"
+  },
+  {
+    "version": "20.10.36",
+    "isBeta": true,
+    "title": "YouTube 20.10.36 beta"
+  },
+  {
+    "version": "20.10.35",
+    "isBeta": true,
+    "title": "YouTube 20.10.35 beta"
+  },
+  {
+    "version": "20.10.33",
+    "isBeta": true,
+    "title": "YouTube 20.10.33 beta"
+  },
+  {
+    "version": "20.09.39",
+    "isBeta": false,
+    "title": "YouTube 20.09.39"
+  },
+  {
+    "version": "20.10.32",
+    "isBeta": true,
+    "title": "YouTube 20.10.32 beta"
+  },
+  {
+    "version": "20.09.37",
+    "isBeta": true,
+    "title": "YouTube 20.09.37 beta"
+  },
+  {
+    "version": "20.08.38",
+    "isBeta": false,
+    "title": "YouTube 20.08.38"
+  },
+  {
+    "version": "20.09.34",
+    "isBeta": true,
+    "title": "YouTube 20.09.34 beta"
+  },
+  {
+    "version": "20.09.33",
+    "isBeta": true,
+    "title": "YouTube 20.09.33 beta"
+  },
+  {
+    "version": "20.09.32",
+    "isBeta": true,
+    "title": "YouTube 20.09.32 beta"
+  },
+  {
+    "version": "20.08.36",
+    "isBeta": false,
+    "title": "YouTube 20.08.36"
+  },
+  {
+    "version": "20.08.34",
+    "isBeta": true,
+    "title": "YouTube 20.08.34 beta"
+  },
+  {
+    "version": "20.07.39",
+    "isBeta": false,
+    "title": "YouTube 20.07.39"
+  },
+  {
+    "version": "20.08.33",
+    "isBeta": true,
+    "title": "YouTube 20.08.33 beta"
+  },
+  {
+    "version": "20.07.37",
+    "isBeta": true,
+    "title": "YouTube 20.07.37 beta"
+  },
+  {
+    "version": "20.08.32",
+    "isBeta": true,
+    "title": "YouTube 20.08.32 beta"
+  },
+  {
+    "version": "20.07.33",
+    "isBeta": true,
+    "title": "YouTube 20.07.33 beta"
+  },
+  {
+    "version": "20.06.42",
+    "isBeta": false,
+    "title": "YouTube 20.06.42"
+  },
+  {
+    "version": "20.06.39",
+    "isBeta": false,
+    "title": "YouTube 20.06.39"
+  },
+  {
+    "version": "20.06.38",
+    "isBeta": false,
+    "title": "YouTube 20.06.38"
+  },
+  {
+    "version": "20.05.46",
+    "isBeta": false,
+    "title": "YouTube 20.05.46"
+  },
+  {
+    "version": "20.07.32",
+    "isBeta": true,
+    "title": "YouTube 20.07.32 beta"
+  },
+  {
+    "version": "20.06.36",
+    "isBeta": false,
+    "title": "YouTube 20.06.36"
+  },
+  {
+    "version": "20.06.34",
+    "isBeta": true,
+    "title": "YouTube 20.06.34 beta"
+  },
+  {
+    "version": "20.05.44",
+    "isBeta": false,
+    "title": "YouTube 20.05.44"
+  },
+  {
+    "version": "20.05.41",
+    "isBeta": false,
+    "title": "YouTube 20.05.41"
+  },
+  {
+    "version": "20.06.33",
+    "isBeta": true,
+    "title": "YouTube 20.06.33 beta"
+  },
+  {
+    "version": "20.05.40",
+    "isBeta": false,
+    "title": "YouTube 20.05.40"
+  },
+  {
+    "version": "20.05.35",
+    "isBeta": false,
+    "title": "YouTube 20.05.35"
+  },
+  {
+    "version": "20.05.34",
+    "isBeta": false,
+    "title": "YouTube 20.05.34"
+  },
+  {
+    "version": "20.04.46",
+    "isBeta": false,
+    "title": "YouTube 20.04.46"
+  },
+  {
+    "version": "20.04.45",
+    "isBeta": false,
+    "title": "YouTube 20.04.45"
+  },
+  {
+    "version": "20.04.42",
+    "isBeta": false,
+    "title": "YouTube 20.04.42"
+  },
+  {
+    "version": "20.05.33",
+    "isBeta": true,
+    "title": "YouTube 20.05.33 beta"
+  },
+  {
+    "version": "20.05.32",
+    "isBeta": true,
+    "title": "YouTube 20.05.32 beta"
+  },
+  {
+    "version": "20.04.40",
+    "isBeta": false,
+    "title": "YouTube 20.04.40"
+  },
+  {
+    "version": "20.03.45",
+    "isBeta": false,
+    "title": "YouTube 20.03.45"
+  },
+  {
+    "version": "20.04.38",
+    "isBeta": false,
+    "title": "YouTube 20.04.38"
+  },
+  {
+    "version": "20.04.35",
+    "isBeta": false,
+    "title": "YouTube 20.04.35"
+  },
+  {
+    "version": "20.03.43",
+    "isBeta": false,
+    "title": "YouTube 20.03.43"
+  },
+  {
+    "version": "20.03.40",
+    "isBeta": false,
+    "title": "YouTube 20.03.40"
+  },
+  {
+    "version": "20.04.32",
+    "isBeta": true,
+    "title": "YouTube 20.04.32 beta"
+  },
+  {
+    "version": "20.03.37",
+    "isBeta": false,
+    "title": "YouTube 20.03.37"
+  },
+  {
+    "version": "20.02.40",
+    "isBeta": false,
+    "title": "YouTube 20.02.40"
+  },
+  {
+    "version": "20.02.41",
+    "isBeta": false,
+    "title": "YouTube 20.02.41"
+  },
+  {
+    "version": "19.50.41",
+    "isBeta": false,
+    "title": "YouTube 19.50.41"
+  },
+  {
+    "version": "20.03.35",
+    "isBeta": true,
+    "title": "YouTube 20.03.35 beta"
+  },
+  {
+    "version": "20.02.38",
+    "isBeta": true,
+    "title": "YouTube 20.02.38 beta"
+  },
+  {
+    "version": "20.03.32",
+    "isBeta": true,
+    "title": "YouTube 20.03.32 beta"
+  },
+  {
+    "version": "20.02.35",
+    "isBeta": true,
+    "title": "YouTube 20.02.35 beta"
+  },
+  {
+    "version": "20.02.34",
+    "isBeta": true,
+    "title": "YouTube 20.02.34 beta"
+  },
+  {
+    "version": "19.50.40",
+    "isBeta": false,
+    "title": "YouTube 19.50.40"
+  },
+  {
+    "version": "19.50.38",
+    "isBeta": true,
+    "title": "YouTube 19.50.38 beta"
+  },
+  {
+    "version": "19.50.36",
+    "isBeta": true,
+    "title": "YouTube 19.50.36 beta"
+  },
+  {
+    "version": "19.49.39",
+    "isBeta": false,
+    "title": "YouTube 19.49.39"
+  },
+  {
+    "version": "19.50.34",
+    "isBeta": true,
+    "title": "YouTube 19.50.34 beta"
+  },
+  {
+    "version": "19.50.33",
+    "isBeta": true,
+    "title": "YouTube 19.50.33 beta"
+  },
+  {
+    "version": "19.49.36",
+    "isBeta": false,
+    "title": "YouTube 19.49.36"
+  },
+  {
+    "version": "19.49.34",
+    "isBeta": true,
+    "title": "YouTube 19.49.34 beta"
+  },
+  {
+    "version": "19.47.53",
+    "isBeta": false,
+    "title": "YouTube 19.47.53"
+  },
+  {
+    "version": "19.47.51",
+    "isBeta": false,
+    "title": "YouTube 19.47.51"
+  },
+  {
+    "version": "19.49.33",
+    "isBeta": true,
+    "title": "YouTube 19.49.33 beta"
+  },
+  {
+    "version": "19.49.32",
+    "isBeta": true,
+    "title": "YouTube 19.49.32 beta"
+  },
+  {
+    "version": "19.47.41",
+    "isBeta": false,
+    "title": "YouTube 19.47.41"
+  },
+  {
+    "version": "19.47.39",
+    "isBeta": false,
+    "title": "YouTube 19.47.39"
+  },
+  {
+    "version": "19.46.42",
+    "isBeta": false,
+    "title": "YouTube 19.46.42"
+  },
+  {
+    "version": "19.46.40",
+    "isBeta": false,
+    "title": "YouTube 19.46.40"
+  },
+  {
+    "version": "19.47.36",
+    "isBeta": false,
+    "title": "YouTube 19.47.36"
+  },
+  {
+    "version": "19.46.38",
+    "isBeta": false,
+    "title": "YouTube 19.46.38"
+  },
+  {
+    "version": "19.47.33",
+    "isBeta": true,
+    "title": "YouTube 19.47.33 beta"
+  },
+  {
+    "version": "19.45.38",
+    "isBeta": false,
+    "title": "YouTube 19.45.38"
+  },
+  {
+    "version": "19.46.36",
+    "isBeta": false,
+    "title": "YouTube 19.46.36"
+  },
+  {
+    "version": "19.46.34",
+    "isBeta": true,
+    "title": "YouTube 19.46.34 beta"
+  },
+  {
+    "version": "19.46.33",
+    "isBeta": true,
+    "title": "YouTube 19.46.33 beta"
+  },
+  {
+    "version": "19.46.32",
+    "isBeta": true,
+    "title": "YouTube 19.46.32 beta"
+  },
+  {
+    "version": "19.45.35",
+    "isBeta": false,
+    "title": "YouTube 19.45.35"
+  },
+  {
+    "version": "19.45.36",
+    "isBeta": false,
+    "title": "YouTube 19.45.36"
+  },
+  {
+    "version": "19.44.39",
+    "isBeta": false,
+    "title": "YouTube 19.44.39"
+  },
+  {
+    "version": "19.44.38",
+    "isBeta": false,
+    "title": "YouTube 19.44.38"
+  },
+  {
+    "version": "19.45.34",
+    "isBeta": true,
+    "title": "YouTube 19.45.34 beta"
+  },
+  {
+    "version": "19.44.37",
+    "isBeta": false,
+    "title": "YouTube 19.44.37"
+  },
+  {
+    "version": "19.45.33",
+    "isBeta": true,
+    "title": "YouTube 19.45.33 beta"
+  },
+  {
+    "version": "19.45.32",
+    "isBeta": true,
+    "title": "YouTube 19.45.32 beta"
+  },
+  {
+    "version": "19.43.38",
+    "isBeta": true,
+    "title": "YouTube 19.43.38 beta"
+  },
+  {
+    "version": "19.43.41",
+    "isBeta": false,
+    "title": "YouTube 19.43.41"
+  },
+  {
+    "version": "19.43.40",
+    "isBeta": false,
+    "title": "YouTube 19.43.40"
+  },
+  {
+    "version": "19.44.32",
+    "isBeta": true,
+    "title": "YouTube 19.44.32 beta"
+  },
+  {
+    "version": "19.43.36",
+    "isBeta": false,
+    "title": "YouTube 19.43.36"
+  },
+  {
+    "version": "19.42.41",
+    "isBeta": false,
+    "title": "YouTube 19.42.41"
+  },
+  {
+    "version": "19.43.34",
+    "isBeta": true,
+    "title": "YouTube 19.43.34 beta"
+  },
+  {
+    "version": "19.43.32",
+    "isBeta": true,
+    "title": "YouTube 19.43.32 beta"
+  },
+  {
+    "version": "19.42.37",
+    "isBeta": false,
+    "title": "YouTube 19.42.37"
+  },
+  {
+    "version": "19.41.41",
+    "isBeta": false,
+    "title": "YouTube 19.41.41"
+  },
+  {
+    "version": "19.42.34",
+    "isBeta": true,
+    "title": "YouTube 19.42.34 beta"
+  },
+  {
+    "version": "19.42.33",
+    "isBeta": true,
+    "title": "YouTube 19.42.33 beta"
+  },
+  {
+    "version": "19.42.32",
+    "isBeta": true,
+    "title": "YouTube 19.42.32 beta"
+  },
+  {
+    "version": "19.41.39",
+    "isBeta": false,
+    "title": "YouTube 19.41.39"
+  },
+  {
+    "version": "19.40.37",
+    "isBeta": false,
+    "title": "YouTube 19.40.37"
+  },
+  {
+    "version": "19.41.37",
+    "isBeta": true,
+    "title": "YouTube 19.41.37 beta"
+  },
+  {
+    "version": "19.41.34",
+    "isBeta": true,
+    "title": "YouTube 19.41.34 beta"
+  },
+  {
+    "version": "19.40.35",
+    "isBeta": false,
+    "title": "YouTube 19.40.35"
+  },
+  {
+    "version": "19.39.39",
+    "isBeta": false,
+    "title": "YouTube 19.39.39"
+  },
+  {
+    "version": "19.40.33",
+    "isBeta": true,
+    "title": "YouTube 19.40.33 beta"
+  },
+  {
+    "version": "19.38.41",
+    "isBeta": false,
+    "title": "YouTube 19.38.41"
+  },
+  {
+    "version": "19.40.32",
+    "isBeta": true,
+    "title": "YouTube 19.40.32 beta"
+  },
+  {
+    "version": "19.39.37",
+    "isBeta": false,
+    "title": "YouTube 19.39.37"
+  },
+  {
+    "version": "19.38.39",
+    "isBeta": false,
+    "title": "YouTube 19.38.39"
+  },
+  {
+    "version": "19.39.35",
+    "isBeta": true,
+    "title": "YouTube 19.39.35 beta"
+  },
+  {
+    "version": "19.39.33",
+    "isBeta": true,
+    "title": "YouTube 19.39.33 beta"
+  },
+  {
+    "version": "19.39.32",
+    "isBeta": true,
+    "title": "YouTube 19.39.32 beta"
+  },
+  {
+    "version": "19.38.37",
+    "isBeta": false,
+    "title": "YouTube 19.38.37"
+  },
+  {
+    "version": "19.37.39",
+    "isBeta": false,
+    "title": "YouTube 19.37.39"
+  },
+  {
+    "version": "19.38.35",
+    "isBeta": false,
+    "title": "YouTube 19.38.35"
+  },
+  {
+    "version": "19.38.34",
+    "isBeta": true,
+    "title": "YouTube 19.38.34 beta"
+  },
+  {
+    "version": "19.36.44",
+    "isBeta": false,
+    "title": "YouTube 19.36.44"
+  },
+  {
+    "version": "19.38.33",
+    "isBeta": true,
+    "title": "YouTube 19.38.33 beta"
+  },
+  {
+    "version": "19.36.42",
+    "isBeta": false,
+    "title": "YouTube 19.36.42"
+  },
+  {
+    "version": "19.36.38",
+    "isBeta": false,
+    "title": "YouTube 19.36.38"
+  },
+  {
+    "version": "19.37.35",
+    "isBeta": false,
+    "title": "YouTube 19.37.35"
+  },
+  {
+    "version": "19.37.33",
+    "isBeta": true,
+    "title": "YouTube 19.37.33 beta"
+  },
+  {
+    "version": "19.37.32",
+    "isBeta": true,
+    "title": "YouTube 19.37.32 beta"
+  },
+  {
+    "version": "19.36.37",
+    "isBeta": false,
+    "title": "YouTube 19.36.37"
+  },
+  {
+    "version": "19.36.35",
+    "isBeta": true,
+    "title": "YouTube 19.36.35 beta"
+  },
+  {
+    "version": "19.36.32",
+    "isBeta": true,
+    "title": "YouTube 19.36.32 beta"
+  },
+  {
+    "version": "19.35.36",
+    "isBeta": false,
+    "title": "YouTube 19.35.36"
+  },
+  {
+    "version": "19.35.34",
+    "isBeta": true,
+    "title": "YouTube 19.35.34 beta"
+  },
+  {
+    "version": "19.35.32",
+    "isBeta": true,
+    "title": "YouTube 19.35.32 beta"
+  },
+  {
+    "version": "19.34.42",
+    "isBeta": false,
+    "title": "YouTube 19.34.42"
+  },
+  {
+    "version": "19.33.36",
+    "isBeta": false,
+    "title": "YouTube 19.33.36"
+  },
+  {
+    "version": "19.34.39",
+    "isBeta": true,
+    "title": "YouTube 19.34.39 beta"
+  },
+  {
+    "version": "19.34.34",
+    "isBeta": true,
+    "title": "YouTube 19.34.34 beta"
+  },
+  {
+    "version": "19.34.32",
+    "isBeta": true,
+    "title": "YouTube 19.34.32 beta"
+  },
+  {
+    "version": "19.33.35",
+    "isBeta": false,
+    "title": "YouTube 19.33.35"
+  },
+  {
+    "version": "19.07.39",
+    "isBeta": false,
+    "title": "YouTube 19.07.39"
+  },
+  {
+    "version": "19.33.33",
+    "isBeta": true,
+    "title": "YouTube 19.33.33 beta"
+  },
+  {
+    "version": "19.33.32",
+    "isBeta": true,
+    "title": "YouTube 19.33.32 beta"
+  },
+  {
+    "version": "19.32.36",
+    "isBeta": false,
+    "title": "YouTube 19.32.36"
+  },
+  {
+    "version": "19.32.34",
+    "isBeta": true,
+    "title": "YouTube 19.32.34 beta"
+  },
+  {
+    "version": "19.31.36",
+    "isBeta": false,
+    "title": "YouTube 19.31.36"
+  },
+  {
+    "version": "19.32.32",
+    "isBeta": true,
+    "title": "YouTube 19.32.32 beta"
+  },
+  {
+    "version": "19.31.34",
+    "isBeta": true,
+    "title": "YouTube 19.31.34 beta"
+  },
+  {
+    "version": "19.30.39",
+    "isBeta": false,
+    "title": "YouTube 19.30.39"
+  },
+  {
+    "version": "19.31.33",
+    "isBeta": true,
+    "title": "YouTube 19.31.33 beta"
+  },
+  {
+    "version": "19.31.32",
+    "isBeta": true,
+    "title": "YouTube 19.31.32 beta"
+  },
+  {
+    "version": "19.30.36",
+    "isBeta": false,
+    "title": "YouTube 19.30.36"
+  },
+  {
+    "version": "19.29.42",
+    "isBeta": false,
+    "title": "YouTube 19.29.42"
+  },
+  {
+    "version": "19.30.34",
+    "isBeta": true,
+    "title": "YouTube 19.30.34 beta"
+  },
+  {
+    "version": "19.29.40",
+    "isBeta": false,
+    "title": "YouTube 19.29.40"
+  },
+  {
+    "version": "19.28.42",
+    "isBeta": false,
+    "title": "YouTube 19.28.42"
+  },
+  {
+    "version": "19.30.32",
+    "isBeta": true,
+    "title": "YouTube 19.30.32 beta"
+  },
+  {
+    "version": "19.29.37",
+    "isBeta": false,
+    "title": "YouTube 19.29.37"
+  },
+  {
+    "version": "19.17.34",
+    "isBeta": false,
+    "title": "YouTube 19.17.34"
+  },
+  {
+    "version": "19.29.35",
+    "isBeta": true,
+    "title": "YouTube 19.29.35 beta"
+  },
+  {
+    "version": "19.29.33",
+    "isBeta": true,
+    "title": "YouTube 19.29.33 beta"
+  },
+  {
+    "version": "19.28.35",
+    "isBeta": false,
+    "title": "YouTube 19.28.35"
+  },
+  {
+    "version": "19.26.42",
+    "isBeta": false,
+    "title": "YouTube 19.26.42"
+  },
+  {
+    "version": "19.28.33",
+    "isBeta": true,
+    "title": "YouTube 19.28.33 beta"
+  },
+  {
+    "version": "19.28.32",
+    "isBeta": true,
+    "title": "YouTube 19.28.32 beta"
+  },
+  {
+    "version": "19.26.37",
+    "isBeta": false,
+    "title": "YouTube 19.26.37"
+  },
+  {
+    "version": "19.26.34",
+    "isBeta": true,
+    "title": "YouTube 19.26.34 beta"
+  },
+  {
+    "version": "19.25.39",
+    "isBeta": false,
+    "title": "YouTube 19.25.39"
+  },
+  {
+    "version": "19.25.37",
+    "isBeta": false,
+    "title": "YouTube 19.25.37"
+  },
+  {
+    "version": "19.25.36",
+    "isBeta": false,
+    "title": "YouTube 19.25.36"
+  },
+  {
+    "version": "19.25.34",
+    "isBeta": true,
+    "title": "YouTube 19.25.34 beta"
+  },
+  {
+    "version": "19.26.33",
+    "isBeta": true,
+    "title": "YouTube 19.26.33 beta"
+  },
+  {
+    "version": "19.24.45",
+    "isBeta": false,
+    "title": "YouTube 19.24.45"
+  },
+  {
+    "version": "18.49.36",
+    "isBeta": false,
+    "title": "YouTube 18.49.36"
+  },
+  {
+    "version": "19.24.39",
+    "isBeta": false,
+    "title": "YouTube 19.24.39"
+  },
+  {
+    "version": "19.25.33",
+    "isBeta": true,
+    "title": "YouTube 19.25.33 beta"
+  },
+  {
+    "version": "19.24.38",
+    "isBeta": false,
+    "title": "YouTube 19.24.38"
+  },
+  {
+    "version": "19.24.35",
+    "isBeta": true,
+    "title": "YouTube 19.24.35 beta"
+  },
+  {
+    "version": "19.23.40",
+    "isBeta": false,
+    "title": "YouTube 19.23.40"
+  },
+  {
+    "version": "19.23.39",
+    "isBeta": false,
+    "title": "YouTube 19.23.39"
+  },
+  {
+    "version": "19.24.34",
+    "isBeta": true,
+    "title": "YouTube 19.24.34 beta"
+  },
+  {
+    "version": "19.24.33",
+    "isBeta": true,
+    "title": "YouTube 19.24.33 beta"
+  },
+  {
+    "version": "19.23.38",
+    "isBeta": false,
+    "title": "YouTube 19.23.38"
+  },
+  {
+    "version": "19.23.36",
+    "isBeta": true,
+    "title": "YouTube 19.23.36 beta"
+  },
+  {
+    "version": "19.22.43",
+    "isBeta": false,
+    "title": "YouTube 19.22.43"
+  },
+  {
+    "version": "19.23.33",
+    "isBeta": true,
+    "title": "YouTube 19.23.33 beta"
+  },
+  {
+    "version": "19.22.40",
+    "isBeta": false,
+    "title": "YouTube 19.22.40"
+  },
+  {
+    "version": "19.22.38",
+    "isBeta": false,
+    "title": "YouTube 19.22.38"
+  },
+  {
+    "version": "19.23.32",
+    "isBeta": true,
+    "title": "YouTube 19.23.32 beta"
+  },
+  {
+    "version": "19.21.40",
+    "isBeta": false,
+    "title": "YouTube 19.21.40"
+  },
+  {
+    "version": "19.22.34",
+    "isBeta": false,
+    "title": "YouTube 19.22.34"
+  },
+  {
+    "version": "19.21.39",
+    "isBeta": false,
+    "title": "YouTube 19.21.39"
+  },
+  {
+    "version": "19.21.38",
+    "isBeta": false,
+    "title": "YouTube 19.21.38"
+  },
+  {
+    "version": "19.20.35",
+    "isBeta": false,
+    "title": "YouTube 19.20.35"
+  },
+  {
+    "version": "19.22.32",
+    "isBeta": true,
+    "title": "YouTube 19.22.32 beta"
+  },
+  {
+    "version": "19.21.37",
+    "isBeta": false,
+    "title": "YouTube 19.21.37"
+  },
+  {
+    "version": "19.20.34",
+    "isBeta": false,
+    "title": "YouTube 19.20.34"
+  },
+  {
+    "version": "19.21.34",
+    "isBeta": false,
+    "title": "YouTube 19.21.34"
+  },
+  {
+    "version": "19.21.33",
+    "isBeta": true,
+    "title": "YouTube 19.21.33 beta"
+  },
+  {
+    "version": "19.21.32",
+    "isBeta": true,
+    "title": "YouTube 19.21.32 beta"
+  },
+  {
+    "version": "19.19.39",
+    "isBeta": false,
+    "title": "YouTube 19.19.39"
+  },
+  {
+    "version": "19.20.32",
+    "isBeta": true,
+    "title": "YouTube 19.20.32 beta"
+  },
+  {
+    "version": "19.19.38",
+    "isBeta": true,
+    "title": "YouTube 19.19.38 beta"
+  },
+  {
+    "version": "19.18.41",
+    "isBeta": false,
+    "title": "YouTube 19.18.41"
+  },
+  {
+    "version": "19.19.37",
+    "isBeta": false,
+    "title": "YouTube 19.19.37"
+  },
+  {
+    "version": "19.19.36",
+    "isBeta": true,
+    "title": "YouTube 19.19.36 beta"
+  },
+  {
+    "version": "19.19.33",
+    "isBeta": true,
+    "title": "YouTube 19.19.33 beta"
+  },
+  {
+    "version": "19.19.32",
+    "isBeta": true,
+    "title": "YouTube 19.19.32 beta"
+  },
+  {
+    "version": "19.17.35",
+    "isBeta": false,
+    "title": "YouTube 19.17.35"
+  },
+  {
+    "version": "19.17.41",
+    "isBeta": false,
+    "title": "YouTube 19.17.41"
+  },
+  {
+    "version": "19.18.34",
+    "isBeta": false,
+    "title": "YouTube 19.18.34"
+  },
+  {
+    "version": "19.18.33",
+    "isBeta": true,
+    "title": "YouTube 19.18.33 beta"
+  },
+  {
+    "version": "19.17.37",
+    "isBeta": false,
+    "title": "YouTube 19.17.37"
+  },
+  {
+    "version": "19.18.32",
+    "isBeta": true,
+    "title": "YouTube 19.18.32 beta"
+  },
+  {
+    "version": "19.16.39",
+    "isBeta": false,
+    "title": "YouTube 19.16.39"
+  },
+  {
+    "version": "19.16.38",
+    "isBeta": false,
+    "title": "YouTube 19.16.38"
+  },
+  {
+    "version": "19.17.32",
+    "isBeta": true,
+    "title": "YouTube 19.17.32 beta"
+  },
+  {
+    "version": "19.16.37",
+    "isBeta": true,
+    "title": "YouTube 19.16.37 beta"
+  },
+  {
+    "version": "19.15.36",
+    "isBeta": false,
+    "title": "YouTube 19.15.36"
+  },
+  {
+    "version": "19.16.36",
+    "isBeta": true,
+    "title": "YouTube 19.16.36 beta"
+  },
+  {
+    "version": "19.16.32",
+    "isBeta": true,
+    "title": "YouTube 19.16.32 beta"
+  },
+  {
+    "version": "19.14.42",
+    "isBeta": false,
+    "title": "YouTube 19.14.42"
+  },
+  {
+    "version": "19.14.43",
+    "isBeta": false,
+    "title": "YouTube 19.14.43"
+  },
+  {
+    "version": "19.15.35",
+    "isBeta": false,
+    "title": "YouTube 19.15.35"
+  },
+  {
+    "version": "19.15.33",
+    "isBeta": true,
+    "title": "YouTube 19.15.33 beta"
+  },
+  {
+    "version": "19.14.40",
+    "isBeta": true,
+    "title": "YouTube 19.14.40 beta"
+  },
+  {
+    "version": "19.13.37",
+    "isBeta": false,
+    "title": "YouTube 19.13.37"
+  },
+  {
+    "version": "19.14.38",
+    "isBeta": true,
+    "title": "YouTube 19.14.38 beta"
+  },
+  {
+    "version": "19.14.35",
+    "isBeta": true,
+    "title": "YouTube 19.14.35 beta"
+  },
+  {
+    "version": "19.13.36",
+    "isBeta": false,
+    "title": "YouTube 19.13.36"
+  },
+  {
+    "version": "19.14.33",
+    "isBeta": true,
+    "title": "YouTube 19.14.33 beta"
+  },
+  {
+    "version": "19.12.41",
+    "isBeta": false,
+    "title": "YouTube 19.12.41"
+  },
+  {
+    "version": "18.18.38",
+    "isBeta": false,
+    "title": "YouTube 18.18.38"
+  },
+  {
+    "version": "19.13.35",
+    "isBeta": true,
+    "title": "YouTube 19.13.35 beta"
+  },
+  {
+    "version": "19.13.34",
+    "isBeta": true,
+    "title": "YouTube 19.13.34 beta"
+  },
+  {
+    "version": "19.13.32",
+    "isBeta": true,
+    "title": "YouTube 19.13.32 beta"
+  },
+  {
+    "version": "19.11.43",
+    "isBeta": false,
+    "title": "YouTube 19.11.43"
+  },
+  {
+    "version": "19.11.40",
+    "isBeta": false,
+    "title": "YouTube 19.11.40"
+  },
+  {
+    "version": "19.11.39",
+    "isBeta": false,
+    "title": "YouTube 19.11.39"
+  },
+  {
+    "version": "19.12.36",
+    "isBeta": false,
+    "title": "YouTube 19.12.36"
+  },
+  {
+    "version": "19.12.33",
+    "isBeta": true,
+    "title": "YouTube 19.12.33 beta"
+  },
+  {
+    "version": "19.11.38",
+    "isBeta": false,
+    "title": "YouTube 19.11.38"
+  },
+  {
+    "version": "19.12.32",
+    "isBeta": true,
+    "title": "YouTube 19.12.32 beta"
+  },
+  {
+    "version": "19.10.39",
+    "isBeta": false,
+    "title": "YouTube 19.10.39"
+  },
+  {
+    "version": "19.11.36",
+    "isBeta": false,
+    "title": "YouTube 19.11.36"
+  },
+  {
+    "version": "19.09.38",
+    "isBeta": false,
+    "title": "YouTube 19.09.38"
+  },
+  {
+    "version": "19.11.34",
+    "isBeta": true,
+    "title": "YouTube 19.11.34 beta"
+  },
+  {
+    "version": "19.10.38",
+    "isBeta": false,
+    "title": "YouTube 19.10.38"
+  },
+  {
+    "version": "19.10.37",
+    "isBeta": true,
+    "title": "YouTube 19.10.37 beta"
+  },
+  {
+    "version": "19.10.33",
+    "isBeta": true,
+    "title": "YouTube 19.10.33 beta"
+  },
+  {
+    "version": "19.10.32",
+    "isBeta": true,
+    "title": "YouTube 19.10.32 beta"
+  },
+  {
+    "version": "19.09.37",
+    "isBeta": false,
+    "title": "YouTube 19.09.37"
+  },
+  {
+    "version": "19.08.36",
+    "isBeta": false,
+    "title": "YouTube 19.08.36"
+  },
+  {
+    "version": "19.06.39",
+    "isBeta": false,
+    "title": "YouTube 19.06.39"
+  },
+  {
+    "version": "19.09.36",
+    "isBeta": true,
+    "title": "YouTube 19.09.36 beta"
+  },
+  {
+    "version": "19.09.34",
+    "isBeta": true,
+    "title": "YouTube 19.09.34 beta"
+  },
+  {
+    "version": "19.07.40",
+    "isBeta": false,
+    "title": "YouTube 19.07.40"
+  },
+  {
+    "version": "19.08.35",
+    "isBeta": false,
+    "title": "YouTube 19.08.35"
+  },
+  {
+    "version": "19.08.34",
+    "isBeta": true,
+    "title": "YouTube 19.08.34 beta"
+  },
+  {
+    "version": "19.08.32",
+    "isBeta": true,
+    "title": "YouTube 19.08.32 beta"
+  },
+  {
+    "version": "19.07.32",
+    "isBeta": true,
+    "title": "YouTube 19.07.32 beta"
+  },
+  {
+    "version": "19.05.36",
+    "isBeta": false,
+    "title": "YouTube 19.05.36"
+  }
+]
