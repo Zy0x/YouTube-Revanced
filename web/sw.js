@@ -1,11 +1,11 @@
-const CACHE_NAME = 'rvx-builder-v1';
+const CACHE_NAME = 'rvx-builder-v2';
 const ASSETS_TO_CACHE = [
   './index.html',
   './style.css',
   './app.js',
   './manifest.json',
-  '../config/sources.json',
-  '../config/golden-preset.json'
+  './config/sources.json',
+  './config/golden-preset.json'
 ];
 
 self.addEventListener('install', (event) => {

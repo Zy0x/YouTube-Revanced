@@ -78,36 +78,101 @@ async function verifyGithubToken(token) {
   }
 }
 
+const DEFAULT_SOURCES = [
+  {
+    id: "anddea",
+    name: "⭐ Anddea Patches (Default - Fitur Lengkap)",
+    repository: "anddea/revanced-patches",
+    manifestUrl: "https://raw.githubusercontent.com/anddea/revanced-patches/refs/heads/main/patches-list.json",
+    defaultReleaseType: "dev",
+    isDefault: true,
+    description: "Sumber patch utama dengan fitur terlengkap dan kustomisasi mendalam untuk YouTube RVX."
+  },
+  {
+    id: "morphe",
+    name: "Morphe Official (MorpheApp)",
+    repository: "MorpheApp/morphe-patches",
+    manifestUrl: "https://raw.githubusercontent.com/MorpheApp/morphe-patches/refs/heads/main/patches-list.json",
+    defaultReleaseType: "latest",
+    isDefault: false,
+    description: "Sumber patch resmi dari tim MorpheApp."
+  },
+  {
+    id: "inotia00",
+    name: "Inotia00 (ReVanced Extended)",
+    repository: "inotia00/revanced-patches",
+    manifestUrl: "https://raw.githubusercontent.com/inotia00/revanced-patches/refs/heads/revanced-extended/patches.json",
+    defaultReleaseType: "latest",
+    isDefault: false,
+    description: "Sumber ReVanced Extended klasik dari developer inotia00."
+  },
+  {
+    id: "revanced",
+    name: "ReVanced Official",
+    repository: "ReVanced/revanced-patches",
+    manifestUrl: "https://raw.githubusercontent.com/ReVanced/revanced-patches/refs/heads/main/patches.json",
+    defaultReleaseType: "latest",
+    isDefault: false,
+    description: "Sumber patch resmi dari ReVanced Team."
+  }
+];
+
+// =============================================================================
+// Helper Fetch dengan Multi-Mirror CDN (jsDelivr -> GitHub Raw)
+// =============================================================================
+async function fetchManifestWithFallback(url) {
+  const urlsToTry = [];
+
+  // Jika URL raw.githubusercontent.com, coba mirror jsDelivr terlebih dahulu
+  // jsDelivr jauh lebih cepat, stabil di ISP Indonesia, dan memiliki header CORS lengkap
+  if (url.includes('raw.githubusercontent.com')) {
+    const jsd = url
+      .replace('https://raw.githubusercontent.com/', 'https://cdn.jsdelivr.net/gh/')
+      .replace('/refs/heads/', '@');
+    urlsToTry.push(jsd);
+  }
+
+  urlsToTry.push(url);
+
+  for (const targetUrl of urlsToTry) {
+    try {
+      const res = await fetch(targetUrl);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn(`[RVX] Gagal fetch dari ${targetUrl}, mencoba mirror berikutnya...`, e);
+    }
+  }
+
+  throw new Error('Gagal menghubungi sumber patch dari semua mirror (jsDelivr & GitHub Raw)');
+}
+
 // =============================================================================
 // Load Sumber & Preset
 // =============================================================================
 async function loadSourcesAndPresets() {
   try {
     const [sourcesRes, presetRes] = await Promise.all([
-      fetch('../config/sources.json').catch(() => null),
-      fetch('../config/golden-preset.json').catch(() => null)
+      fetch('config/sources.json').catch(() => null) || fetch('../config/sources.json').catch(() => null),
+      fetch('config/golden-preset.json').catch(() => null) || fetch('../config/golden-preset.json').catch(() => null)
     ]);
 
     if (sourcesRes && sourcesRes.ok) {
       STATE.sources = await sourcesRes.json();
-      renderSourceSelector();
     } else {
-      STATE.sources = [
-        {
-          id: 'anddea',
-          name: '⭐ Anddea Patches (Default)',
-          manifestUrl: 'https://raw.githubusercontent.com/anddea/revanced-patches/refs/heads/main/patches-list.json',
-          description: 'Patch utama dengan opsi kustomisasi terlengkap.'
-        }
-      ];
+      STATE.sources = DEFAULT_SOURCES;
     }
 
     if (presetRes && presetRes.ok) {
       STATE.goldenPreset = await presetRes.json();
     }
   } catch (err) {
-    console.warn('Gagal memuat preset lokal, menggunakan konfigurasi standar:', err);
+    console.warn('Menggunakan konfigurasi default internal:', err);
+    STATE.sources = DEFAULT_SOURCES;
   }
+
+  renderSourceSelector();
 }
 
 function renderSourceSelector() {
@@ -166,15 +231,12 @@ async function fetchAndRenderPatches(sourceId) {
   versionContainer.innerHTML = '<p class="form-hint">Menganalisis manifest patch...</p>';
   patchContainer.innerHTML = '<div class="spinner"></div>';
 
-  const sourceConfig = STATE.sources.find(s => s.id === sourceId) || {
+  const sourceConfig = STATE.sources.find(s => s.id === sourceId) || STATE.sources[0] || {
     manifestUrl: 'https://raw.githubusercontent.com/anddea/revanced-patches/refs/heads/main/patches-list.json'
   };
 
   try {
-    const res = await fetch(sourceConfig.manifestUrl);
-    if (!res.ok) throw new Error('Gagal mengambil manifest patch');
-
-    const data = await res.json();
+    const data = await fetchManifestWithFallback(sourceConfig.manifestUrl);
     const rawPatches = data.patches || [];
     STATE.patches = rawPatches;
 
@@ -184,6 +246,7 @@ async function fetchAndRenderPatches(sourceId) {
 
     const recommendedVersion = sortedVersions[0] || '21.13.164';
     versionBadge.textContent = `${sortedVersions.length} Versi Kompatibel`;
+    versionBadge.className = 'badge badge-info';
 
     // 2. Render Pilihan Versi
     renderVersionSelector(sortedVersions, recommendedVersion);
@@ -195,11 +258,11 @@ async function fetchAndRenderPatches(sourceId) {
     applyGoldenPreset();
 
   } catch (err) {
-    console.error('Error memuat patch:', err);
+    console.error('[RVX] Error memuat patch:', err);
     versionBadge.textContent = 'Gagal';
     versionBadge.className = 'badge badge-gold';
-    versionContainer.innerHTML = '<p class="form-hint text-danger">Gagal menghubungi sumber patch.</p>';
-    patchContainer.innerHTML = '<p class="form-hint">Silakan periksa koneksi internet.</p>';
+    versionContainer.innerHTML = `<p class="form-hint text-danger">Gagal menghubungi sumber patch: ${escapeHtml(err.message)}</p>`;
+    patchContainer.innerHTML = '<p class="form-hint">Silakan periksa koneksi internet atau pilih sumber patch lain.</p>';
   }
 }
 
@@ -341,20 +404,23 @@ function renderPatchCategories(patches) {
         </div>
       `;
 
-      const checkbox = item.querySelector('input[type="checkbox"]');
-      checkbox.addEventListener('change', (e) => {
-        if (e.target.checked) {
-          STATE.selectedPatches.add(patch.name);
-        } else {
-          STATE.selectedPatches.delete(patch.name);
-        }
-        updatePatchCount();
-      });
+      const checkbox = item.querySelector('.switch input[type="checkbox"]');
+      if (checkbox) {
+        checkbox.addEventListener('change', (e) => {
+          if (e.target.checked) {
+            STATE.selectedPatches.add(patch.name);
+          } else {
+            STATE.selectedPatches.delete(patch.name);
+          }
+          updatePatchCount();
+        });
+      }
 
       // Bind listener opsi
       item.querySelectorAll('.patch-option-input').forEach(input => {
         input.addEventListener('change', (e) => {
-          STATE.selectedOptions[e.target.dataset.optKey] = e.target.value;
+          const val = input.type === 'checkbox' ? input.checked : input.value;
+          STATE.selectedOptions[e.target.dataset.optKey] = val;
         });
       });
 
@@ -380,7 +446,8 @@ function renderPatchOptions(options) {
   options.forEach(opt => {
     const key = opt.key;
     const title = opt.title || key;
-    const def = opt.default || '';
+    const rawDef = opt.default;
+    const defStr = String(rawDef ?? '');
 
     html += `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 0.85rem;">
       <span style="color: var(--text-secondary);">${escapeHtml(title)}:</span>`;
@@ -388,13 +455,21 @@ function renderPatchOptions(options) {
     if (opt.values && typeof opt.values === 'object') {
       html += `<select class="form-control form-control-sm patch-option-input" data-opt-key="${escapeHtml(key)}" style="width: auto; min-height: 36px; padding: 4px 8px;">`;
       Object.entries(opt.values).forEach(([label, val]) => {
-        html += `<option value="${escapeHtml(val)}" ${val === def ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+        html += `<option value="${escapeHtml(String(val))}" ${String(val) === defStr ? 'selected' : ''}>${escapeHtml(label)}</option>`;
       });
       html += `</select>`;
-    } else if (def.startsWith('#') || key.toLowerCase().includes('color')) {
-      html += `<input type="text" class="form-control form-control-sm patch-option-input" data-opt-key="${escapeHtml(key)}" value="${escapeHtml(def)}" style="width: 120px; min-height: 36px; padding: 4px 8px; font-family: monospace;">`;
+    } else if (typeof rawDef === 'boolean' || opt.type === 'Boolean' || opt.type === 'boolean') {
+      const isChecked = rawDef === true;
+      html += `
+        <label class="switch" style="transform: scale(0.85); margin: 0;">
+          <input type="checkbox" class="patch-option-input" data-opt-key="${escapeHtml(key)}" ${isChecked ? 'checked' : ''}>
+          <span class="slider"></span>
+        </label>
+      `;
+    } else if (defStr.startsWith('#') || key.toLowerCase().includes('color')) {
+      html += `<input type="text" class="form-control form-control-sm patch-option-input" data-opt-key="${escapeHtml(key)}" value="${escapeHtml(defStr)}" style="width: 120px; min-height: 36px; padding: 4px 8px; font-family: monospace;">`;
     } else {
-      html += `<input type="text" class="form-control form-control-sm patch-option-input" data-opt-key="${escapeHtml(key)}" value="${escapeHtml(def)}" placeholder="${escapeHtml(def)}" style="width: 180px; min-height: 36px; padding: 4px 8px;">`;
+      html += `<input type="text" class="form-control form-control-sm patch-option-input" data-opt-key="${escapeHtml(key)}" value="${escapeHtml(defStr)}" placeholder="${escapeHtml(defStr)}" style="width: 180px; min-height: 36px; padding: 4px 8px;">`;
     }
 
     html += `</div>`;
@@ -414,7 +489,9 @@ function applyGoldenPreset() {
     'Spoof Wi-Fi connection'
   ];
 
-  document.querySelectorAll('.patch-item input[type="checkbox"]').forEach(cb => {
+  document.querySelectorAll('.patch-item').forEach(item => {
+    const cb = item.querySelector('.switch input[type="checkbox"]');
+    if (!cb) return;
     const name = cb.dataset.name;
     if (excluded.includes(name)) {
       cb.checked = false;
@@ -433,13 +510,21 @@ function applyGoldenPreset() {
     'rvxSettingsLabel': 'RVX',
     'darkThemeColor': '#FF000000',
     'lightThemeColor': '#FFFFFFFF',
-    'settingsMenuIcon': 'extension'
+    'settingsMenuIcon': 'extension',
+    'widerButtonsSpace': false,
+    'changeTopButtons': true,
+    'precompileLegacyThemes': false,
+    'applyToAll': true
   };
 
   document.querySelectorAll('.patch-option-input').forEach(input => {
     const k = input.dataset.optKey;
-    if (STATE.selectedOptions[k]) {
-      input.value = STATE.selectedOptions[k];
+    if (STATE.selectedOptions[k] !== undefined) {
+      if (input.type === 'checkbox') {
+        input.checked = Boolean(STATE.selectedOptions[k]);
+      } else {
+        input.value = STATE.selectedOptions[k];
+      }
     }
   });
 

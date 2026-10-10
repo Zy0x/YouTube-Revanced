@@ -1,0 +1,64 @@
+{
+  "name": "Golden Preset (Zy0x Default - 81 Patches)",
+  "source": "anddea",
+  "app": "com.google.android.youtube",
+  "description": "Preset kustomisasi terbaik dengan ikon Cairo, AMOLED Pure Black (#000000), alignment SponsorBlock kanan, dan terjemahan lengkap.",
+  "excludedPatches": [
+    "Disable edge-to-edge display",
+    "Override certificate pinning",
+    "Spoof Wi-Fi connection"
+  ],
+  "rootExcludedPatches": [
+    "GmsCore support",
+    "Spoof signature"
+  ],
+  "nonRootIncludedPatches": [
+    "GmsCore support",
+    "Spoof signature"
+  ],
+  "options": {
+    "Custom Shorts action buttons": {
+      "iconType": "cairo"
+    },
+    "Custom branding for YouTube": {
+      "appIcon": "original"
+    },
+    "Custom double tap length": {
+      "doubleTapLengthArrays": "3, 5, 10, 15, 20, 30, 60, 120, 180"
+    },
+    "Overlay buttons": {
+      "iconType": "rounded",
+      "bottomMargin": "2.5dip",
+      "widerButtonsSpace": "false",
+      "changeTopButtons": "true"
+    },
+    "Settings for YouTube": {
+      "rvxSettingsLabel": "RVX"
+    },
+    "Snack bar components": {
+      "cornerRadius": "8.0dip",
+      "applyCornerRadiusToPlaylistBottomBar": "false",
+      "darkThemeBackgroundColor": "@color/yt_black3",
+      "lightThemeBackgroundColor": "@color/yt_white3",
+      "strokeColor": ""
+    },
+    "SponsorBlock": {
+      "NewSegmentAlignment": "right"
+    },
+    "Theme": {
+      "darkThemeColor": "#FF000000",
+      "lightThemeColor": "#FFFFFFFF",
+      "precompileLegacyThemes": "false"
+    },
+    "Visual preferences icons for YouTube": {
+      "settingsMenuIcon": "extension",
+      "applyToAll": "true"
+    },
+    "Hide shortcuts": {
+      "explore": "false",
+      "subscriptions": "false",
+      "search": "false",
+      "shorts": "false"
+    }
+  }
+}
