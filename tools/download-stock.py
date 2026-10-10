@@ -132,6 +132,11 @@ def main():
         sys.exit(1)
 
     version = sys.argv[1].lstrip('v')
+    # Validasi format versi untuk mencegah path traversal atau injeksi karakter
+    if not re.match(r'^[0-9]+(\.[0-9]+)*(-[a-zA-Z0-9.]+)?$', version):
+        print(f"[-] Format versi YouTube tidak valid atau terdeteksi karakter mencurigakan: {version}")
+        sys.exit(1)
+
     output_path = sys.argv[2]
     base_dir = os.path.realpath(os.getcwd())
     resolved_output_path = os.path.realpath(os.path.join(base_dir, output_path))
@@ -139,6 +144,7 @@ def main():
         print(f"[-] output_path tidak valid, terdeteksi path traversal: {output_path}")
         sys.exit(1)
     output_path = resolved_output_path
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     custom_url = sys.argv[3] if len(sys.argv) > 3 else None
 
     # 1. Custom URL jika disediakan
