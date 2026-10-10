@@ -620,11 +620,12 @@ function renderPatchCategories(patches) {
   Object.keys(categories).forEach(k => grouped[k] = []);
 
   patches.forEach(patch => {
-    const nameLower = patch.name.toLowerCase();
+    const nameLower = (patch.name || '').toLowerCase();
+    const descLower = (patch.description || '').toLowerCase();
     let assigned = false;
 
     for (const [catName, catData] of Object.entries(categories)) {
-      if (catData.keywords.some(kw => nameLower.includes(kw))) {
+      if (catData.keywords.some(kw => nameLower.includes(kw) || descLower.includes(kw))) {
         grouped[catName].push(patch);
         assigned = true;
         break;
@@ -726,17 +727,25 @@ function renderPatchOptions(options) {
     const title = opt.title || key;
     const rawDef = opt.default;
     const defStr = String(rawDef ?? '');
+    const optType = (opt.type || '').toLowerCase();
 
-    html += `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 0.85rem;">
-      <span style="color: var(--text-secondary);">${escapeHtml(title)}:</span>`;
+    html += `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 0.85rem; flex-wrap: wrap;">
+      <span style="color: var(--text-secondary); max-width: 60%; word-break: break-word;">${escapeHtml(title)}:</span>`;
 
     if (opt.values && typeof opt.values === 'object') {
-      html += `<select class="form-control form-control-sm patch-option-input" data-opt-key="${escapeHtml(key)}" style="width: auto; min-height: 36px; padding: 4px 8px;">`;
-      Object.entries(opt.values).forEach(([label, val]) => {
-        html += `<option value="${escapeHtml(String(val))}" ${String(val) === defStr ? 'selected' : ''}>${escapeHtml(label)}</option>`;
-      });
+      html += `<select class="form-control form-control-sm patch-option-input" data-opt-key="${escapeHtml(key)}" style="width: auto; min-width: 140px; min-height: 38px; padding: 4px 8px;">`;
+      if (Array.isArray(opt.values)) {
+        opt.values.forEach(val => {
+          const sVal = String(val);
+          html += `<option value="${escapeHtml(sVal)}" ${sVal === defStr ? 'selected' : ''}>${escapeHtml(sVal)}</option>`;
+        });
+      } else {
+        Object.entries(opt.values).forEach(([label, val]) => {
+          html += `<option value="${escapeHtml(String(val))}" ${String(val) === defStr ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+        });
+      }
       html += `</select>`;
-    } else if (typeof rawDef === 'boolean' || opt.type === 'Boolean' || opt.type === 'boolean') {
+    } else if (typeof rawDef === 'boolean' || optType === 'boolean') {
       const isChecked = rawDef === true;
       html += `
         <label class="switch" style="transform: scale(0.85); margin: 0;">
@@ -744,10 +753,12 @@ function renderPatchOptions(options) {
           <span class="slider"></span>
         </label>
       `;
+    } else if (optType === 'int' || optType === 'integer' || optType === 'number' || typeof rawDef === 'number') {
+      html += `<input type="number" class="form-control form-control-sm patch-option-input" data-opt-key="${escapeHtml(key)}" value="${escapeHtml(defStr)}" placeholder="${escapeHtml(defStr)}" style="width: 120px; min-height: 38px; padding: 4px 8px;">`;
     } else if (defStr.startsWith('#') || key.toLowerCase().includes('color')) {
-      html += `<input type="text" class="form-control form-control-sm patch-option-input" data-opt-key="${escapeHtml(key)}" value="${escapeHtml(defStr)}" style="width: 120px; min-height: 36px; padding: 4px 8px; font-family: monospace;">`;
+      html += `<input type="text" class="form-control form-control-sm patch-option-input" data-opt-key="${escapeHtml(key)}" value="${escapeHtml(defStr)}" style="width: 130px; min-height: 38px; padding: 4px 8px; font-family: monospace;">`;
     } else {
-      html += `<input type="text" class="form-control form-control-sm patch-option-input" data-opt-key="${escapeHtml(key)}" value="${escapeHtml(defStr)}" placeholder="${escapeHtml(defStr)}" style="width: 180px; min-height: 36px; padding: 4px 8px;">`;
+      html += `<input type="text" class="form-control form-control-sm patch-option-input" data-opt-key="${escapeHtml(key)}" value="${escapeHtml(defStr)}" placeholder="${escapeHtml(defStr)}" style="width: 180px; min-height: 38px; padding: 4px 8px;">`;
     }
 
     html += `</div>`;
@@ -758,7 +769,7 @@ function renderPatchOptions(options) {
 }
 
 // =============================================================================
-// Preset Management (Golden Preset)
+// Preset Management (Golden Preset, Ekspor & Impor Racikan)
 // =============================================================================
 function applyGoldenPreset() {
   const excluded = [
@@ -795,6 +806,11 @@ function applyGoldenPreset() {
     'applyToAll': true
   };
 
+  syncOptionsToDom();
+  updatePatchCount();
+}
+
+function syncOptionsToDom() {
   document.querySelectorAll('.patch-option-input').forEach(input => {
     const k = input.dataset.optKey;
     if (STATE.selectedOptions[k] !== undefined) {
@@ -805,8 +821,132 @@ function applyGoldenPreset() {
       }
     }
   });
+}
 
-  updatePatchCount();
+function exportPreset() {
+  const allPatchNames = STATE.patches.map(p => p.name);
+  const excluded = allPatchNames.filter(name => !STATE.selectedPatches.has(name));
+  const included = Array.from(STATE.selectedPatches);
+
+  const presetData = {
+    format: "rvx-cloud-preset",
+    version: "1.0",
+    created_at: new Date().toISOString(),
+    source: STATE.currentSource,
+    patchTag: document.getElementById('selectPatchRelease')?.value || STATE.patchTag || 'dev',
+    youtubeVersion: STATE.currentVersion,
+    arch: document.getElementById('selectArch')?.value || STATE.buildArch || 'all',
+    buildMode: document.getElementById('selectBuildMode')?.value || 'test',
+    totalActivePatches: included.length,
+    includedPatches: included,
+    excludedPatches: excluded,
+    options: STATE.selectedOptions
+  };
+
+  const jsonStr = JSON.stringify(presetData, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `rvx-racikan-${STATE.currentSource}-v${STATE.currentVersion}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importPreset(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data || typeof data !== 'object') {
+        throw new Error('Data bukan objek JSON yang valid');
+      }
+
+      // 1. Ganti Sumber Patch jika berbeda
+      if (data.source && data.source !== STATE.currentSource) {
+        STATE.currentSource = data.source;
+        const selectSrc = document.getElementById('selectPatchSource');
+        if (selectSrc) selectSrc.value = data.source;
+        await fetchAndRenderPatches(data.source);
+      }
+
+      // 2. Pulihkan Tag Patch
+      if (data.patchTag) {
+        STATE.patchTag = data.patchTag;
+        const selectTag = document.getElementById('selectPatchRelease');
+        if (selectTag) selectTag.value = data.patchTag;
+      }
+
+      // 3. Pulihkan Versi YouTube
+      if (data.youtubeVersion) {
+        STATE.currentVersion = data.youtubeVersion;
+        const exists = STATE.availableVersions.find(x => x.version === data.youtubeVersion);
+        if (!exists) {
+          STATE.availableVersions.unshift({
+            version: data.youtubeVersion,
+            isBeta: false,
+            isRecommended: false,
+            isManifest: false,
+            title: `YouTube ${data.youtubeVersion} (Impor)`
+          });
+        }
+        renderVersionSelector();
+      }
+
+      // 4. Pulihkan Arsitektur Target
+      if (data.arch) {
+        STATE.buildArch = data.arch;
+        const selectArch = document.getElementById('selectArch');
+        if (selectArch) selectArch.value = data.arch;
+      }
+
+      // 5. Pulihkan Mode Build
+      if (data.buildMode) {
+        const selectMode = document.getElementById('selectBuildMode');
+        if (selectMode) selectMode.value = data.buildMode;
+      }
+
+      // 6. Pulihkan Pemilihan Patch
+      const includedSet = new Set(data.includedPatches || []);
+      const excludedSet = new Set(data.excludedPatches || []);
+
+      document.querySelectorAll('.patch-item').forEach(item => {
+        const cb = item.querySelector('.switch input[type="checkbox"]');
+        if (!cb) return;
+        const name = cb.dataset.name;
+
+        let shouldCheck = true;
+        if (data.includedPatches && data.includedPatches.length > 0) {
+          shouldCheck = includedSet.has(name);
+        } else if (data.excludedPatches && data.excludedPatches.length > 0) {
+          shouldCheck = !excludedSet.has(name);
+        }
+
+        cb.checked = shouldCheck;
+        if (shouldCheck) {
+          STATE.selectedPatches.add(name);
+        } else {
+          STATE.selectedPatches.delete(name);
+        }
+      });
+
+      // 7. Pulihkan Opsi Konfigurasi Dinamis
+      if (data.options && typeof data.options === 'object') {
+        STATE.selectedOptions = { ...data.options };
+        syncOptionsToDom();
+      }
+
+      updatePatchCount();
+      alert(`✅ Berhasil Mengimpor Racikan!\n• Versi YouTube: v${STATE.currentVersion}\n• Patch Aktif: ${STATE.selectedPatches.size}\n• Sumber: ${STATE.currentSource}`);
+    } catch (err) {
+      console.error('Error importing preset:', err);
+      alert('❌ Gagal mengimpor preset: Format file JSON tidak valid!');
+    }
+  };
+  reader.readAsText(file);
 }
 
 function updatePatchCount() {
@@ -1019,13 +1159,43 @@ function initEventListeners() {
     updatePatchCount();
   });
 
-  document.getElementById('inputSearchPatch').addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase();
-    document.querySelectorAll('.patch-item').forEach(item => {
-      const name = item.dataset.patchName.toLowerCase();
-      item.style.display = name.includes(query) ? 'flex' : 'none';
+  // Ekspor & Impor Racikan Kustom (.json)
+  const btnExport = document.getElementById('btnExportPreset');
+  if (btnExport) {
+    btnExport.addEventListener('click', exportPreset);
+  }
+
+  const btnImport = document.getElementById('btnImportPreset');
+  const inputImport = document.getElementById('inputImportPreset');
+  if (btnImport && inputImport) {
+    btnImport.addEventListener('click', () => inputImport.click());
+    inputImport.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        importPreset(file);
+        inputImport.value = '';
+      }
     });
-  });
+  }
+
+  // Pencarian Patch Cerdas (Mencari Nama Patch dan Deskripsi Fungsi)
+  const inputSearchPatch = document.getElementById('inputSearchPatch');
+  if (inputSearchPatch) {
+    inputSearchPatch.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase().trim();
+      document.querySelectorAll('.category-group').forEach(group => {
+        let groupHasMatch = false;
+        group.querySelectorAll('.patch-item').forEach(item => {
+          const name = (item.dataset.patchName || '').toLowerCase();
+          const desc = (item.querySelector('.patch-desc')?.textContent || '').toLowerCase();
+          const match = !query || name.includes(query) || desc.includes(query);
+          item.style.display = match ? 'flex' : 'none';
+          if (match) groupHasMatch = true;
+        });
+        group.style.display = groupHasMatch ? 'block' : 'none';
+      });
+    });
+  }
 
   document.getElementById('btnTriggerBuild').addEventListener('click', triggerCloudBuild);
 

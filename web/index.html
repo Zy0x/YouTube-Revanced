@@ -133,11 +133,18 @@
     <!-- Preset Action Bar -->
     <section class="preset-bar" aria-label="Aksi Preset">
       <button id="btnLoadGoldenPreset" class="btn btn-primary" aria-label="Muat Racikan Saya (Golden Preset)">
-        <span aria-hidden="true">⚡</span> Muat Racikan Saya (81 Patch)
+        <span aria-hidden="true">⚡</span> Racikan Saya (81 Patch)
       </button>
       <button id="btnResetPatches" class="btn btn-secondary" aria-label="Reset Patch ke Standar">
         <span aria-hidden="true">🔄</span> Reset Standar
       </button>
+      <button id="btnExportPreset" class="btn btn-secondary" aria-label="Ekspor Konfigurasi Racikan ke File JSON">
+        <span aria-hidden="true">💾</span> Ekspor Racikan
+      </button>
+      <button id="btnImportPreset" class="btn btn-secondary" aria-label="Impor Konfigurasi Racikan dari File JSON">
+        <span aria-hidden="true">📂</span> Impor Racikan
+      </button>
+      <input type="file" id="inputImportPreset" accept=".json,application/json" style="display: none;" aria-hidden="true">
     </section>
 
     <!-- Patch Customization & Categories -->
@@ -148,7 +155,7 @@
           <p class="form-hint"><span id="activePatchCount">0</span> patch aktif dipilih</p>
         </div>
         <div class="search-box">
-          <input type="search" id="inputSearchPatch" class="form-control search-input" placeholder="Cari nama patch..." aria-label="Cari nama patch">
+          <input type="search" id="inputSearchPatch" class="form-control search-input" placeholder="Cari nama atau fungsi patch..." aria-label="Cari nama atau fungsi patch">
         </div>
       </div>
 

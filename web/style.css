@@ -316,11 +316,22 @@ body {
 /* Preset Action Bar */
 .preset-bar {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
+  .preset-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .preset-bar .btn {
+    padding: 10px 10px;
+    font-size: 0.88rem;
+  }
+}
+
+@media (max-width: 360px) {
   .preset-bar {
     grid-template-columns: 1fr;
   }
