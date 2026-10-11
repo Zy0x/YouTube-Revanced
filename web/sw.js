@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rvx-builder-v2';
+const CACHE_NAME = 'rvx-builder-v2.1.5';
 const ASSETS_TO_CACHE = [
   './index.html',
   './style.css',
@@ -11,9 +11,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE).catch(err => {
-        console.log('Cache prefetch partial:', err);
-      });
+      return cache.addAll(ASSETS_TO_CACHE).catch(() => {});
     })
   );
   self.skipWaiting();
@@ -35,16 +33,21 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Always fetch live for GitHub API and raw manifests
   if (event.request.url.includes('api.github.com') || event.request.url.includes('raw.githubusercontent.com')) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Network first with cache fallback for local assets
+  // Always prefer fresh network response, fallback to cache if offline
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
-    })
+    fetch(event.request)
+      .then((res) => {
+        if (res && res.status === 200 && event.request.method === 'GET') {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return res;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

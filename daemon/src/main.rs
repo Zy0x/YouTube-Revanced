@@ -17,7 +17,7 @@ use embedded::static_handler;
 use state::AppState;
 
 #[derive(Parser, Debug)]
-#[command(name = "rvx-daemon", version = "2.1.4", about = "On-Device YouTube RVX Patcher Daemon")]
+#[command(name = "rvx-daemon", version = "2.1.5", about = "On-Device YouTube RVX Patcher Daemon")]
 struct CliArgs {
     /// IP address to bind to. Default: 127.0.0.1 (loopback).
     /// Use 0.0.0.0 for LAN access during development/testing.
@@ -69,7 +69,7 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-    tracing::info!("Starting YouTube RVX Daemon v2.1.4");
+    tracing::info!("Starting YouTube RVX Daemon v2.1.5");
     tracing::info!("Module Path: {}", modpath.display());
 
     // Generate or read session token

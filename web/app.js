@@ -1,5 +1,5 @@
 /**
- * YouTube RVX Patcher - Morphe Mobile-First Web Architecture
+ * YouTube RVX Patcher - Morphe Clean Mobile-First Architecture (v2.1.5)
  * Universal Multi-Source Parser, Step-Based Navigation, Adaptive Viewports
  */
 
@@ -17,7 +17,7 @@ const STATE = {
   availableVersions: [],
   versionFilter: 'all',
   versionSearch: '',
-  versionDisplayLimit: 12,
+  versionDisplayLimit: 8,
   patches: [],
   selectedPatches: new Set(),
   selectedOptions: {},
@@ -59,36 +59,27 @@ function initTabs() {
   const railButtons = document.querySelectorAll('.rail-tab-btn');
 
   tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tabId = btn.dataset.tab;
-      switchTab(tabId);
-    });
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 
   railButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tabId = btn.dataset.tab;
-      switchTab(tabId);
-    });
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 }
 
 function switchTab(tabId) {
   STATE.activeTab = tabId;
 
-  // Sync top tab bar
   document.querySelectorAll('.tab-btn').forEach(btn => {
     const isTarget = btn.dataset.tab === tabId;
     btn.classList.toggle('active', isTarget);
     btn.setAttribute('aria-selected', isTarget ? 'true' : 'false');
   });
 
-  // Sync landscape rail
   document.querySelectorAll('.rail-tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tabId);
   });
 
-  // Sync tab panes
   document.querySelectorAll('.tab-pane').forEach(pane => {
     pane.classList.remove('active');
   });
@@ -113,6 +104,9 @@ function initViewportTracker() {
   const updateMetrics = () => {
     const w = window.innerWidth;
     const h = window.innerHeight;
+    if (w > h && h <= 500 && window.scrollY > 0) {
+      window.scrollTo(0, 0);
+    }
     const dpr = (window.devicePixelRatio || 1).toFixed(2);
     const orientation = w > h ? 'Landscape' : 'Portrait';
 
@@ -131,7 +125,7 @@ function initViewportTracker() {
 
     const textEl = document.getElementById('viewportResolutionText');
     if (textEl) {
-      textEl.textContent = `📐 ${w} × ${h} px • DPR: ${dpr} • ${orientation}${deviceTag}`;
+      textEl.textContent = `📐 ${w} × ${h} px • DPR ${dpr} • ${orientation}${deviceTag}`;
     }
   };
 
@@ -187,13 +181,12 @@ async function verifyGithubToken(token) {
 const DEFAULT_SOURCES = [
   {
     id: "anddea",
-    name: "Anddea Patches (Default)",
+    name: "Anddea",
     repository: "anddea/revanced-patches",
     manifestUrl: "https://raw.githubusercontent.com/anddea/revanced-patches/refs/heads/main/patches-list.json",
     manifestCdnUrl: "https://cdn.jsdelivr.net/gh/anddea/revanced-patches@main/patches-list.json",
     defaultReleaseType: "dev",
     isDefault: true,
-    description: "Primary patch source featuring full customization and rich features for YouTube RVX.",
     fallbackTags: [
       { tag_name: "v4.3.1-dev.1", name: "v4.3.1-dev.1 (Prerelease)", prerelease: true },
       { tag_name: "v4.3.0", name: "v4.3.0 (Stable)", prerelease: false }
@@ -207,33 +200,30 @@ const DEFAULT_SOURCES = [
     manifestCdnUrl: "https://cdn.jsdelivr.net/gh/MorpheApp/morphe-patches@main/patches-list.json",
     defaultReleaseType: "latest",
     isDefault: false,
-    description: "Official patch source from the MorpheApp team.",
     fallbackTags: [
       { tag_name: "v1.18.0", name: "v1.18.0 (Stable)", prerelease: false }
     ]
   },
   {
     id: "inotia00",
-    name: "Inotia00 (ReVanced Extended)",
+    name: "Inotia00 RVX",
     repository: "inotia00/revanced-patches",
     manifestUrl: "https://raw.githubusercontent.com/inotia00/revanced-patches/refs/heads/revanced-extended/patches.json",
     manifestCdnUrl: "https://cdn.jsdelivr.net/gh/inotia00/revanced-patches@revanced-extended/patches.json",
     defaultReleaseType: "latest",
     isDefault: false,
-    description: "Classic ReVanced Extended patches by developer inotia00.",
     fallbackTags: [
       { tag_name: "v2.190.1", name: "v2.190.1 (Stable)", prerelease: false }
     ]
   },
   {
     id: "revanced",
-    name: "ReVanced Official",
+    name: "ReVanced",
     repository: "ReVanced/revanced-patches",
     manifestUrl: "https://raw.githubusercontent.com/ReVanced/revanced-patches/refs/heads/main/patches.json",
     manifestCdnUrl: "https://cdn.jsdelivr.net/gh/ReVanced/revanced-patches@main/patches.json",
     defaultReleaseType: "latest",
     isDefault: false,
-    description: "Official patches from the ReVanced Team.",
     fallbackTags: [
       { tag_name: "v4.16.0", name: "v4.16.0 (Stable)", prerelease: false }
     ]
@@ -266,44 +256,41 @@ async function fetchManifestWithFallback(url) {
     }
   }
 
-  throw new Error('Failed to reach patch source from all mirrors (jsDelivr & GitHub Raw)');
+  throw new Error('Failed to reach patch source from all mirrors');
 }
 
 // =============================================================================
 // Load Sources, Presets & APKMirror Catalog
 // =============================================================================
-async function loadSourcesAndPresets() {
+async function fetchJsonSafe(url) {
   try {
-    const [sourcesRes, presetRes, versionsRes] = await Promise.all([
-      fetch('config/sources.json').catch(() => null) || fetch('../config/sources.json').catch(() => null),
-      fetch('config/golden-preset.json').catch(() => null) || fetch('../config/golden-preset.json').catch(() => null),
-      fetch('config/youtube-versions.json').catch(() => null) || fetch('../config/youtube-versions.json').catch(() => null)
-    ]);
-
-    if (sourcesRes && sourcesRes.ok) {
-      STATE.sources = await sourcesRes.json();
-    } else {
-      STATE.sources = DEFAULT_SOURCES;
+    const res = await fetch(url);
+    if (res.ok) {
+      return await res.json();
     }
+  } catch (_) {}
+  return null;
+}
 
-    if (presetRes && presetRes.ok) {
-      STATE.goldenPreset = await presetRes.json();
-    }
+async function loadSourcesAndPresets() {
+  const [sourcesData, presetData, versionsData] = await Promise.all([
+    fetchJsonSafe('config/sources.json'),
+    fetchJsonSafe('config/golden-preset.json'),
+    fetchJsonSafe('config/youtube-versions.json')
+  ]);
 
-    if (versionsRes && versionsRes.ok) {
-      STATE.catalogVersions = await versionsRes.json();
-    } else {
-      try {
-        const cdnRes = await fetch('https://cdn.jsdelivr.net/gh/Zy0x/YouTube-Revanced@main/config/youtube-versions.json');
-        if (cdnRes.ok) {
-          STATE.catalogVersions = await cdnRes.json();
-        }
-      } catch (e) {
-        console.warn('Failed to load version catalog from CDN:', e);
-      }
+  STATE.sources = Array.isArray(sourcesData) && sourcesData.length > 0 ? sourcesData : DEFAULT_SOURCES;
+  if (presetData) {
+    STATE.goldenPreset = presetData;
+  }
+
+  if (Array.isArray(versionsData) && versionsData.length > 0) {
+    STATE.catalogVersions = versionsData;
+  } else {
+    const cdnVer = await fetchJsonSafe('https://cdn.jsdelivr.net/gh/Zy0x/YouTube-Revanced@main/config/youtube-versions.json');
+    if (Array.isArray(cdnVer)) {
+      STATE.catalogVersions = cdnVer;
     }
-  } catch (err) {
-    STATE.sources = DEFAULT_SOURCES;
   }
 
   renderSourceCards();
@@ -323,25 +310,25 @@ function renderSourceCards() {
     card.setAttribute('role', 'radio');
     card.setAttribute('aria-checked', isActive ? 'true' : 'false');
 
+    const shortTitle = (s.name || s.id)
+      .replace(/\s*\(Default\)/i, '')
+      .replace(/\s*\(ReVanced Extended\)/i, ' RVX');
+    const repo = s.repository || `${s.id}/patches`;
+
     card.innerHTML = `
       <div class="source-card-header">
-        <span class="source-card-title">${escapeHtml(s.name)}</span>
-        ${isActive ? '<span class="headline-tag">Selected</span>' : ''}
+        <span class="source-card-title">${escapeHtml(shortTitle)}</span>
+        <span class="source-card-check">${isActive ? '●' : ''}</span>
       </div>
-      <div class="source-card-desc">${escapeHtml(s.description || '')}</div>
+      <div class="source-card-repo">${escapeHtml(repo)}</div>
     `;
 
     card.addEventListener('click', async () => {
-      document.querySelectorAll('.source-card').forEach(c => {
-        c.classList.remove('active');
-        c.setAttribute('aria-checked', 'false');
-      });
-      card.classList.add('active');
-      card.setAttribute('aria-checked', 'true');
       STATE.currentSource = s.id;
+      renderSourceCards();
 
       const tagBadge = document.getElementById('sourceTagBadge');
-      if (tagBadge) tagBadge.textContent = s.name.split(' ')[0];
+      if (tagBadge) tagBadge.textContent = shortTitle.split(' ')[0];
 
       await loadPatchReleases(s);
       await fetchAndRenderPatches(s.id);
@@ -352,7 +339,7 @@ function renderSourceCards() {
 }
 
 // =============================================================================
-// Fetch Patch Release (.mpp) Channels with Zero-API Rate-Limit Protection
+// Fetch Patch Release (.mpp) Channels with Zero-API Fallback
 // =============================================================================
 async function loadPatchReleases(sourceConfig) {
   if (!sourceConfig) return;
@@ -361,7 +348,7 @@ async function loadPatchReleases(sourceConfig) {
   const hint = document.getElementById('patchReleaseHint');
   if (!select) return;
 
-  hint.textContent = `Connecting to release mirrors (${repo})...`;
+  if (hint) hint.textContent = `Checking releases (${repo})...`;
 
   try {
     const headers = { 'Accept': 'application/vnd.github.v3+json' };
@@ -378,25 +365,21 @@ async function loadPatchReleases(sourceConfig) {
 
       select.innerHTML = '';
 
-      // Option 1: Channel Dev / Prerelease
       const optDev = document.createElement('option');
       optDev.value = 'dev';
       optDev.textContent = `⚡ Prerelease / Dev ${latestPre ? `(${latestPre.tag_name})` : '(Latest)'}`;
       if (sourceConfig.defaultReleaseType === 'dev' || !latestStable) optDev.selected = true;
       select.appendChild(optDev);
 
-      // Option 2: Channel Stable / Latest
       const optStable = document.createElement('option');
       optStable.value = 'latest';
       optStable.textContent = `🛡️ Stable / Latest ${latestStable ? `(${latestStable.tag_name})` : '(Official)'}`;
       if (sourceConfig.defaultReleaseType === 'latest' && latestStable) optStable.selected = true;
       select.appendChild(optStable);
 
-      // Option 3: Specific Release Tags
       if (releases.length > 0) {
         const optGroup = document.createElement('optgroup');
         optGroup.label = '── Specific Release Tags (.mpp) ──';
-
         releases.forEach(rel => {
           const opt = document.createElement('option');
           opt.value = rel.tag_name;
@@ -404,19 +387,18 @@ async function loadPatchReleases(sourceConfig) {
           opt.textContent = `🏷️ ${rel.tag_name} ${typeLabel}`;
           optGroup.appendChild(opt);
         });
-
         select.appendChild(optGroup);
       }
 
-      hint.textContent = `Discovered ${releases.length} releases on GitHub (${latestPre?.tag_name || 'dev'} & ${latestStable?.tag_name || 'latest'})`;
+      if (hint) {
+        hint.textContent = `Active: ${latestPre?.tag_name || 'dev'} (Dev) • ${latestStable?.tag_name || 'latest'} (Stable)`;
+      }
       STATE.patchTag = select.value;
       return;
     }
-  } catch (err) {
-    console.warn('[RVX] GitHub API skipped or rate limited. Using zero-API fallback channel:', err);
-  }
+  } catch (_) {}
 
-  // Resilient Zero-API Fallback
+  // Zero-API Fallback
   select.innerHTML = '';
   const optDev = document.createElement('option');
   optDev.value = 'dev';
@@ -442,7 +424,7 @@ async function loadPatchReleases(sourceConfig) {
     select.appendChild(optGroup);
   }
 
-  hint.textContent = 'Standard Channels active: Dev & Latest. Zero GitHub API quota consumed.';
+  if (hint) hint.textContent = 'Zero-API CDN Channel Active';
   STATE.patchTag = select.value;
 }
 
@@ -485,12 +467,35 @@ const FALLBACK_YOUTUBE_VERSIONS = [
   { version: '21.09.38', isBeta: false, title: 'YouTube 21.09.38' },
   { version: '21.08.35', isBeta: false, title: 'YouTube 21.08.35' },
   { version: '21.07.247', isBeta: false, title: 'YouTube 21.07.247' },
-  { version: '20.51.39', isBeta: false, title: 'YouTube 20.51.39' },
-  { version: '20.05.46', isBeta: false, title: 'YouTube 20.05.46' }
+  { version: '20.51.39', isBeta: false, title: 'YouTube 20.51.39' }
 ];
 
 // =============================================================================
-// Universal Parser: Extract Supported & Catalog YouTube Versions
+// Filter Patches Strictly for com.google.android.youtube
+// =============================================================================
+function filterPatchesForYouTube(patches, pkgName = 'com.google.android.youtube') {
+  return patches.filter(p => {
+    const compat = p.compatiblePackages;
+    // Universal patch (applies to any package)
+    if (!compat) return true;
+
+    if (typeof compat === 'object' && !Array.isArray(compat)) {
+      const keys = Object.keys(compat);
+      if (keys.length === 0) return true;
+      return Object.prototype.hasOwnProperty.call(compat, pkgName);
+    }
+
+    if (Array.isArray(compat)) {
+      if (compat.length === 0) return true;
+      return compat.some(entry => entry && (entry.name === pkgName || entry === pkgName));
+    }
+
+    return true;
+  });
+}
+
+// =============================================================================
+// Universal Parser: Extract & Smart-Sort Supported YouTube Versions
 // =============================================================================
 function extractUniversalVersions(patches, pkgName = 'com.google.android.youtube') {
   const manifestVersions = new Set();
@@ -547,9 +552,12 @@ function extractUniversalVersions(patches, pkgName = 'com.google.android.youtube
     }
   });
 
+  // Smart Sort: Recommended first -> Manifest-supported second -> Descending version third
   const allVersions = Array.from(versionsMap.values()).sort((a, b) => {
-    return a.version.localeCompare(b.version, undefined, { numeric: true, sensitivity: 'base' });
-  }).reverse();
+    if (a.isRecommended !== b.isRecommended) return a.isRecommended ? -1 : 1;
+    if (a.isManifest !== b.isManifest) return a.isManifest ? -1 : 1;
+    return b.version.localeCompare(a.version, undefined, { numeric: true, sensitivity: 'base' });
+  });
 
   return {
     allVersions,
@@ -565,7 +573,7 @@ async function fetchAndRenderPatches(sourceId) {
   const patchContainer = document.getElementById('patchCategoriesContainer');
 
   if (versionContainer) {
-    versionContainer.innerHTML = '<p class="card-hint">Loading versions from APKMirror & patch manifest...</p>';
+    versionContainer.innerHTML = '<p class="card-hint">Loading compatible versions...</p>';
   }
   if (patchContainer) {
     patchContainer.innerHTML = '<div class="morphe-spinner"></div>';
@@ -577,10 +585,11 @@ async function fetchAndRenderPatches(sourceId) {
 
   try {
     const data = await fetchManifestWithFallback(sourceConfig.manifestUrl);
-    const rawPatches = data.patches || [];
-    STATE.patches = rawPatches;
+    const rawList = Array.isArray(data) ? data : (data.patches || []);
+    const ytPatches = filterPatchesForYouTube(rawList, 'com.google.android.youtube');
+    STATE.patches = ytPatches;
 
-    const { allVersions, recommendedVersion } = extractUniversalVersions(rawPatches);
+    const { allVersions, recommendedVersion } = extractUniversalVersions(ytPatches);
     STATE.availableVersions = allVersions;
     STATE.recommendedVersion = recommendedVersion;
 
@@ -592,7 +601,7 @@ async function fetchAndRenderPatches(sourceId) {
     }
 
     renderVersionSelector();
-    renderPatchCategories(rawPatches);
+    renderPatchCategories(ytPatches);
     applyGoldenPreset();
     updateBottomBarSummary();
 
@@ -608,7 +617,7 @@ async function fetchAndRenderPatches(sourceId) {
 }
 
 // =============================================================================
-// Render YouTube Version Selector (Mobile-First Card Grid)
+// Render YouTube Version Selector (Smart 2-Col Mobile / Multi-Col Grid)
 // =============================================================================
 function renderVersionSelector() {
   const container = document.getElementById('versionListContainer');
@@ -636,7 +645,7 @@ function renderVersionSelector() {
     filtered = filtered.filter(item => item.version.toLowerCase().includes(q));
   }
 
-  const limit = STATE.showAllVersions ? filtered.length : (STATE.versionDisplayLimit || 12);
+  const limit = STATE.showAllVersions ? filtered.length : (STATE.versionDisplayLimit || 8);
   const displayList = filtered.slice(0, limit);
 
   if (displayList.length === 0) {
@@ -646,12 +655,16 @@ function renderVersionSelector() {
       const ver = item.version;
       const isSelected = (ver === STATE.currentVersion);
       const card = document.createElement('div');
-      card.className = `version-item-card ${isSelected ? 'active' : ''}`;
+      card.className = `version-item-card ${isSelected ? 'active' : ''} ${item.isRecommended ? 'recommended-card' : ''}`;
       card.setAttribute('role', 'radio');
       card.setAttribute('aria-checked', isSelected ? 'true' : 'false');
 
       let badgeText = item.isBeta ? '⚡ Beta' : '🛡️ Stable';
-      if (item.isRecommended) badgeText = '⭐ Recommended';
+      if (item.isRecommended) {
+        badgeText = '⭐ Recommended';
+      } else if (item.isManifest) {
+        badgeText = '✓ Supported';
+      }
 
       card.innerHTML = `
         <div class="version-item-ver">v${ver}</div>
@@ -659,13 +672,8 @@ function renderVersionSelector() {
       `;
 
       card.addEventListener('click', () => {
-        document.querySelectorAll('.version-item-card').forEach(c => {
-          c.classList.remove('active');
-          c.setAttribute('aria-checked', 'false');
-        });
-        card.classList.add('active');
-        card.setAttribute('aria-checked', 'true');
         STATE.currentVersion = ver;
+        renderVersionSelector();
         updateBottomBarSummary();
       });
 
@@ -675,12 +683,17 @@ function renderVersionSelector() {
 
   const counterHint = document.getElementById('versionCounterHint');
   if (counterHint) {
-    counterHint.textContent = `Showing ${displayList.length} of ${filtered.length} versions`;
+    counterHint.textContent = `${displayList.length} of ${filtered.length} shown`;
   }
 
   const btnLoadMore = document.getElementById('btnLoadMoreVersions');
   if (btnLoadMore) {
     btnLoadMore.style.display = (displayList.length >= filtered.length) ? 'none' : 'inline-flex';
+  }
+
+  const btnToggleAll = document.getElementById('btnToggleAllVersions');
+  if (btnToggleAll) {
+    btnToggleAll.textContent = STATE.showAllVersions ? '🔼 Show Less' : '📋 Show All';
   }
 
   const selectedBadge = document.getElementById('selectedVersionBadge');
@@ -690,13 +703,14 @@ function renderVersionSelector() {
 }
 
 // =============================================================================
-// Group & Render Patches with Full-Card Touch Targets & Morphe Switches
+// Group & Render Patches with Collapsible Morphe Accordions
 // =============================================================================
 function renderPatchCategories(patches) {
   const container = document.getElementById('patchCategoriesContainer');
   if (!container) return;
   container.innerHTML = '';
   STATE.selectedOptions = {};
+  STATE.selectedPatches.clear();
 
   const categories = {
     'Ad-blocking & Sponsor': {
@@ -705,19 +719,19 @@ function renderPatchCategories(patches) {
     },
     'Video Player & Gestures': {
       icon: '▶️',
-      keywords: ['player', 'playback', 'swipe', 'audio', 'stream', 'speed', 'controls']
+      keywords: ['player', 'playback', 'swipe', 'audio', 'stream', 'speed', 'controls', 'seek']
     },
     'Appearance & Themes': {
       icon: '🎨',
-      keywords: ['theme', 'branding', 'overlay', 'icon', 'color', 'dpi', 'buttons']
+      keywords: ['theme', 'branding', 'overlay', 'icon', 'color', 'dpi', 'buttons', 'snack']
     },
     'Shorts & Navigation': {
       icon: '⚡',
-      keywords: ['shorts', 'navigation', 'bar', 'feed', 'header']
+      keywords: ['shorts', 'navigation', 'bar', 'feed', 'header', 'shortcut']
     },
     'Anti-Buffering & Spoofing': {
       icon: '🔧',
-      keywords: ['spoof', 'potoken', 'quic', 'version', 'wifi', 'certificate']
+      keywords: ['spoof', 'potoken', 'quic', 'version', 'wifi', 'certificate', 'gmscore']
     },
     'Miscellaneous Features': {
       icon: '🧩',
@@ -746,18 +760,30 @@ function renderPatchCategories(patches) {
     }
   });
 
+  let catIndex = 0;
   Object.entries(grouped).forEach(([catTitle, patchList]) => {
     if (patchList.length === 0) return;
 
     const groupEl = document.createElement('div');
-    groupEl.className = 'category-group';
+    // First category expanded by default; rest collapsed for a clean Morphe layout
+    groupEl.className = `category-group ${catIndex > 0 ? 'collapsed' : ''}`;
+    catIndex++;
 
     const header = document.createElement('div');
     header.className = 'category-header';
+    header.setAttribute('role', 'button');
+    header.setAttribute('tabindex', '0');
     header.innerHTML = `
       <span>${categories[catTitle].icon} ${catTitle}</span>
-      <span class="badge badge-primary">${patchList.length}</span>
+      <div class="category-header-right">
+        <span class="badge badge-primary" data-cat-badge>${patchList.length}/${patchList.length}</span>
+        <span class="cat-chevron">▾</span>
+      </div>
     `;
+
+    header.addEventListener('click', () => {
+      groupEl.classList.toggle('collapsed');
+    });
 
     const body = document.createElement('div');
     body.className = 'category-patches-list';
@@ -772,7 +798,7 @@ function renderPatchCategories(patches) {
 
       let optionsHtml = '';
       if (Array.isArray(patch.options) && patch.options.length > 0) {
-        optionsHtml = renderPatchOptions(patch.options);
+        optionsHtml = renderPatchOptions(patch.name, patch.options);
       }
 
       item.innerHTML = `
@@ -782,17 +808,18 @@ function renderPatchCategories(patches) {
           ${optionsHtml}
         </div>
         <label class="switch" aria-label="Toggle ${escapeHtml(patch.name)}">
-          <input type="checkbox" data-name="${escapeHtml(patch.name)}" ${isDefault ? 'checked' : ''}>
+          <input type="checkbox" class="patch-main-cb" data-name="${escapeHtml(patch.name)}" ${isDefault ? 'checked' : ''}>
           <span class="slider"></span>
         </label>
       `;
 
-      // Full-Card Touch Target (Rule 1 & Rule 2): Tapping anywhere on item toggles the patch
+      // Full-Card Touch Target: Tapping anywhere outside options toggles the patch
       item.addEventListener('click', (e) => {
-        if (e.target.closest('.patch-option-input') || e.target.closest('select')) {
-          return; // Let dropdowns/inputs handle their own interaction
+        if (e.target.closest('.patch-options-box')) {
+          return;
         }
-        const cb = item.querySelector('input[type="checkbox"]');
+        const cb = item.querySelector('.patch-main-cb');
+        if (!cb) return;
         cb.checked = !cb.checked;
         if (cb.checked) {
           STATE.selectedPatches.add(patch.name);
@@ -825,8 +852,8 @@ function renderPatchCategories(patches) {
   updateBottomBarSummary();
 }
 
-function renderPatchOptions(options) {
-  let html = '<div class="patch-options-box" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-subtle); display: flex; flex-direction: column; gap: 6px;">';
+function renderPatchOptions(patchName, options) {
+  let html = '<div class="patch-options-box">';
 
   options.forEach(opt => {
     const key = opt.key;
@@ -835,24 +862,24 @@ function renderPatchOptions(options) {
     const defStr = String(rawDef ?? '');
     const optType = (opt.type || '').toLowerCase();
 
-    html += `<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 0.8rem; flex-wrap: wrap;">
-      <span style="color: var(--text-secondary);">${escapeHtml(title)}:</span>`;
+    html += `<div class="patch-option-row">
+      <span class="patch-option-label">${escapeHtml(title)}:</span>`;
 
     if (optType === 'boolean' || typeof rawDef === 'boolean') {
       const checked = Boolean(rawDef);
-      html += `<label class="switch" style="width: 44px; height: 24px;">
-        <input type="checkbox" class="patch-option-input" data-opt-key="${escapeHtml(key)}" ${checked ? 'checked' : ''}>
+      html += `<label class="switch">
+        <input type="checkbox" class="patch-option-input" data-patch-parent="${escapeHtml(patchName)}" data-opt-key="${escapeHtml(key)}" ${checked ? 'checked' : ''}>
         <span class="slider"></span>
       </label>`;
     } else if (Array.isArray(opt.possibleValues) && opt.possibleValues.length > 0) {
-      html += `<select class="form-control patch-option-input" data-opt-key="${escapeHtml(key)}" style="width: auto; min-height: 36px; padding: 4px 8px; font-size: 0.8rem;">`;
+      html += `<select class="form-control form-control-sm patch-option-input" data-patch-parent="${escapeHtml(patchName)}" data-opt-key="${escapeHtml(key)}" style="width: auto; max-width: 180px;">`;
       opt.possibleValues.forEach(val => {
         const sel = String(val) === defStr ? 'selected' : '';
         html += `<option value="${escapeHtml(String(val))}" ${sel}>${escapeHtml(String(val))}</option>`;
       });
       html += `</select>`;
     } else {
-      html += `<input type="text" class="form-control patch-option-input" data-opt-key="${escapeHtml(key)}" value="${escapeHtml(defStr)}" style="width: 140px; min-height: 36px; padding: 4px 8px; font-size: 0.8rem;">`;
+      html += `<input type="text" class="form-control form-control-sm patch-option-input" data-patch-parent="${escapeHtml(patchName)}" data-opt-key="${escapeHtml(key)}" value="${escapeHtml(defStr)}" style="width: 140px;">`;
     }
 
     html += `</div>`;
@@ -868,24 +895,29 @@ function renderPatchOptions(options) {
 function applyGoldenPreset() {
   if (!STATE.goldenPreset) return;
   const config = STATE.goldenPreset;
-  const targetVer = config.target_youtube_version || '21.13.164';
-  const targetSrc = config.patch_source || 'anddea';
 
-  STATE.currentVersion = targetVer;
-  STATE.currentSource = targetSrc;
+  if (config.target_youtube_version) {
+    STATE.currentVersion = config.target_youtube_version;
+  }
 
-  const excList = config.excluded_patches || [];
+  // Support both golden-preset.json schema (excludedPatches + rootExcludedPatches)
+  // and exported preset schema (excluded_patches / included_patches)
+  const excSet = new Set([
+    ...(config.excludedPatches || []),
+    ...(config.rootExcludedPatches || []),
+    ...(config.excluded_patches || [])
+  ]);
   const incList = config.included_patches || [];
 
   STATE.selectedPatches.clear();
 
   document.querySelectorAll('.patch-item').forEach(item => {
     const name = item.dataset.patchName;
-    const cb = item.querySelector('input[type="checkbox"]');
+    const cb = item.querySelector('.patch-main-cb');
     if (!cb) return;
 
     let shouldSelect = true;
-    if (excList.includes(name)) {
+    if (excSet.has(name)) {
       shouldSelect = false;
     } else if (incList.length > 0 && !incList.includes(name)) {
       shouldSelect = false;
@@ -899,7 +931,17 @@ function applyGoldenPreset() {
   });
 
   if (config.options && typeof config.options === 'object') {
-    STATE.selectedOptions = { ...config.options };
+    const flatOpts = {};
+    Object.entries(config.options).forEach(([k, v]) => {
+      if (v && typeof v === 'object' && !Array.isArray(v)) {
+        Object.entries(v).forEach(([optKey, optVal]) => {
+          flatOpts[optKey] = optVal;
+        });
+      } else {
+        flatOpts[k] = v;
+      }
+    });
+    STATE.selectedOptions = flatOpts;
     syncOptionsToDom();
   }
 
@@ -913,7 +955,7 @@ function syncOptionsToDom() {
     const el = document.querySelector(`.patch-option-input[data-opt-key="${k}"]`);
     if (el) {
       if (el.type === 'checkbox') {
-        el.checked = Boolean(v);
+        el.checked = (v === true || v === 'true');
       } else {
         el.value = String(v);
       }
@@ -927,7 +969,7 @@ function exportPreset() {
   const includedPatches = Array.from(STATE.selectedPatches);
 
   const payload = {
-    schema_version: "2.1.4",
+    schema_version: "2.1.5",
     exported_at: new Date().toISOString(),
     patch_source: STATE.currentSource,
     patch_tag: STATE.patchTag,
@@ -961,13 +1003,17 @@ function importPreset(file) {
         STATE.currentVersion = data.target_youtube_version;
       }
 
-      const exc = new Set(data.excluded_patches || []);
+      const exc = new Set([
+        ...(data.excluded_patches || []),
+        ...(data.excludedPatches || []),
+        ...(data.rootExcludedPatches || [])
+      ]);
       const inc = new Set(data.included_patches || []);
 
       STATE.selectedPatches.clear();
       document.querySelectorAll('.patch-item').forEach(item => {
         const name = item.dataset.patchName;
-        const cb = item.querySelector('input[type="checkbox"]');
+        const cb = item.querySelector('.patch-main-cb');
         if (!cb) return;
 
         let active = true;
@@ -1003,6 +1049,16 @@ function updatePatchCount() {
   if (el) el.textContent = count;
   if (badge) badge.textContent = count;
   if (railBadge) railBadge.textContent = count;
+
+  // Update per-category active/total badges
+  document.querySelectorAll('.category-group').forEach(group => {
+    const items = group.querySelectorAll('.patch-item');
+    const selected = group.querySelectorAll('.patch-item.selected');
+    const catBadge = group.querySelector('[data-cat-badge]');
+    if (catBadge) {
+      catBadge.textContent = `${selected.length}/${items.length}`;
+    }
+  });
 }
 
 function updateBottomBarSummary() {
@@ -1012,13 +1068,14 @@ function updateBottomBarSummary() {
   const railSummary = document.getElementById('railSummaryLabel');
 
   const verText = `v${STATE.currentVersion}`;
-  const patchText = `${STATE.selectedPatches.size} patches`;
+  const patchCount = STATE.selectedPatches.size;
+  const srcName = capitalize(STATE.currentSource);
   const engineText = STATE.engineMode === 'local' ? 'Local' : 'Cloud';
 
-  if (targetEl) targetEl.textContent = verText;
-  if (patchEl) patchEl.textContent = patchText;
+  if (targetEl) targetEl.textContent = `YT ${verText}`;
+  if (patchEl) patchEl.textContent = `${patchCount} patches • ${srcName}`;
   if (engineEl) engineEl.textContent = engineText;
-  if (railSummary) railSummary.textContent = `${verText} • ${patchText}`;
+  if (railSummary) railSummary.textContent = `${verText} • ${patchCount} patches`;
 
   const selectedBadge = document.getElementById('selectedVersionBadge');
   if (selectedBadge) selectedBadge.textContent = verText;
@@ -1042,7 +1099,7 @@ function initEngineSwitcher() {
 async function checkDaemonStatus() {
   const badge = document.getElementById('daemonStatusBadge');
   const urlsToTest = [
-    '', // Relative if served by daemon
+    '', // Relative when served directly by rvx-daemon (localhost or LAN IP)
     'http://127.0.0.1:8080',
     'http://localhost:8080'
   ];
@@ -1057,7 +1114,7 @@ async function checkDaemonStatus() {
         if (badge) {
           badge.className = 'status-pill status-pill-online';
           const textSpan = badge.querySelector('.status-pill-text');
-          if (textSpan) textSpan.textContent = `Online (v${data.daemon_version})`;
+          if (textSpan) textSpan.textContent = `v${data.daemon_version}`;
         }
         setEngineMode('local');
         return;
@@ -1070,24 +1127,31 @@ async function checkDaemonStatus() {
   if (badge) {
     badge.className = 'status-pill status-pill-offline';
     const textSpan = badge.querySelector('.status-pill-text');
-    if (textSpan) textSpan.textContent = 'Daemon Offline';
+    if (textSpan) textSpan.textContent = 'Cloud Mode';
   }
   setEngineMode('cloud');
 }
 
 async function fetchInstalledAppInfo() {
-  if (!STATE.daemonOnline) return;
+  const text = document.getElementById('installedVerText');
+  if (!STATE.daemonOnline) {
+    if (text) text.textContent = 'Not connected';
+    return;
+  }
   try {
     const res = await fetch(`${STATE.daemonUrl}/api/v1/system/youtube-info`);
     if (res.ok) {
       const data = await res.json();
       if (data.installed_version && data.installed_version !== 'Unknown') {
         STATE.installedVersion = data.installed_version;
-        const text = document.getElementById('installedVerText');
         if (text) text.textContent = `v${data.installed_version}`;
+      } else {
+        if (text) text.textContent = 'Host / Dev Mode';
       }
     }
-  } catch (_) {}
+  } catch (_) {
+    if (text) text.textContent = 'Unavailable';
+  }
 }
 
 function setEngineMode(mode) {
@@ -1104,21 +1168,20 @@ function setEngineMode(mode) {
       btnLocal.setAttribute('aria-checked', 'true');
       btnCloud.classList.remove('active');
       btnCloud.setAttribute('aria-checked', 'false');
-      if (engineTag) engineTag.textContent = 'Zero-Cloud / On-Device';
+      if (engineTag) engineTag.textContent = 'On-Device Daemon';
     } else {
       btnCloud.classList.add('active');
       btnCloud.setAttribute('aria-checked', 'true');
       btnLocal.classList.remove('active');
       btnLocal.setAttribute('aria-checked', 'false');
-      if (engineTag) engineTag.textContent = 'GitHub Actions Cloud';
+      if (engineTag) engineTag.textContent = 'GitHub Cloud';
     }
   }
 
-  const ctaText = mode === 'local' ? 'Patch On Device' : 'Build on GitHub';
+  const ctaText = mode === 'local' ? 'Patch On Device' : 'Build on Cloud';
   if (btnTrigger) {
     const txt = btnTrigger.querySelector('.btn-text');
     if (txt) txt.textContent = ctaText;
-    btnTrigger.disabled = false;
   }
   if (btnRail) {
     btnRail.textContent = `⚡ ${ctaText}`;
@@ -1131,7 +1194,6 @@ function setEngineMode(mode) {
 // Patch Execution (Local Daemon & Cloud Actions)
 // =============================================================================
 async function triggerLocalPatch() {
-  // 1. Auto-Navigate to Tab 3 (Terminal & Output) per interview decision
   switchTab('terminal');
 
   const indicator = document.getElementById('patchStatusBadge');
@@ -1142,11 +1204,10 @@ async function triggerLocalPatch() {
   if (liveBadge) liveBadge.classList.remove('hidden');
   if (heroCard) heroCard.classList.add('hidden');
 
-  appendTerminalLog('===========================================================');
-  appendTerminalLog(`[WebUI] Initiating On-Device Patch for YouTube v${STATE.currentVersion}`);
-  appendTerminalLog(`[WebUI] Patch Source: ${STATE.currentSource} (${STATE.patchTag})`);
-  appendTerminalLog(`[WebUI] Selected Patches: ${STATE.selectedPatches.size}`);
-  appendTerminalLog('===========================================================');
+  appendTerminalLog('───────────────────────────────────────────────────────────');
+  appendTerminalLog(`[WebUI] Starting On-Device Patch for YouTube v${STATE.currentVersion}`);
+  appendTerminalLog(`[WebUI] Source: ${STATE.currentSource} (${STATE.patchTag}) • Active Patches: ${STATE.selectedPatches.size}`);
+  appendTerminalLog('───────────────────────────────────────────────────────────');
 
   const allPatchNames = STATE.patches.map(p => p.name);
   const excludedPatches = allPatchNames.filter(name => !STATE.selectedPatches.has(name));
@@ -1218,7 +1279,7 @@ async function triggerCloudBuild() {
 
   progressModal.classList.remove('hidden');
   linksBox.classList.add('hidden');
-  statusMsg.textContent = `Connecting to GitHub Actions runner...`;
+  statusMsg.textContent = 'Connecting to GitHub Actions runner...';
 
   const allPatchNames = STATE.patches.map(p => p.name);
   const excludedPatches = allPatchNames.filter(name => !STATE.selectedPatches.has(name));
@@ -1250,7 +1311,7 @@ async function triggerCloudBuild() {
     });
 
     if (res.status === 204 || res.ok) {
-      statusMsg.textContent = `✅ Build Dispatched to GitHub Actions! Runner is patching YouTube v${STATE.currentVersion}.`;
+      statusMsg.textContent = `✅ Build Dispatched! GitHub runner is patching YouTube v${STATE.currentVersion}.`;
       linksBox.classList.remove('hidden');
       runLink.href = 'https://github.com/Zy0x/YouTube-Revanced/actions';
     } else {
@@ -1291,7 +1352,15 @@ function initEventListeners() {
   const btnRailTrigger = document.getElementById('btnRailTrigger');
   if (btnRailTrigger) btnRailTrigger.addEventListener('click', triggerHandler);
 
-  // Hero Card Fast Actions
+  // Release Channel Selector
+  const selectChannel = document.getElementById('selectPatchRelease');
+  if (selectChannel) {
+    selectChannel.addEventListener('change', (e) => {
+      STATE.patchTag = e.target.value;
+    });
+  }
+
+  // Quick Version Match Actions
   const btnUseInstalled = document.getElementById('btnUseInstalledVer');
   if (btnUseInstalled) {
     btnUseInstalled.addEventListener('click', () => {
@@ -1300,7 +1369,7 @@ function initEventListeners() {
         renderVersionSelector();
         updateBottomBarSummary();
       } else {
-        alert('Installed YouTube version has not been detected yet.');
+        alert('Installed YouTube version is only detected when running directly on an Android device.');
       }
     });
   }
@@ -1320,7 +1389,7 @@ function initEventListeners() {
       document.querySelectorAll('.btn-filter-pill').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       STATE.versionFilter = btn.dataset.filter;
-      STATE.versionDisplayLimit = 12;
+      STATE.versionDisplayLimit = 8;
       renderVersionSelector();
     });
   });
@@ -1330,7 +1399,7 @@ function initEventListeners() {
   if (inputSearchVer) {
     inputSearchVer.addEventListener('input', (e) => {
       STATE.versionSearch = e.target.value.trim();
-      STATE.versionDisplayLimit = 12;
+      STATE.versionDisplayLimit = 8;
       renderVersionSelector();
     });
   }
@@ -1339,7 +1408,7 @@ function initEventListeners() {
   const btnLoadMore = document.getElementById('btnLoadMoreVersions');
   if (btnLoadMore) {
     btnLoadMore.addEventListener('click', () => {
-      STATE.versionDisplayLimit = (STATE.versionDisplayLimit || 12) + 24;
+      STATE.versionDisplayLimit = (STATE.versionDisplayLimit || 8) + 16;
       renderVersionSelector();
     });
   }
@@ -1348,7 +1417,7 @@ function initEventListeners() {
   if (btnToggleAll) {
     btnToggleAll.addEventListener('click', () => {
       STATE.showAllVersions = !STATE.showAllVersions;
-      if (!STATE.showAllVersions) STATE.versionDisplayLimit = 12;
+      if (!STATE.showAllVersions) STATE.versionDisplayLimit = 8;
       renderVersionSelector();
     });
   }
@@ -1361,7 +1430,7 @@ function initEventListeners() {
     if (!customVer) return;
 
     if (!/^\d+(\.\d+)+$/.test(customVer)) {
-      alert('Invalid version format. Example: 21.07.247 or 20.51.39');
+      alert('Invalid version format. Example: 21.13.164 or 20.51.39');
       return;
     }
 
@@ -1384,17 +1453,37 @@ function initEventListeners() {
   const btnApplyVer = document.getElementById('btnApplyCustomVersion');
   if (btnApplyVer) btnApplyVer.addEventListener('click', applyCustomVer);
 
-  // Preset Buttons
-  document.getElementById('btnLoadGoldenPreset').addEventListener('click', applyGoldenPreset);
-  document.getElementById('btnResetPatches').addEventListener('click', () => {
-    document.querySelectorAll('.patch-item input[type="checkbox"]').forEach(cb => {
-      cb.checked = true;
-      STATE.selectedPatches.add(cb.dataset.name);
+  // Accordion Expand/Collapse All
+  const btnExpandAll = document.getElementById('btnExpandAllCats');
+  if (btnExpandAll) {
+    btnExpandAll.addEventListener('click', () => {
+      document.querySelectorAll('.category-group').forEach(g => g.classList.remove('collapsed'));
     });
-    document.querySelectorAll('.patch-item').forEach(p => p.classList.add('selected'));
-    updatePatchCount();
-    updateBottomBarSummary();
-  });
+  }
+
+  const btnCollapseAll = document.getElementById('btnCollapseAllCats');
+  if (btnCollapseAll) {
+    btnCollapseAll.addEventListener('click', () => {
+      document.querySelectorAll('.category-group').forEach(g => g.classList.add('collapsed'));
+    });
+  }
+
+  // Preset Buttons
+  const btnGolden = document.getElementById('btnLoadGoldenPreset');
+  if (btnGolden) btnGolden.addEventListener('click', applyGoldenPreset);
+
+  const btnReset = document.getElementById('btnResetPatches');
+  if (btnReset) {
+    btnReset.addEventListener('click', () => {
+      document.querySelectorAll('.patch-item .patch-main-cb').forEach(cb => {
+        cb.checked = true;
+        STATE.selectedPatches.add(cb.dataset.name);
+      });
+      document.querySelectorAll('.patch-item').forEach(p => p.classList.add('selected'));
+      updatePatchCount();
+      updateBottomBarSummary();
+    });
+  }
 
   const btnExport = document.getElementById('btnExportPreset');
   if (btnExport) btnExport.addEventListener('click', exportPreset);
@@ -1417,7 +1506,7 @@ function initEventListeners() {
   if (inputSearchPatch) {
     inputSearchPatch.addEventListener('input', (e) => {
       const query = e.target.value.toLowerCase().trim();
-      document.querySelectorAll('.category-group').forEach(group => {
+      document.querySelectorAll('.category-group').forEach((group, idx) => {
         let hasMatch = false;
         group.querySelectorAll('.patch-item').forEach(item => {
           const name = (item.dataset.patchName || '').toLowerCase();
@@ -1427,6 +1516,11 @@ function initEventListeners() {
           if (match) hasMatch = true;
         });
         group.style.display = hasMatch ? 'block' : 'none';
+        if (query && hasMatch) {
+          group.classList.remove('collapsed');
+        } else if (!query) {
+          group.classList.toggle('collapsed', idx > 0);
+        }
       });
     });
   }
@@ -1462,7 +1556,7 @@ function initEventListeners() {
     });
   }
 
-  // Post-Patch Actions (Hero Card & Modal)
+  // Post-Patch Actions
   const bindMountAction = (btnId, alertId) => {
     const btn = document.getElementById(btnId);
     if (!btn) return;
@@ -1531,45 +1625,28 @@ function initEventListeners() {
   bindExportZipAction('btnExportZip', 'mountAlert');
 
   // Modals
-  document.getElementById('btnAuthModal').addEventListener('click', openAuthModal);
-  document.getElementById('btnCloseAuthModal').addEventListener('click', closeAuthModal);
-  document.getElementById('btnCloseProgressModal').addEventListener('click', () => {
-    document.getElementById('buildProgressModal').classList.add('hidden');
+  document.getElementById('btnAuthModal')?.addEventListener('click', openAuthModal);
+  document.getElementById('btnCloseAuthModal')?.addEventListener('click', closeAuthModal);
+  document.getElementById('btnCloseProgressModal')?.addEventListener('click', () => {
+    document.getElementById('buildProgressModal')?.classList.add('hidden');
   });
 
-  const btnNotes = document.getElementById('btnViewPatchNotes');
-  if (btnNotes) btnNotes.addEventListener('click', showPatchNotesModal);
-
-  const btnCloseNotes = document.getElementById('btnClosePatchNotesModal');
-  if (btnCloseNotes) {
-    btnCloseNotes.addEventListener('click', () => {
-      document.getElementById('patchNotesModal').classList.add('hidden');
-    });
-  }
-
-  const btnCloseNotesBtn = document.getElementById('btnClosePatchNotesBtn');
-  if (btnCloseNotesBtn) {
-    btnCloseNotesBtn.addEventListener('click', () => {
-      document.getElementById('patchNotesModal').classList.add('hidden');
-    });
-  }
-
-  const btnCloseSuccess = document.getElementById('btnCloseSuccessModal');
-  if (btnCloseSuccess) {
-    btnCloseSuccess.addEventListener('click', () => {
-      document.getElementById('patchSuccessModal').classList.add('hidden');
-    });
-  }
-
-  const btnFinish = document.getElementById('btnFinishSuccess');
-  if (btnFinish) {
-    btnFinish.addEventListener('click', () => {
-      document.getElementById('patchSuccessModal').classList.add('hidden');
-    });
-  }
+  document.getElementById('btnViewPatchNotes')?.addEventListener('click', showPatchNotesModal);
+  document.getElementById('btnClosePatchNotesModal')?.addEventListener('click', () => {
+    document.getElementById('patchNotesModal')?.classList.add('hidden');
+  });
+  document.getElementById('btnClosePatchNotesBtn')?.addEventListener('click', () => {
+    document.getElementById('patchNotesModal')?.classList.add('hidden');
+  });
+  document.getElementById('btnCloseSuccessModal')?.addEventListener('click', () => {
+    document.getElementById('patchSuccessModal')?.classList.add('hidden');
+  });
+  document.getElementById('btnFinishSuccess')?.addEventListener('click', () => {
+    document.getElementById('patchSuccessModal')?.classList.add('hidden');
+  });
 
   // Token Auth
-  document.getElementById('btnSaveAuth').addEventListener('click', async () => {
+  document.getElementById('btnSaveAuth')?.addEventListener('click', async () => {
     const token = document.getElementById('inputGithubToken').value.trim();
     const alertBox = document.getElementById('authAlert');
 
@@ -1592,7 +1669,7 @@ function initEventListeners() {
     }
   });
 
-  document.getElementById('btnClearAuth').addEventListener('click', () => {
+  document.getElementById('btnClearAuth')?.addEventListener('click', () => {
     localStorage.removeItem('rvx_gh_pat');
     STATE.authToken = '';
     STATE.authUser = null;
@@ -1602,13 +1679,14 @@ function initEventListeners() {
 }
 
 function openAuthModal() {
-  document.getElementById('inputGithubToken').value = STATE.authToken;
-  document.getElementById('authAlert').classList.add('hidden');
-  document.getElementById('authModal').classList.remove('hidden');
+  const input = document.getElementById('inputGithubToken');
+  if (input) input.value = STATE.authToken;
+  document.getElementById('authAlert')?.classList.add('hidden');
+  document.getElementById('authModal')?.classList.remove('hidden');
 }
 
 function closeAuthModal() {
-  document.getElementById('authModal').classList.add('hidden');
+  document.getElementById('authModal')?.classList.add('hidden');
 }
 
 function escapeHtml(str) {
@@ -1620,8 +1698,6 @@ function escapeHtml(str) {
 
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(err => {
-      console.log('SW registration error:', err);
-    });
+    navigator.serviceWorker.register('sw.js?v=2.1.5').catch(() => {});
   }
 }

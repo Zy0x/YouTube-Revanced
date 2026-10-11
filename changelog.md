@@ -1,3 +1,13 @@
+## v2.1.5 (2026-10-11)
+
+### Features & Fixes
+- **Clean Morphe Layout Overhaul**: Streamlined Tab 1 and Tab 2 with a compact 2-way execution switcher, unified Target YouTube Version card, 2×2 source cards, and zero-overflow 3-step segmented tab bar across all mobile (`392px–431px`), tablet, and desktop viewports.
+- **Collapsible Patch Category Accordions**: Added interactive category accordions with live `active/total` counters and `Expand All / Collapse All` controls for effortless patch navigation.
+- **Strict YouTube Package Filtering & Golden Preset Sync**: Filtered patch manifests strictly for `com.google.android.youtube` (81 active patches by default) and synchronized `golden-preset.json` exclusion rules and options.
+- **Smart Version Prioritization**: Sorted recommended (`v21.13.164`) and manifest-supported versions to the top of the version grid without nested scroll traps.
+- **Short Landscape Split-Rail Polish**: Refined the landscape rail (`≤ 500px` height) for `850×296`, `946×335`, `901×347`, and `723×296` screens with zero vertical clipping.
+- **LAN Testing Support**: Enabled optional `0.0.0.0` bind mode for local WiFi device testing alongside no-cache asset headers.
+
 ## v2.1.4 (2026-10-11)
 
 ### Features & Updates
