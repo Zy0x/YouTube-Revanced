@@ -6,3 +6,7 @@ build_out/
 *.log
 *.tmp
 stock-youtube.apk
+target/
+daemon/target/
+bin/
+.daemon_token

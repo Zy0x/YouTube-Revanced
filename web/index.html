@@ -24,6 +24,10 @@
         </div>
       </div>
       <div class="nav-actions">
+        <button id="btnToggleTerminal" class="btn-chip" aria-label="Terminal Logs" title="View Real-Time Terminal Output">
+          <span class="terminal-dot">💻</span>
+          <span id="terminalDrawerBadge">Terminal</span>
+        </button>
         <button id="btnAuthModal" class="btn-chip" aria-label="Security & Access Settings" title="Manage GitHub Access Token">
           <span id="authStatusIcon">🔒</span>
           <span id="authStatusText">Locked</span>
@@ -34,6 +38,23 @@
 
   <!-- Main Container -->
   <main class="main-content" role="main">
+
+    <!-- Engine Mode Switcher Bar -->
+    <div class="engine-switch-card">
+      <div class="engine-switch-header">
+        <span class="engine-switch-title">Patch Execution Engine:</span>
+        <span id="daemonStatusBadge" class="badge badge-info">Detecting daemon...</span>
+      </div>
+      <div class="engine-switch-pills" role="tablist" aria-label="Patch Engine Mode">
+        <button type="button" id="btnEngineLocal" class="btn-engine active" role="tab" aria-selected="true" title="On-Device Local Patching (Morphe CLI on Android, zero API quota, instant live mount)">
+          <span class="status-indicator online"></span>
+          <span>📱 On-Device (Local Daemon)</span>
+        </button>
+        <button type="button" id="btnEngineCloud" class="btn-engine" role="tab" aria-selected="false" title="Cloud GitHub Actions Dispatch (Requires GitHub Token)">
+          <span>☁️ Cloud (GitHub Actions)</span>
+        </button>
+      </div>
+    </div>
 
     <!-- Hero Card: Target & Source Selection -->
     <section class="card config-card" aria-labelledby="section-config">
@@ -260,6 +281,53 @@
     </div>
   </div>
 
-  <script src="app.js?v=2.1.2"></script>
+  <!-- Post-Patch Completion Modal -->
+  <div id="patchSuccessModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalSuccessTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalSuccessTitle" class="modal-title">🎉 Patching Complete!</h3>
+        <button id="btnCloseSuccessModal" class="btn-close" aria-label="Close Dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-secondary" style="margin-bottom: 16px;">
+          Your YouTube RVX has been patched successfully directly on your device. Choose what you want to do next:
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <button type="button" id="btnHotMount" class="btn btn-primary" style="min-height: 52px; font-size: 1rem; justify-content: center;">
+            🚀 Mount Instantly (No Reboot)
+          </button>
+          <button type="button" id="btnExportZip" class="btn btn-secondary" style="min-height: 52px; font-size: 1rem; justify-content: center;">
+            💾 Save Flashable Module ZIP (/sdcard/Download)
+          </button>
+        </div>
+        <div id="mountAlert" class="alert hidden" role="alert" style="margin-top: 14px;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnFinishSuccess" class="btn btn-secondary">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Terminal Console Drawer -->
+  <aside id="terminalDrawer" class="terminal-drawer hidden" aria-label="Live Patch Terminal Console">
+    <div class="terminal-header">
+      <div class="terminal-title">
+        <span class="terminal-icon" aria-hidden="true">📟</span>
+        <span>Terminal Output</span>
+        <span id="patchJobIndicator" class="badge badge-info hidden">Running...</span>
+      </div>
+      <div class="terminal-actions">
+        <button type="button" id="btnAutoScroll" class="btn-term-action active" title="Toggle Auto-Scroll">📜 Scroll: ON</button>
+        <button type="button" id="btnClearLogs" class="btn-term-action" title="Clear Logs">🧹 Clear</button>
+        <button type="button" id="btnCopyLogs" class="btn-term-action" title="Copy Logs">📋 Copy</button>
+        <button type="button" id="btnCloseTerminal" class="btn-term-close" aria-label="Close Terminal">&times;</button>
+      </div>
+    </div>
+    <div id="terminalBody" class="terminal-body" role="log" aria-live="polite">
+      <pre id="terminalLogs" class="terminal-pre">Ready. Tap 'Patch On Device' to start on-device patching process.</pre>
+    </div>
+  </aside>
+
+  <script src="app.js?v=2.1.3"></script>
 </body>
 </html>

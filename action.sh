@@ -61,6 +61,18 @@ else
     fi
 fi
 
+# Check and launch RVX WebUI Dashboard if available
+if [ -f "$MODPATH/bin/rvx-daemon" ]; then
+    if ! pgrep -f "rvx-daemon" >/dev/null 2>&1; then
+        echo "🌐 Starting RVX Patcher Daemon on port 8080..."
+        chmod 755 "$MODPATH/bin/rvx-daemon"
+        nohup "$MODPATH/bin/rvx-daemon" --modpath "$MODPATH" --port 8080 > "$MODPATH/daemon.log" 2>&1 &
+        sleep 1
+    fi
+    echo "📱 Opening RVX WebUI (http://127.0.0.1:8080)..."
+    am start -a android.intent.action.VIEW -d "http://127.0.0.1:8080" >/dev/null 2>&1
+fi
+
 echo "⏳ Opening YouTube in 3 seconds..."
 sleep 1
 echo "3️⃣"

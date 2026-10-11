@@ -62,6 +62,16 @@ Supports both **ROOT** and **NON-ROOT** versions! 🚀
 3. **Export settings** (Optional)  
 4. Enjoy ✨  
 
+### 📱 On-Device WebUI Patcher (`rvx-daemon`)
+After flashing the module in **KernelSU**, **APatch**, or **Magisk**:
+- **KernelSU / APatch**: Tap the **WebUI** button inside the module card.
+- **Magisk**: Tap the **Action** button in Magisk to open `http://127.0.0.1:8080` in your browser.
+- **Features**:
+  - ⚡ 100% On-device patching with zero cloud runner limits or GitHub API quota restrictions.
+  - 💻 Live terminal console drawer streaming Morphe CLI logs in real-time.
+  - 🚀 **Instant Hot-Mount** without rebooting your device.
+  - 💾 **Export Flashable ZIP** directly to `/sdcard/Download/`.  
+
 ---
 
 <h3>🌈 Non-Root</h3>  

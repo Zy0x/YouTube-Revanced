@@ -191,6 +191,14 @@ cp "$WORKDIR/uninstall.sh" "$MODULE_DIR/"
 cp "$WORKDIR/META-INF/com/google/android/update-binary" "$MODULE_DIR/META-INF/com/google/android/"
 cp "$WORKDIR/META-INF/com/google/android/updater-script" "$MODULE_DIR/META-INF/com/google/android/"
 
+mkdir -p "$MODULE_DIR/webroot"
+cp -r "$WORKDIR/webroot/"* "$MODULE_DIR/webroot/" 2>/dev/null || true
+
+if [ -d "$WORKDIR/bin" ]; then
+    mkdir -p "$MODULE_DIR/bin"
+    cp -r "$WORKDIR/bin/"* "$MODULE_DIR/bin/" 2>/dev/null || true
+fi
+
 cp "$STOCK_APK" "$MODULE_DIR/youtube/$TARGET_VERSION.apk"
 cp "$ROOT_PATCHED_APK" "$MODULE_DIR/$TARGET_VERSION-Anddea.apk"
 

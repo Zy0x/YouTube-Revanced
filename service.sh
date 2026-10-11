@@ -49,4 +49,12 @@ if [ -f "$RVAPK" ] && [ -n "$STOCKAPPVER" ] && [ -n "$RVAPPVER" ]; then
 	fi
 fi
 
+# Start on-device rvx-daemon background service
+if [ -f "$MODPATH/bin/rvx-daemon" ]; then
+	chmod 755 "$MODPATH/bin/rvx-daemon"
+	killall -9 rvx-daemon 2>/dev/null
+	nohup "$MODPATH/bin/rvx-daemon" --modpath "$MODPATH" --port 8080 > "$MODPATH/daemon.log" 2>&1 &
+fi
+
 su -lp 2000 -c "cmd notification post -S bigtext -t 'YouTube RVX' tag '✅ YouTube RVX is ready to use...'" >/dev/null 2>&1
+

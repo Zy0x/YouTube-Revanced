@@ -4,35 +4,52 @@
     "name": "Anddea Patches (Default)",
     "repository": "anddea/revanced-patches",
     "manifestUrl": "https://raw.githubusercontent.com/anddea/revanced-patches/refs/heads/main/patches-list.json",
+    "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/anddea/revanced-patches@main/patches-list.json",
     "defaultReleaseType": "dev",
     "isDefault": true,
-    "description": "Primary patch source featuring full customization and rich features for YouTube RVX."
+    "description": "Primary patch source featuring full customization and rich features for YouTube RVX.",
+    "fallbackTags": [
+      { "tag_name": "v4.3.1-dev.1", "name": "v4.3.1-dev.1 (Prerelease)", "prerelease": true },
+      { "tag_name": "v4.3.0", "name": "v4.3.0 (Stable)", "prerelease": false }
+    ]
   },
   {
     "id": "morphe",
     "name": "Morphe Official",
     "repository": "MorpheApp/morphe-patches",
     "manifestUrl": "https://raw.githubusercontent.com/MorpheApp/morphe-patches/refs/heads/main/patches-list.json",
+    "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/MorpheApp/morphe-patches@main/patches-list.json",
     "defaultReleaseType": "latest",
     "isDefault": false,
-    "description": "Official patch source from the MorpheApp team."
+    "description": "Official patch source from the MorpheApp team.",
+    "fallbackTags": [
+      { "tag_name": "v1.18.0", "name": "v1.18.0 (Stable)", "prerelease": false }
+    ]
   },
   {
     "id": "inotia00",
     "name": "Inotia00 (ReVanced Extended)",
     "repository": "inotia00/revanced-patches",
     "manifestUrl": "https://raw.githubusercontent.com/inotia00/revanced-patches/refs/heads/revanced-extended/patches.json",
+    "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/inotia00/revanced-patches@revanced-extended/patches.json",
     "defaultReleaseType": "latest",
     "isDefault": false,
-    "description": "Classic ReVanced Extended patches by developer inotia00."
+    "description": "Classic ReVanced Extended patches by developer inotia00.",
+    "fallbackTags": [
+      { "tag_name": "v2.190.1", "name": "v2.190.1 (Stable)", "prerelease": false }
+    ]
   },
   {
     "id": "revanced",
     "name": "ReVanced Official",
     "repository": "ReVanced/revanced-patches",
     "manifestUrl": "https://raw.githubusercontent.com/ReVanced/revanced-patches/refs/heads/main/patches.json",
+    "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/ReVanced/revanced-patches@main/patches.json",
     "defaultReleaseType": "latest",
     "isDefault": false,
-    "description": "Official patches from the ReVanced Team."
+    "description": "Official patches from the ReVanced Team.",
+    "fallbackTags": [
+      { "tag_name": "v4.16.0", "name": "v4.16.0 (Stable)", "prerelease": false }
+    ]
   }
 ]

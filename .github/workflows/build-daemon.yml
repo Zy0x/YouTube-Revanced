@@ -1,0 +1,49 @@
+name: Build & Package RVX Daemon (Android ARM64)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'daemon/**'
+      - 'web/**'
+      - '.github/workflows/build-daemon.yml'
+
+jobs:
+  build-daemon:
+    name: Build On-Device Daemon (aarch64-linux-android)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26b
+          add-to-path: true
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk --locked
+
+      - name: Build rvx-daemon for Android ARM64
+        run: |
+          mkdir -p bin
+          cargo ndk -t arm64-v8a build --release --manifest-path daemon/Cargo.toml
+          cp daemon/target/aarch64-linux-android/release/rvx-daemon bin/rvx-daemon
+          chmod +x bin/rvx-daemon
+          ls -lh bin/rvx-daemon
+
+      - name: Upload rvx-daemon Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rvx-daemon-aarch64
+          path: bin/rvx-daemon
+          if-no-files-found: error

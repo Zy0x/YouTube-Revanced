@@ -102,7 +102,14 @@ rm -rf /data/adb/revanced \
 	/data/adb/post-fs-data.d/*revanced*.sh \
 	/data/adb/post-fs-data.d/detach*.sh \
 	/data/adb/post-fs-data.d/*youtube*.sh \
-	/data/local/tmp/revanced* 2>/dev/null
+# Setup RVX Daemon & WebUI for KernelSU / APatch / Magisk
+if [ -d "$MODPATH/bin" ]; then
+	chmod 755 "$MODPATH/bin"/* 2>/dev/null
+fi
+mkdir -p "$MODPATH/webroot"
+if [ -f "$MODPATH/webroot/index.html" ]; then
+	chmod 644 "$MODPATH/webroot"/* 2>/dev/null
+fi
 
 ui_print "- Installation Successful !!"
 ui_print "- You can use YouTube ReVanced without rebooting."

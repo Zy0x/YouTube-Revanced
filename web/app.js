@@ -23,15 +23,23 @@ const STATE = {
   goldenPreset: null,
   authToken: localStorage.getItem('rvx_gh_pat') || '',
   authPasscode: localStorage.getItem('rvx_passcode') || '',
-  authUser: null
+  authUser: null,
+  // Dual-Engine & On-Device Daemon State
+  engineMode: 'local',
+  daemonOnline: false,
+  daemonUrl: '',
+  terminalAutoScroll: true,
+  eventSource: null
 };
 
 // =============================================================================
-// Inisialisasi Aplikasi
+// Application Initialization
 // =============================================================================
 document.addEventListener('DOMContentLoaded', async () => {
   initSecurity();
   initEventListeners();
+  initEngineSwitcher();
+  await checkDaemonStatus();
   await loadSourcesAndPresets();
   await fetchAndRenderPatches(STATE.currentSource);
   registerServiceWorker();
@@ -214,7 +222,7 @@ function renderSourceSelector() {
 }
 
 // =============================================================================
-// Mengambil Daftar Rilis Versi Patch (.mpp) dari GitHub API Secara Dinamis
+// Fetch Patch Release (.mpp) Channels with Zero-API Rate-Limit Protection
 // =============================================================================
 async function loadPatchReleases(sourceConfig) {
   if (!sourceConfig) return;
@@ -223,7 +231,7 @@ async function loadPatchReleases(sourceConfig) {
   const hint = document.getElementById('patchReleaseHint');
   if (!select) return;
 
-  hint.textContent = `Menghubungkan ke GitHub Releases (${repo})...`;
+  hint.textContent = `Connecting to release mirrors (${repo})...`;
 
   try {
     const headers = { 'Accept': 'application/vnd.github.v3+json' };
@@ -240,24 +248,24 @@ async function loadPatchReleases(sourceConfig) {
 
       select.innerHTML = '';
 
-      // Opsi 1: Channel Dev / Prerelease
+      // Option 1: Channel Dev / Prerelease
       const optDev = document.createElement('option');
       optDev.value = 'dev';
-      optDev.textContent = `⚡ Prerelease / Dev ${latestPre ? `(${latestPre.tag_name})` : '(Terkini)'}`;
+      optDev.textContent = `⚡ Prerelease / Dev ${latestPre ? `(${latestPre.tag_name})` : '(Latest)'}`;
       if (sourceConfig.defaultReleaseType === 'dev' || !latestStable) optDev.selected = true;
       select.appendChild(optDev);
 
-      // Opsi 2: Channel Stable / Latest
+      // Option 2: Channel Stable / Latest
       const optStable = document.createElement('option');
       optStable.value = 'latest';
-      optStable.textContent = `🛡️ Stable / Latest ${latestStable ? `(${latestStable.tag_name})` : '(Stabil Resmi)'}`;
+      optStable.textContent = `🛡️ Stable / Latest ${latestStable ? `(${latestStable.tag_name})` : '(Official)'}`;
       if (sourceConfig.defaultReleaseType === 'latest' && latestStable) optStable.selected = true;
       select.appendChild(optStable);
 
-      // Opsi 3: Tag Rilis Spesifik
+      // Option 3: Specific Release Tags
       if (releases.length > 0) {
         const optGroup = document.createElement('optgroup');
-        optGroup.label = '── Tag Rilis Spesifik (.mpp) ──';
+        optGroup.label = '── Specific Release Tags (.mpp) ──';
 
         releases.forEach(rel => {
           const opt = document.createElement('option');
@@ -270,20 +278,41 @@ async function loadPatchReleases(sourceConfig) {
         select.appendChild(optGroup);
       }
 
-      hint.textContent = `Tersedia ${releases.length} rilis di GitHub (${latestPre?.tag_name || 'dev'} & ${latestStable?.tag_name || 'latest'})`;
+      hint.textContent = `Discovered ${releases.length} releases on GitHub (${latestPre?.tag_name || 'dev'} & ${latestStable?.tag_name || 'latest'})`;
       updatePatchTagBadge(select.value);
       return;
     }
   } catch (err) {
-    console.warn('[RVX] Gagal fetch releases dari GitHub API:', err);
+    console.warn('[RVX] GitHub REST API query skipped or rate limited. Using zero-API fallback channel:', err);
   }
 
-  // Fallback standar jika offline / rate limit API
-  select.innerHTML = `
-    <option value="dev" ${sourceConfig.defaultReleaseType === 'dev' ? 'selected' : ''}>⚡ Prerelease / Dev (Terkini)</option>
-    <option value="latest" ${sourceConfig.defaultReleaseType === 'latest' ? 'selected' : ''}>🛡️ Stable / Latest (Stabil Resmi)</option>
-  `;
-  hint.textContent = 'Channel default: Dev (Prerelease) dan Latest (Stabil).';
+  // Resilient Zero-API Fallback using pre-configured static channels & tags
+  select.innerHTML = '';
+  const optDev = document.createElement('option');
+  optDev.value = 'dev';
+  optDev.textContent = '⚡ Prerelease / Dev (Latest Channel)';
+  if (sourceConfig.defaultReleaseType === 'dev') optDev.selected = true;
+  select.appendChild(optDev);
+
+  const optStable = document.createElement('option');
+  optStable.value = 'latest';
+  optStable.textContent = '🛡️ Stable / Latest (Official Channel)';
+  if (sourceConfig.defaultReleaseType === 'latest') optStable.selected = true;
+  select.appendChild(optStable);
+
+  if (sourceConfig.fallbackTags && sourceConfig.fallbackTags.length > 0) {
+    const optGroup = document.createElement('optgroup');
+    optGroup.label = '── Verified Static Tags (.mpp) ──';
+    sourceConfig.fallbackTags.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.tag_name;
+      opt.textContent = `🏷️ ${t.name}`;
+      optGroup.appendChild(opt);
+    });
+    select.appendChild(optGroup);
+  }
+
+  hint.textContent = 'Standard Channels active: Dev & Latest. Zero GitHub API quota consumed.';
   updatePatchTagBadge(select.value);
 }
 
@@ -323,13 +352,13 @@ function showPatchNotesModal() {
   }
 
   if (foundRelease) {
-    title.textContent = `ℹ️ Catatan Rilis: ${foundRelease.name || foundRelease.tag_name}`;
-    const pubDate = foundRelease.published_at ? new Date(foundRelease.published_at).toLocaleString('id-ID') : '-';
+    title.textContent = `ℹ️ Release Notes: ${foundRelease.name || foundRelease.tag_name}`;
+    const pubDate = foundRelease.published_at ? new Date(foundRelease.published_at).toLocaleString('en-US') : '-';
     const tagType = foundRelease.prerelease ? 'PRERELEASE / DEV' : 'STABLE';
-    content.textContent = `📌 Versi Tag: ${foundRelease.tag_name} (${tagType})\n📅 Tanggal Rilis: ${pubDate}\n\n=== CATATAN RILIS ===\n\n${foundRelease.body || 'Tidak ada catatan rilis khusus.'}`;
+    content.textContent = `📌 Tag: ${foundRelease.tag_name} (${tagType})\n📅 Published Date: ${pubDate}\n\n=== RELEASE NOTES ===\n\n${foundRelease.body || 'No release notes provided.'}`;
   } else {
-    title.textContent = `ℹ️ Catatan Rilis: ${currentTag.toUpperCase()}`;
-    content.textContent = `Channel aktif: ${currentTag.toUpperCase()}\n\nMorphe CLI akan mengunduh bundle patch .mpp terbaru dari repositori ${STATE.currentSource} saat proses build dijalankan di GitHub Actions.`;
+    title.textContent = `ℹ️ Release Notes: ${currentTag.toUpperCase()}`;
+    content.textContent = `Active Channel: ${currentTag.toUpperCase()}\n\nMorphe CLI automatically downloads the corresponding .mpp patch bundle from the ${STATE.currentSource} repository upon build dispatch.`;
   }
 
   modal.classList.remove('hidden');
@@ -1196,13 +1225,124 @@ function initEventListeners() {
     });
   }
 
-  document.getElementById('btnTriggerBuild').addEventListener('click', triggerCloudBuild);
+  document.getElementById('btnTriggerBuild').addEventListener('click', () => {
+    if (STATE.engineMode === 'local') {
+      triggerLocalPatch();
+    } else {
+      triggerCloudBuild();
+    }
+  });
 
   document.getElementById('btnAuthModal').addEventListener('click', openAuthModal);
   document.getElementById('btnCloseAuthModal').addEventListener('click', closeAuthModal);
   document.getElementById('btnCloseProgressModal').addEventListener('click', () => {
     document.getElementById('buildProgressModal').classList.add('hidden');
   });
+
+  // Terminal Drawer Listeners
+  const btnToggleTerm = document.getElementById('btnToggleTerminal');
+  const btnCloseTerm = document.getElementById('btnCloseTerminal');
+  const drawerTerm = document.getElementById('terminalDrawer');
+  if (btnToggleTerm && drawerTerm) {
+    btnToggleTerm.addEventListener('click', () => {
+      drawerTerm.classList.toggle('hidden');
+    });
+  }
+  if (btnCloseTerm && drawerTerm) {
+    btnCloseTerm.addEventListener('click', () => {
+      drawerTerm.classList.add('hidden');
+    });
+  }
+
+  const btnAutoScroll = document.getElementById('btnAutoScroll');
+  if (btnAutoScroll) {
+    btnAutoScroll.addEventListener('click', () => {
+      STATE.terminalAutoScroll = !STATE.terminalAutoScroll;
+      btnAutoScroll.textContent = STATE.terminalAutoScroll ? '📜 Scroll: ON' : '📜 Scroll: OFF';
+      btnAutoScroll.classList.toggle('active', STATE.terminalAutoScroll);
+    });
+  }
+
+  const btnClearLogs = document.getElementById('btnClearLogs');
+  if (btnClearLogs) {
+    btnClearLogs.addEventListener('click', () => {
+      const logs = document.getElementById('terminalLogs');
+      if (logs) logs.textContent = 'Cleared. Ready.';
+    });
+  }
+
+  const btnCopyLogs = document.getElementById('btnCopyLogs');
+  if (btnCopyLogs) {
+    btnCopyLogs.addEventListener('click', () => {
+      const logs = document.getElementById('terminalLogs');
+      if (logs && navigator.clipboard) {
+        navigator.clipboard.writeText(logs.textContent).then(() => {
+          btnCopyLogs.textContent = '✅ Copied!';
+          setTimeout(() => btnCopyLogs.textContent = '📋 Copy', 1800);
+        });
+      }
+    });
+  }
+
+  // Post-Patch Actions
+  const btnHotMount = document.getElementById('btnHotMount');
+  const btnExportZip = document.getElementById('btnExportZip');
+  const btnCloseSuccess = document.getElementById('btnCloseSuccessModal');
+  const btnFinishSuccess = document.getElementById('btnFinishSuccess');
+  const successModal = document.getElementById('patchSuccessModal');
+
+  if (btnCloseSuccess && successModal) {
+    btnCloseSuccess.addEventListener('click', () => successModal.classList.add('hidden'));
+  }
+  if (btnFinishSuccess && successModal) {
+    btnFinishSuccess.addEventListener('click', () => successModal.classList.add('hidden'));
+  }
+
+  if (btnHotMount) {
+    btnHotMount.addEventListener('click', async () => {
+      const alertBox = document.getElementById('mountAlert');
+      alertBox.textContent = 'Mounting YouTube RVX into running package...';
+      alertBox.className = 'alert text-secondary';
+      alertBox.classList.remove('hidden');
+
+      try {
+        const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/mount`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+          alertBox.textContent = '🎉 Successfully mounted! YouTube has been restarted.';
+          alertBox.className = 'alert text-success';
+        } else {
+          throw new Error(data.error || 'Failed to mount');
+        }
+      } catch (err) {
+        alertBox.textContent = `❌ Mount error: ${err.message}`;
+        alertBox.className = 'alert text-danger';
+      }
+    });
+  }
+
+  if (btnExportZip) {
+    btnExportZip.addEventListener('click', async () => {
+      const alertBox = document.getElementById('mountAlert');
+      alertBox.textContent = 'Packaging flashable ZIP module...';
+      alertBox.className = 'alert text-secondary';
+      alertBox.classList.remove('hidden');
+
+      try {
+        const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/export-zip`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+          alertBox.textContent = `💾 Module ZIP saved to: ${data.path}`;
+          alertBox.className = 'alert text-success';
+        } else {
+          throw new Error(data.error || 'Failed to export ZIP');
+        }
+      } catch (err) {
+        alertBox.textContent = `❌ Export error: ${err.message}`;
+        alertBox.className = 'alert text-danger';
+      }
+    });
+  }
 
   document.getElementById('btnSaveAuth').addEventListener('click', async () => {
     const token = document.getElementById('inputGithubToken').value.trim();
@@ -1234,6 +1374,168 @@ function initEventListeners() {
     initSecurity();
     closeAuthModal();
   });
+}
+
+// =============================================================================
+// Engine Mode Switcher & Daemon Communication
+// =============================================================================
+function initEngineSwitcher() {
+  const btnLocal = document.getElementById('btnEngineLocal');
+  const btnCloud = document.getElementById('btnEngineCloud');
+
+  if (btnLocal) {
+    btnLocal.addEventListener('click', () => setEngineMode('local'));
+  }
+  if (btnCloud) {
+    btnCloud.addEventListener('click', () => setEngineMode('cloud'));
+  }
+}
+
+async function checkDaemonStatus() {
+  const badge = document.getElementById('daemonStatusBadge');
+  const urlsToTest = [
+    '', // Relative if served by daemon
+    'http://127.0.0.1:8080',
+    'http://localhost:8080'
+  ];
+
+  for (const url of urlsToTest) {
+    try {
+      const res = await fetch(`${url}/api/v1/system/status`, { signal: AbortSignal.timeout(1500) });
+      if (res.ok) {
+        const data = await res.json();
+        STATE.daemonOnline = true;
+        STATE.daemonUrl = url;
+        if (badge) {
+          badge.textContent = `🟢 Daemon Online (v${data.daemon_version})`;
+          badge.className = 'badge badge-success';
+        }
+        setEngineMode('local');
+        return;
+      }
+    } catch (_) {}
+  }
+
+  STATE.daemonOnline = false;
+  STATE.daemonUrl = '';
+  if (badge) {
+    badge.textContent = '☁️ Cloud Mode (Daemon Offline)';
+    badge.className = 'badge badge-secondary';
+  }
+  setEngineMode('cloud');
+}
+
+function setEngineMode(mode) {
+  STATE.engineMode = mode;
+  const btnLocal = document.getElementById('btnEngineLocal');
+  const btnCloud = document.getElementById('btnEngineCloud');
+  const btnTrigger = document.getElementById('btnTriggerBuild');
+
+  if (btnLocal && btnCloud) {
+    if (mode === 'local') {
+      btnLocal.classList.add('active');
+      btnLocal.setAttribute('aria-selected', 'true');
+      btnCloud.classList.remove('active');
+      btnCloud.setAttribute('aria-selected', 'false');
+    } else {
+      btnCloud.classList.add('active');
+      btnCloud.setAttribute('aria-selected', 'true');
+      btnLocal.classList.remove('active');
+      btnLocal.setAttribute('aria-selected', 'false');
+    }
+  }
+
+  if (btnTrigger) {
+    const btnText = btnTrigger.querySelector('.btn-text');
+    if (mode === 'local') {
+      if (btnText) btnText.textContent = 'Patch On Device';
+      btnTrigger.disabled = false;
+      btnTrigger.title = 'Run on-device patching using local daemon (Zero cloud quota)';
+    } else {
+      if (btnText) btnText.textContent = 'Build on GitHub';
+      if (!STATE.authToken) {
+        btnTrigger.disabled = false;
+        btnTrigger.title = 'Unlock with your GitHub Token to trigger build';
+      }
+    }
+  }
+}
+
+async function triggerLocalPatch() {
+  const drawer = document.getElementById('terminalDrawer');
+  const indicator = document.getElementById('patchJobIndicator');
+  if (drawer) drawer.classList.remove('hidden');
+  if (indicator) indicator.classList.remove('hidden');
+
+  appendTerminalLog('===========================================================');
+  appendTerminalLog(`[WebUI] Preparing On-Device Patch for YouTube v${STATE.currentVersion}`);
+  appendTerminalLog(`[WebUI] Patch Source: ${STATE.currentSource} (${STATE.patchTag})`);
+  appendTerminalLog(`[WebUI] Selected Patches: ${STATE.selectedPatches.size}`);
+  appendTerminalLog('===========================================================');
+
+  const allPatchNames = STATE.patches.map(p => p.name);
+  const excludedPatches = allPatchNames.filter(name => !STATE.selectedPatches.has(name));
+  const includedPatches = Array.from(STATE.selectedPatches);
+
+  const payload = {
+    target_version: STATE.currentVersion,
+    patch_source: STATE.currentSource,
+    patch_tag: STATE.patchTag,
+    is_root: true,
+    included_patches: includedPatches,
+    excluded_patches: excludedPatches,
+    options: STATE.selectedOptions
+  };
+
+  try {
+    const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+
+    // Connect to Server-Sent Events log stream
+    if (STATE.eventSource) {
+      STATE.eventSource.close();
+    }
+
+    STATE.eventSource = new EventSource(`${STATE.daemonUrl}/api/v1/patch/stream`);
+    STATE.eventSource.onmessage = (event) => {
+      appendTerminalLog(event.data);
+      if (event.data.includes('Patching process completed successfully')) {
+        if (indicator) indicator.classList.add('hidden');
+        const modal = document.getElementById('patchSuccessModal');
+        if (modal) modal.classList.remove('hidden');
+        if (STATE.eventSource) STATE.eventSource.close();
+      } else if (event.data.includes('Patching failed')) {
+        if (indicator) indicator.classList.add('hidden');
+        if (STATE.eventSource) STATE.eventSource.close();
+      }
+    };
+
+    STATE.eventSource.onerror = () => {
+      if (indicator) indicator.classList.add('hidden');
+    };
+  } catch (err) {
+    appendTerminalLog(`❌ Failed to start patching: ${err.message}`);
+    if (indicator) indicator.classList.add('hidden');
+  }
+}
+
+function appendTerminalLog(line) {
+  const container = document.getElementById('terminalLogs');
+  const body = document.getElementById('terminalBody');
+  if (!container) return;
+
+  container.textContent += `\n${line}`;
+  if (STATE.terminalAutoScroll && body) {
+    body.scrollTop = body.scrollHeight;
+  }
 }
 
 function openAuthModal() {
