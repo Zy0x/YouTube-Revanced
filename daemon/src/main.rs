@@ -19,7 +19,8 @@ use state::AppState;
 #[derive(Parser, Debug)]
 #[command(name = "rvx-daemon", version = "2.1.4", about = "On-Device YouTube RVX Patcher Daemon")]
 struct CliArgs {
-    /// IP address to bind to (strictly loopback for security)
+    /// IP address to bind to. Default: 127.0.0.1 (loopback).
+    /// Use 0.0.0.0 for LAN access during development/testing.
     #[arg(short, long, default_value = "127.0.0.1")]
     bind: String,
 
@@ -44,12 +45,18 @@ async fn main() -> anyhow::Result<()> {
 
     let args = CliArgs::parse();
 
-    // Enforce loopback binding for security (Rule 9)
-    let bind_addr = if args.bind == "127.0.0.1" || args.bind == "localhost" {
-        args.bind
-    } else {
-        tracing::warn!("Non-loopback bind address requested ('{}'). Overriding to '127.0.0.1' for security.", args.bind);
-        "127.0.0.1".to_string()
+    // Security: default is loopback. Allow 0.0.0.0 for explicit LAN/dev mode.
+    // On Android module production, service.sh passes no --bind so it stays loopback.
+    let bind_addr = match args.bind.as_str() {
+        "127.0.0.1" | "localhost" => args.bind,
+        "0.0.0.0" => {
+            tracing::warn!("⚠️  Binding to 0.0.0.0 — LAN access enabled. Use only for local development/testing.");
+            args.bind
+        }
+        other => {
+            tracing::warn!("Unknown bind address '{}'. Falling back to '127.0.0.1' for security.", other);
+            "127.0.0.1".to_string()
+        }
     };
 
     let modpath = args.modpath.unwrap_or_else(|| {
@@ -62,7 +69,7 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-    tracing::info!("Starting YouTube RVX Daemon v2.1.3");
+    tracing::info!("Starting YouTube RVX Daemon v2.1.4");
     tracing::info!("Module Path: {}", modpath.display());
 
     // Generate or read session token
