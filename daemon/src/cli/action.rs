@@ -67,24 +67,37 @@ pub async fn run_action(modpath: PathBuf) -> anyhow::Result<()> {
     // Launch daemon WebUI if binary present
     let daemon_bin = modpath.join("bin").join("rvx-daemon");
     if daemon_bin.exists() {
+        let port: u16 = std::fs::read_to_string(modpath.join(".daemon_port"))
+            .ok()
+            .and_then(|s| s.trim().parse().ok())
+            .unwrap_or(8088);
+
         let is_running = run_shell_command("pgrep -f rvx-daemon")
             .await
             .map_or(false, |out| !out.trim().is_empty());
         if !is_running {
-            println!("🌐 Starting RVX Patcher Daemon on port 8080...");
+            println!("🌐 Starting RVX Patcher Daemon on port {}...", port);
             let _ = run_shell_command(&format!("chmod 755 \"{}\"", daemon_bin.display())).await;
             let log_file = modpath.join("daemon.log");
             let cmd = format!(
-                "nohup \"{}\" server --modpath \"{}\" --port 8080 > \"{}\" 2>&1 &",
+                "nohup \"{}\" server --modpath \"{}\" --port {} > \"{}\" 2>&1 &",
                 daemon_bin.display(),
                 modpath.display(),
+                port,
                 log_file.display()
             );
             let _ = run_shell_command(&cmd).await;
             sleep(Duration::from_millis(500)).await;
         }
-        println!("📱 Opening RVX WebUI Dashboard (http://127.0.0.1:8080)...");
-        let _ = run_shell_command("am start -a android.intent.action.VIEW -d \"http://127.0.0.1:8080\" >/dev/null 2>&1").await;
+
+        // Re-read active port in case auto-hunting selected a different port
+        let active_port: u16 = std::fs::read_to_string(modpath.join(".daemon_port"))
+            .ok()
+            .and_then(|s| s.trim().parse().ok())
+            .unwrap_or(port);
+
+        println!("📱 Opening RVX WebUI Dashboard (http://127.0.0.1:{})...", active_port);
+        let _ = run_shell_command(&format!("am start -a android.intent.action.VIEW -d \"http://127.0.0.1:{}\" >/dev/null 2>&1", active_port)).await;
     }
 
     println!("🙏 Thank you for using RVX Multi-App Module! 🎬");

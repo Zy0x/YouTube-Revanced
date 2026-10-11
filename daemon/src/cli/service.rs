@@ -131,13 +131,18 @@ async fn start_background_daemon(modpath: &Path) {
         let check_running = run_shell_command("pgrep -f rvx-daemon").await;
         let is_running = check_running.map_or(false, |out| !out.trim().is_empty());
         if !is_running {
-            tracing::info!("🌐 [Service] Starting rvx-daemon background WebUI on port 8080...");
+            let port: u16 = std::fs::read_to_string(modpath.join(".daemon_port"))
+                .ok()
+                .and_then(|s| s.trim().parse().ok())
+                .unwrap_or(8088);
+            tracing::info!("🌐 [Service] Starting rvx-daemon background WebUI on port {}...", port);
             let _ = run_shell_command(&format!("chmod 755 \"{}\"", daemon_bin.display())).await;
             let log_file = modpath.join("daemon.log");
             let cmd = format!(
-                "nohup \"{}\" server --modpath \"{}\" --port 8080 > \"{}\" 2>&1 &",
+                "nohup \"{}\" server --modpath \"{}\" --port {} > \"{}\" 2>&1 &",
                 daemon_bin.display(),
                 modpath.display(),
+                port,
                 log_file.display()
             );
             let _ = run_shell_command(&cmd).await;

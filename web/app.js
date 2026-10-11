@@ -1,6 +1,6 @@
 /**
  * YouTube RVX — Application Bootstrap & Event Orchestrator
- * Version: 2.1.13
+ * Version: 2.1.14
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -457,7 +457,7 @@ function registerServiceWorker() {
     if (isLocalhost && 'caches' in window) {
       caches.keys().then((keys) => {
         keys.forEach((k) => {
-          if (k !== 'rvx-builder-v2.1.13') {
+          if (k !== 'rvx-builder-v2.1.14') {
             caches.delete(k);
           }
         });

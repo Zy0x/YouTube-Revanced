@@ -58,43 +58,62 @@
   </style>
 </head>
 <body>
-  <iframe id="appFrame" src="http://127.0.0.1:8080" style="display:none;"></iframe>
+  <iframe id="appFrame" src="" style="display:none;"></iframe>
   <div id="loadingFallback">
     <div class="spinner"></div>
     <h2>Connecting to RVX Patcher Daemon...</h2>
-    <p style="color: #9ca3af; font-size: 0.9rem; max-width: 320px;">
-      Connecting to local daemon on http://127.0.0.1:8080. If the daemon is starting up, this will load automatically.
+    <p id="statusHint" style="color: #9ca3af; font-size: 0.9rem; max-width: 340px;">
+      Connecting to local RVX daemon on port 8088...
     </p>
-    <button type="button" class="btn-retry" onclick="reloadFrame()">Retry Connection</button>
+    <button type="button" class="btn-retry" onclick="checkConnection()">Retry Connection</button>
   </div>
 
   <script>
     const iframe = document.getElementById('appFrame');
     const fallback = document.getElementById('loadingFallback');
+    const statusHint = document.getElementById('statusHint');
 
-    function checkConnection() {
-      fetch('http://127.0.0.1:8080/api/v1/system/status', { signal: AbortSignal.timeout(2000) })
-        .then(res => {
-          if (res.ok) {
-            iframe.style.display = 'block';
-            fallback.style.display = 'none';
-          } else {
-            setTimeout(checkConnection, 1500);
-          }
-        })
-        .catch(() => {
-          setTimeout(checkConnection, 2000);
+    // Candidate ports (8088 default, never conflict with Lynx Kernel Manager 8080)
+    const CANDIDATE_PORTS = [8088, 8089, 8090, 8280, 8080];
+
+    async function probePort(port) {
+      try {
+        const res = await fetch(`http://127.0.0.1:${port}/api/v1/system/status`, {
+          signal: AbortSignal.timeout(1200)
         });
+        if (res.ok) {
+          const data = await res.json();
+          // Verify RVX Daemon signature so other web services like Lynx Kernel Manager are ignored
+          if (data && (data.jre_ready !== undefined || data.daemon_version !== undefined)) {
+            return `http://127.0.0.1:${port}`;
+          }
+        }
+      } catch (_) {}
+      return null;
     }
 
-    function reloadFrame() {
-      iframe.src = 'http://127.0.0.1:8080?' + Date.now();
-      checkConnection();
+    async function checkConnection() {
+      if (statusHint) statusHint.textContent = 'Probing RVX daemon on port 8088...';
+      for (const port of CANDIDATE_PORTS) {
+        const url = await probePort(port);
+        if (url) {
+          iframe.src = url;
+          iframe.style.display = 'block';
+          fallback.style.display = 'none';
+          return;
+        }
+      }
+      if (statusHint) {
+        statusHint.textContent = 'Daemon starting up. Checking again shortly...';
+      }
+      setTimeout(checkConnection, 2000);
     }
 
     iframe.onload = () => {
-      iframe.style.display = 'block';
-      fallback.style.display = 'none';
+      if (iframe.src && iframe.src !== 'about:blank') {
+        iframe.style.display = 'block';
+        fallback.style.display = 'none';
+      }
     };
 
     checkConnection();

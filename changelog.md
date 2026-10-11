@@ -1,3 +1,11 @@
+## v2.1.14 (2026-10-12)
+
+### Dedicated Port 8088 & Anti-Collision Engine (Fix Lynx Kernel Manager Conflict)
+- **Port Conflict Resolution (Port 8088 Default)**: Changed default WebUI and daemon port from generic `8080` to dedicated `8088` across daemon, `start.bat`, `run.bat`, `action.sh`, and `service.sh` to eliminate collisions with other root managers (especially Lynx Kernel Manager / LKM which binds to `8080` by default).
+- **Dynamic Port Hunting Fallback**: Implemented an automated port hunting loop in `daemon/src/main.rs`. If port `8088` is occupied, the daemon automatically probes sequential ports (`8089`, `8090`, up to `8103`) without crashing, and persists the active port in `.daemon_port`.
+- **Verified Signature Probing in WebRoot (`webroot/index.html`)**: Upgraded KernelSU and APatch webroot loader to probe candidate ports and verify daemon API signatures (`jre_ready` / `daemon_version`), guaranteeing it will never erroneously embed or iframe third-party tools like Lynx Kernel Manager.
+- **Client Auto-Discovery (`web/js/api.js`)**: Updated `checkDaemonStatus()` to probe ports `8088`, `8089`, `8090`, `8280`, and `8080`, automatically syncing `STATE.daemonUrl` with signature verification.
+
 ## v2.1.13 (2026-10-12)
 
 ### Live Disk Reloading & Local Launcher Auto-Sync Engine

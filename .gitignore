@@ -10,3 +10,4 @@ target/
 daemon/target/
 bin/
 .daemon_token
+.daemon_port

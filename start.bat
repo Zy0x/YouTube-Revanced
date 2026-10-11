@@ -50,12 +50,12 @@ for /f "usebackq tokens=*" %%i in (`powershell -NoProfile -Command "(Get-NetIPAd
     set "LAN_IP=%%i"
 )
 
-set "PORT=8080"
+set "PORT=8088"
 set "BIND_ADDR=0.0.0.0"
 
 echo [i] Daemon binary : %DAEMON_EXE%
 echo [i] Bind address  : %BIND_ADDR% (LAN ^& Localhost accessible)
-echo [i] Port          : %PORT%
+echo [i] Port          : %PORT% (Dedicated RVX port, no conflict with Lynx Kernel Manager 8080)
 echo [i] Live Reload   : AKTIF (Perubahan pada folder web/ langsung live saat di-refresh!)
 echo.
 echo =====================================================================

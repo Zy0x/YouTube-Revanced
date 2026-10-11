@@ -25,12 +25,15 @@ if [ -f "$RV_APK" ] && [ -n "$STOCKAPK" ]; then
 fi
 
 if [ -f "$MODPATH/bin/rvx-daemon" ]; then
+	PORT=8088
+	[ -f "$MODPATH/.daemon_port" ] && PORT=$(cat "$MODPATH/.daemon_port" 2>/dev/null | tr -d '\r\n')
 	if ! pgrep -f "rvx-daemon" >/dev/null 2>&1; then
 		chmod 755 "$MODPATH/bin/rvx-daemon"
-		nohup "$MODPATH/bin/rvx-daemon" server --modpath "$MODPATH" --port 8080 > "$MODPATH/daemon.log" 2>&1 &
+		nohup "$MODPATH/bin/rvx-daemon" server --modpath "$MODPATH" --port "$PORT" > "$MODPATH/daemon.log" 2>&1 &
 		sleep 1
 	fi
-	am start -a android.intent.action.VIEW -d "http://127.0.0.1:8080" >/dev/null 2>&1
+	[ -f "$MODPATH/.daemon_port" ] && PORT=$(cat "$MODPATH/.daemon_port" 2>/dev/null | tr -d '\r\n')
+	am start -a android.intent.action.VIEW -d "http://127.0.0.1:$PORT" >/dev/null 2>&1
 fi
 
 am start -n com.google.android.youtube/com.google.android.apps.youtube.app.WatchWhileActivity >/dev/null 2>&1

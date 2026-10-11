@@ -569,17 +569,26 @@ function importPreset(file) {
 }
 
 async function checkDaemonStatus() {
-  const urlsToTest = ['', 'http://127.0.0.1:8080', 'http://localhost:8080'];
+  const candidatePorts = [8088, 8089, 8090, 8280, 8080];
+  const urlsToTest = [''];
+  candidatePorts.forEach((p) => {
+    urlsToTest.push(`http://127.0.0.1:${p}`);
+    urlsToTest.push(`http://localhost:${p}`);
+  });
+
   for (const url of urlsToTest) {
     try {
-      const res = await fetch(`${url}/api/v1/system/status`, { signal: AbortSignal.timeout(1500) });
+      const res = await fetch(`${url}/api/v1/system/status`, { signal: AbortSignal.timeout(1200) });
       if (res.ok) {
         const data = await res.json();
-        STATE.daemonOnline = true;
-        STATE.daemonUrl = url;
-        STATE.daemonVersion = data.daemon_version || '2.1.10';
-        setEngineMode('local');
-        return;
+        // Ensure this is our RVX Daemon and not another server (e.g. Lynx Kernel Manager)
+        if (data && (data.jre_ready !== undefined || data.daemon_version !== undefined)) {
+          STATE.daemonOnline = true;
+          STATE.daemonUrl = url;
+          STATE.daemonVersion = data.daemon_version || '2.1.13';
+          setEngineMode('local');
+          return;
+        }
       }
     } catch (_) {}
   }

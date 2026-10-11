@@ -31,8 +31,8 @@ struct CliArgs {
     #[arg(short, long, default_value = "127.0.0.1")]
     bind: String,
 
-    /// Port to listen on for server mode. Default: 8080
-    #[arg(short, long, default_value_t = 8080)]
+    /// Port to listen on for server mode. Default: 8088
+    #[arg(short, long, default_value_t = 8088)]
     port: u16,
 
     /// Root path of the Magisk/KernelSU/APatch module
@@ -46,7 +46,7 @@ enum Commands {
     Server {
         #[arg(short, long, default_value = "127.0.0.1")]
         bind: String,
-        #[arg(short, long, default_value_t = 8080)]
+        #[arg(short, long, default_value_t = 8088)]
         port: u16,
     },
     /// Run boot service (replaces service.sh in native Rust)
@@ -166,10 +166,43 @@ async fn run_server(bind_addr_str: &str, port: u16, modpath: PathBuf) -> anyhow:
         .layer(cors)
         .layer(TraceLayer::new_for_http());
 
-    let addr: SocketAddr = format!("{}:{}", bind_addr, port).parse()?;
+    let mut listener_opt = None;
+    let mut bound_port = port;
+
+    for offset in 0..15 {
+        let test_port = port + offset;
+        let addr: SocketAddr = match format!("{}:{}", bind_addr, test_port).parse() {
+            Ok(a) => a,
+            Err(_) => continue,
+        };
+        match tokio::net::TcpListener::bind(addr).await {
+            Ok(listener) => {
+                bound_port = test_port;
+                listener_opt = Some((listener, addr));
+                break;
+            }
+            Err(err) if err.kind() == std::io::ErrorKind::AddrInUse => {
+                tracing::warn!(
+                    "⚠️ Port {} is already in use (e.g. by Lynx Kernel Manager). Hunting for next port {}...",
+                    test_port,
+                    test_port + 1
+                );
+            }
+            Err(err) => return Err(err.into()),
+        }
+    }
+
+    let (listener, addr) = match listener_opt {
+        Some(val) => val,
+        None => anyhow::bail!("Could not find an available port starting from {}", port),
+    };
+
+    // Save active port to module dir and current dir for WebUI / am start launchers
+    let _ = std::fs::write(modpath.join(".daemon_port"), bound_port.to_string());
+    let _ = std::fs::write(".daemon_port", bound_port.to_string());
+
     tracing::info!("🚀 Server running at http://{}", addr);
 
-    let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await?;
 
     Ok(())

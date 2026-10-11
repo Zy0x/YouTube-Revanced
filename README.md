@@ -65,7 +65,7 @@ Supports both **ROOT** and **NON-ROOT** versions! 🚀
 ### 📱 On-Device WebUI Patcher & Native Rust Core (`rvx-daemon`)
 After flashing the module in **KernelSU**, **APatch**, or **Magisk**:
 - **KernelSU / APatch**: Tap the **WebUI** button inside the module card.
-- **Magisk**: Tap the **Action** button in Magisk to open `http://127.0.0.1:8080` in your browser.
+- **Magisk**: Tap the **Action** button in Magisk to open `http://127.0.0.1:8088` in your browser.
 - **Features**:
   - ⚡ **Native Rust Multi-Call Engine**: Zero-overhead service, action, installer, uninstaller, and packager.
   - 💻 **Live Terminal Console**: Real-time streaming Morphe CLI logs.
