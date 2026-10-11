@@ -1,6 +1,6 @@
 /**
  * YouTube RVX — State Management & Constants
- * Version: 2.1.12
+ * Version: 2.1.13
  */
 
 const STATE = {

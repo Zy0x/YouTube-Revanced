@@ -1,6 +1,6 @@
 /**
  * YouTube RVX — Application Bootstrap & Event Orchestrator
- * Version: 2.1.12
+ * Version: 2.1.13
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -453,6 +453,19 @@ function initEventListeners() {
 
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalhost && 'caches' in window) {
+      caches.keys().then((keys) => {
+        keys.forEach((k) => {
+          if (k !== 'rvx-builder-v2.1.13') {
+            caches.delete(k);
+          }
+        });
+      });
+    }
+
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      reg.update();
+    }).catch(() => {});
   }
 }

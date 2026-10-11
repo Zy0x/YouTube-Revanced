@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rvx-builder-v2.1.12';
+const CACHE_NAME = 'rvx-builder-v2.1.13';
 const ASSETS_TO_CACHE = [
   './index.html',
   './style.css',
@@ -31,6 +31,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
+            console.log('[SW] Purging old cache:', key);
             return caches.delete(key);
           }
         })
@@ -41,12 +42,24 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.url.includes('api.github.com') || event.request.url.includes('raw.githubusercontent.com')) {
+  const url = new URL(event.request.url);
+  const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+
+  // Never cache GitHub API or raw CDN
+  if (url.hostname.includes('github.com') || url.hostname.includes('githubusercontent.com')) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Always prefer fresh network response, fallback to cache if offline
+  // On localhost / 127.0.0.1, ALWAYS fetch fresh from server for live update!
+  if (isLocalhost) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Production PWA: Network first with cache fallback
   event.respondWith(
     fetch(event.request)
       .then((res) => {

@@ -1,3 +1,11 @@
+## v2.1.13 (2026-10-12)
+
+### Live Disk Reloading & Local Launcher Auto-Sync Engine
+- **Direct Live Disk-First Web Serving**: Upgraded `daemon/src/embedded.rs` static file handler to prioritize reading directly from the physical `web/` directory on disk at runtime before falling back to compile-time embedded assets. Any modification to HTML, JavaScript, CSS, or JSON is immediately reflected on browser refresh without restarting or recompiling the Rust binary.
+- **Aggressive Cache-Control Headers**: Implemented `no-cache, no-store, must-revalidate, max-age=0` and `Pragma: no-cache` response headers on all static web assets, preventing browser HTTP caching from freezing stale web code during local testing.
+- **Localhost Service Worker Cache Bypass**: Enhanced `web/sw.js` and `web/app.js` to automatically bypass Service Worker CacheStorage when running on `localhost` or `127.0.0.1`, purging legacy cache buckets and ensuring 100% fresh network fetches.
+- **Smart Incremental Build & Stale Process Elimination**: Rebuilt `start.bat` and `run.bat` to automatically terminate any dangling background `rvx-daemon.exe` instances (freeing port 8080 and releasing Windows binary locks) and perform automatic fast incremental Cargo compilation (< 1s) whenever Rust code in `daemon/src/` is edited.
+
 ## v2.1.12 (2026-10-12)
 
 ### User-Friendly Workflow Hierarchy & Guided ZIP Module Installation

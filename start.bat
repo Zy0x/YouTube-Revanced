@@ -5,39 +5,43 @@ title YouTube RVX - Morphe Manager WebUI
 :: Always run in script's directory
 cd /d "%~dp0"
 
+:: Terminate any stale rvx-daemon process to free port 8080 and release binary file locks
+taskkill /f /im rvx-daemon.exe >nul 2>&1
+
 echo =====================================================================
 echo           YouTube RVX - Morphe Manager ^& Revancify-Xisr
 echo                     Local Web Server Launcher
 echo =====================================================================
 echo.
 
-:: Locate daemon binary (prefer release, fallback to debug)
+:: Check for Rust/Cargo to guarantee binary is always up to date
 set "DAEMON_EXE="
-if exist "daemon\target\release\rvx-daemon.exe" (
-    set "DAEMON_EXE=daemon\target\release\rvx-daemon.exe"
-) else if exist "daemon\target\debug\rvx-daemon.exe" (
-    set "DAEMON_EXE=daemon\target\debug\rvx-daemon.exe"
+where cargo >nul 2>&1
+if %errorlevel% equ 0 (
+    if "%~1"=="--release" (
+        echo [*] Mengompilasi rvx-daemon (Release mode)...
+        cargo build --release --manifest-path daemon\Cargo.toml
+        if !errorlevel! equ 0 set "DAEMON_EXE=daemon\target\release\rvx-daemon.exe"
+    ) else (
+        echo [*] Memeriksa ^& mengompilasi rvx-daemon (Incremental build)...
+        cargo build --manifest-path daemon\Cargo.toml
+        if !errorlevel! equ 0 set "DAEMON_EXE=daemon\target\debug\rvx-daemon.exe"
+    )
 )
 
-:: If binary does not exist, attempt to compile via cargo
+:: If cargo is not available or build failed, fallback to existing binary
 if not defined DAEMON_EXE (
-    echo [!] Binary rvx-daemon.exe not found.
-    where cargo >nul 2>&1
-    if %errorlevel% neq 0 (
-        echo [ERROR] Rust/Cargo is not installed or not in PATH.
-        echo Please install Rust from https://rustup.rs/ to compile the daemon.
+    if exist "daemon\target\debug\rvx-daemon.exe" (
+        set "DAEMON_EXE=daemon\target\debug\rvx-daemon.exe"
+    ) else if exist "daemon\target\release\rvx-daemon.exe" (
+        set "DAEMON_EXE=daemon\target\release\rvx-daemon.exe"
+    ) else (
+        echo [ERROR] Binary rvx-daemon.exe tidak ditemukan dan Rust/Cargo tidak ada di PATH.
+        echo Silakan pasang Rust dari https://rustup.rs/ untuk mengompilasi daemon.
         echo.
         pause
         exit /b 1
     )
-    echo [*] Compiling rvx-daemon in release mode, please wait...
-    cargo build --release --manifest-path daemon\Cargo.toml
-    if %errorlevel% neq 0 (
-        echo [ERROR] Compilation failed.
-        pause
-        exit /b 1
-    )
-    set "DAEMON_EXE=daemon\target\release\rvx-daemon.exe"
 )
 
 :: Detect primary LAN IPv4 address for mobile/WiFi testing
@@ -52,6 +56,7 @@ set "BIND_ADDR=0.0.0.0"
 echo [i] Daemon binary : %DAEMON_EXE%
 echo [i] Bind address  : %BIND_ADDR% (LAN ^& Localhost accessible)
 echo [i] Port          : %PORT%
+echo [i] Live Reload   : AKTIF (Perubahan pada folder web/ langsung live saat di-refresh!)
 echo.
 echo =====================================================================
 echo   Akses WebUI di Browser:
