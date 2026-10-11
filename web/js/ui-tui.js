@@ -17,13 +17,22 @@ function renderTuiView() {
     if (titleEl) titleEl.textContent = '| Main Menu |';
     const menuItems = [
       { num: '1', label: 'Select App', sub: STATE.currentApp?.name || 'YouTube', action: () => { STATE.tuiScreen = 'app'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '2', label: 'Patch App', sub: `v${STATE.currentVersion}`, action: () => triggerBuildPipeline() },
-      { num: '3', label: 'Change Source', sub: srcName, action: () => { STATE.tuiScreen = 'source'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '4', label: 'Select Version', sub: `v${STATE.currentVersion}`, action: () => { STATE.tuiScreen = 'version'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '5', label: 'Edit Patches', sub: `${active}/${total}`, action: () => { STATE.tuiScreen = 'patches'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '6', label: 'Edit Patch Options', sub: 'Options', action: () => { STATE.tuiScreen = 'options'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '7', label: 'Preset Manager', sub: 'JSON', action: () => { STATE.tuiScreen = 'presets'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '8', label: 'Settings', sub: STATE.engineMode === 'local' ? 'Local' : 'Cloud', action: () => { document.getElementById('settingsModal')?.classList.remove('hidden'); } }
+      { num: '2', label: 'Change Source', sub: srcName, action: () => { STATE.tuiScreen = 'source'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '3', label: 'Select Version', sub: `v${STATE.currentVersion}`, action: () => { STATE.tuiScreen = 'version'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '4', label: 'Edit Patches', sub: `${active}/${total}`, action: () => { STATE.tuiScreen = 'patches'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '5', label: 'Edit Patch Options', sub: 'Options', action: () => { STATE.tuiScreen = 'options'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '6', label: 'Preset Manager', sub: 'JSON', action: () => { STATE.tuiScreen = 'presets'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '7', label: 'Patch App (Compile)', sub: 'Start Build', action: () => triggerBuildPipeline() },
+      { num: '8', label: 'Mount / Export ZIP', sub: 'Install Module', action: () => {
+          document.getElementById('screenVersion')?.classList.remove('active');
+          document.getElementById('screenPatches')?.classList.remove('active');
+          document.getElementById('screenHome')?.classList.remove('active');
+          document.getElementById('screenProgress')?.classList.add('active');
+          document.getElementById('tuiAppContainer')?.classList.add('hidden');
+          document.getElementById('morpheAppContainer')?.classList.remove('hidden');
+        }
+      },
+      { num: '9', label: 'Settings', sub: STATE.engineMode === 'local' ? 'Local' : 'Cloud', action: () => { document.getElementById('settingsModal')?.classList.remove('hidden'); } }
     ];
 
     menuItems.forEach((item, idx) => {

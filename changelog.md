@@ -1,3 +1,19 @@
+## v2.1.12 (2026-10-12)
+
+### User-Friendly Workflow Hierarchy & Guided ZIP Module Installation
+- **Intuitive 5-Step Workflow Hierarchy**: Structured the entire patcher experience into a sequential 5-stage pipeline across both Morphe Manager GUI and Revancify-Xisr Termux TUI:
+  1. *Langkah 1*: Inisialisasi & Pemilihan Aplikasi & Sumber Patch (Catalog & Sources)
+  2. *Langkah 2*: Pencocokan Versi Target APK (Target Version Matching with Recommended badges)
+  3. *Langkah 3*: Kurasi Patch & Konfigurasi Opsi (Patch Selection, Golden Presets & Gear Options)
+  4. *Langkah 4*: Kompilasi & Eksekusi Patch Engine (Rust daemon compiling APK & building module)
+  5. *Langkah 5*: Selesai & Aktivasi Modul (Live Hot-Mount vs. Flashable ZIP)
+- **Step Badges Across All Views**: Added sleek, non-intrusive `.morphe-step-badge` indicators (`LANGKAH X DARI 5`) on Screen 1 (Home), Screen 2 (Version Selection), Screen 3 (Expert Mode Patches), Screen 4 (Progress/Compilation), and Completion Hero Card.
+- **Guided 2-Method Post-Patch Activation**: Upgraded `#postPatchHeroCard` with two dedicated cards eliminating all post-build confusion:
+  - *Metode A (Live Hot-Mount)*: Instantly overlays patched APK into running Android system namespace without rebooting.
+  - *Metode B (Flashable ZIP Modul)*: Provides a 4-step checklist to save the module ZIP, open Magisk / KernelSU / APatch, navigate to Modules > Install from Storage, flash the ZIP, and reboot.
+- **Workflow Guide in System Info Sheet**: Integrated a persistent "Panduan Hierarki 5 Langkah Alur Kerja" section into the System & App Info `(i)` sheet, accessible at any point during patching.
+- **Sequential Termux TUI Menu**: Re-ordered the Revancify-Xisr main menu to follow the exact 1..9 sequential hierarchy (1 Select App → 2 Change Source → 3 Select Version → 4 Edit Patches → 5 Edit Patch Options → 6 Preset Manager → 7 Patch App → 8 Mount / Export ZIP → 9 Settings).
+
 ## v2.1.11 (2026-10-12)
 
 ### Flexible Multi-Source Ecosystem & 1:1 Morphe Patch Sources Replica

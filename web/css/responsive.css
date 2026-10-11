@@ -671,3 +671,193 @@
     max-height: 150px;
   }
 }
+
+/* =========================================================================
+   WORKFLOW STEP HIERARCHY & GUIDED ACTIVATION (v2.1.12)
+   ========================================================================= */
+
+.morphe-step-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(164, 201, 255, 0.08);
+  border: 1px solid rgba(164, 201, 255, 0.22);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #D2E5FF;
+  letter-spacing: 0.2px;
+  margin-bottom: 8px;
+}
+
+.morphe-step-badge span {
+  color: #7CC0FF;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.morphe-step-badge-inset {
+  margin: 10px 16px 0;
+  align-self: flex-start;
+}
+
+.morphe-step-badge.complete-badge {
+  background: rgba(74, 222, 128, 0.1);
+  border-color: rgba(74, 222, 128, 0.3);
+  color: #DCFCE7;
+  margin-bottom: 4px;
+}
+
+.morphe-step-badge.complete-badge span {
+  color: #4ADE80;
+}
+
+/* Post-Patch 2-Method Activation Cards */
+.complete-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.method-card {
+  background: #111827;
+  border: 1px solid rgba(164, 201, 255, 0.15);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.method-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.method-pill-badge {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.method-pill-instant {
+  background: rgba(124, 192, 255, 0.15);
+  color: #7CC0FF;
+  border: 1px solid rgba(124, 192, 255, 0.3);
+}
+
+.method-pill-zip {
+  background: rgba(245, 158, 11, 0.15);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.method-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--morphe-text);
+  margin: 0;
+}
+
+.method-desc {
+  font-size: 12.5px;
+  color: var(--morphe-text-sub);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.method-steps-box {
+  background: #0B0F19;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.method-steps-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 11.5px;
+  color: #D1D5DB;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.method-steps-list li strong {
+  color: #FFFFFF;
+}
+
+/* Info Modal Workflow Hierarchy Guide */
+.morphe-hierarchy-guide-box {
+  margin-top: 14px;
+  padding: 14px;
+  background: #111622;
+  border: 1px solid rgba(164, 201, 255, 0.18);
+  border-radius: 16px;
+}
+
+.guide-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #D2E5FF;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.hierarchy-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hierarchy-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.step-num-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1E3A5F;
+  color: #7CC0FF;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.step-content {
+  font-size: 12px;
+  color: #9CA3AF;
+  line-height: 1.45;
+}
+
+.step-content strong {
+  color: #E5E7EB;
+}
+
+.step-content em {
+  color: #7CC0FF;
+  font-style: normal;
+}
+

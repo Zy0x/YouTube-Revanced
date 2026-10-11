@@ -124,6 +124,16 @@ The engine supports unlimited patch sources without hardcoded constraints:
 - **Pre-Configured RVX Catalog**: Anddea Patches (`anddea/revanced-patches`), Morphe Official (`MorpheApp/morphe-patches`), Inotia00 RVX (`inotia00/revanced-patches`), and ReVanced Official (`ReVanced/revanced-patches`).
 - **Termux TUI Native Management**: Add, delete, and switch custom sources seamlessly inside the Revancify-Xisr terminal interface.
 
+### 5. Clear 5-Step Workflow Hierarchy
+The workflow is organized into an intuitive sequential pipeline guiding users from start to module installation:
+1. **Langkah 1 (Akses & Pilih Aplikasi)**: Buka patcher (WebUI / Termux TUI) dan pilih aplikasi target beserta sumber patch (Anddea, Morphe, RVX, Official, atau Custom Source).
+2. **Langkah 2 (Cocokkan Versi Target APK)**: Pilih versi APK yang direkomendasikan (`[👍 Recommended]`) agar patch bekerja stabil tanpa force-close.
+3. **Langkah 3 (Kurasi Patch & Konfigurasi Opsi)**: Pilih patch yang diinginkan (atau gunakan Golden Preset). Sesuaikan opsi patch individual via ikon gear ⚙️.
+4. **Langkah 4 (Kompilasi Modul via Engine)**: Jalankan patch engine. Rust daemon & Morphe CLI memproses bytecode, menyuntikkan patch, dan membuat modul ZIP.
+5. **Langkah 5 (Selesai & Aktivasi Modul ZIP)**:
+   - **Metode A (Live Hot-Mount)**: Langsung bind-mount APK hasil patch ke Android yang sedang berjalan tanpa perlu reboot.
+   - **Metode B (Flashable ZIP Modul)**: Simpan file ZIP modul, buka Magisk / KernelSU / APatch > tab Modules > Install from storage > pilih ZIP > Reboot.
+
 ## 📜 Sources & References  
 - 🔧 [Revancify Tools](https://github.com/decipher3114/Revancify)
 - 🔧 [Revancify Xisr Tools](https://github.com/Xisrr1/Revancify-Xisr)

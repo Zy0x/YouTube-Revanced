@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rvx-builder-v2.1.11';
+const CACHE_NAME = 'rvx-builder-v2.1.12';
 const ASSETS_TO_CACHE = [
   './index.html',
   './style.css',

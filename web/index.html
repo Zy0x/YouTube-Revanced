@@ -42,6 +42,7 @@
       </div>
 
       <div class="morphe-home-center">
+        <div class="morphe-step-badge"><span>LANGKAH 1 DARI 5</span> • Pilih Target Aplikasi &amp; Sumber Patch</div>
         <h1 class="morphe-home-greeting">What app do you want to patch?</h1>
 
         <!-- Dynamic Morphe App Cards Grid (Populated dynamically for all apps in .mpp) -->
@@ -85,6 +86,7 @@
       </div>
 
       <div class="morphe-version-center">
+        <div class="morphe-step-badge"><span>LANGKAH 2 DARI 5</span> • Cocokkan Versi Target APK</div>
         <h2 class="morphe-version-heading">Need help finding an original unpatched APK?</h2>
         <p class="morphe-version-subheading">
           To patch <strong id="versionAppHeading">YouTube</strong>, you need an unpatched APK of versions:
@@ -155,6 +157,8 @@
         </div>
       </div>
 
+      <div class="morphe-step-badge morphe-step-badge-inset"><span>LANGKAH 3 DARI 5</span> • Kurasi Patch &amp; Konfigurasi Opsi</div>
+
       <!-- 1:1 Authentic 5-Icon Pill Row (Icon-Only, Clean & Uncluttered) -->
       <div class="morphe-five-toolbar" role="toolbar" aria-label="Patch Quick Actions">
         <button type="button" id="btnResetPatches" class="five-pill five-pill-blue" title="Enable all patches" aria-label="Enable all patches">
@@ -201,6 +205,8 @@
          1:1 Reference: docs/images/patching-expert-mode/05-patching-progress.jpg
          ------------------------------------------------------------------- -->
     <section id="screenProgress" class="morphe-screen" aria-label="Patching Progress and Logs">
+
+      <div class="morphe-step-badge morphe-step-badge-inset"><span>LANGKAH 4 DARI 5</span> • Kompilasi &amp; Pembuatan Modul</div>
 
       <!-- Clean Top Progress Header (No Box Border, Matches 05-patching-progress.jpg) -->
       <div class="morphe-progress-top">
@@ -249,18 +255,48 @@
         <div class="complete-banner-top">
           <div class="complete-check-circle">✓</div>
           <div>
-            <h3 class="complete-banner-title">Patching complete!</h3>
-            <p class="complete-banner-sub">Press a button below to mount or save your module.</p>
+            <div class="morphe-step-badge complete-badge"><span>LANGKAH 5 DARI 5</span> • Selesai &amp; Aktivasi Modul</div>
+            <h3 class="complete-banner-title">Patching berhasil diselesaikan!</h3>
+            <p class="complete-banner-sub">Pilih salah satu metode di bawah untuk mengaktifkan modul Anda di perangkat:</p>
           </div>
         </div>
-        <div class="complete-banner-actions">
-          <button type="button" id="btnHeroHotMount" class="morphe-pill-btn morphe-pill-sky">
-            Mount Instantly
-          </button>
-          <button type="button" id="btnHeroExportZip" class="morphe-pill-btn morphe-pill-outline">
-            Save ZIP
-          </button>
+
+        <div class="complete-methods-grid">
+          <!-- Metode A: Hot-Mount Langsung -->
+          <div class="method-card">
+            <div class="method-card-header">
+              <span class="method-pill-badge method-pill-instant">Metode A • Instan (Tanpa Reboot)</span>
+              <h4 class="method-title">Live Hot-Mount</h4>
+            </div>
+            <p class="method-desc">Langsung meng-overlay APK hasil patch ke sistem Android yang sedang berjalan detik ini juga menggunakan mount namespace bind.</p>
+            <button type="button" id="btnHeroHotMount" class="morphe-pill-btn morphe-pill-sky btn-block">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span>Mount Instantly</span>
+            </button>
+          </div>
+
+          <!-- Metode B: Flashable ZIP Modul Root -->
+          <div class="method-card">
+            <div class="method-card-header">
+              <span class="method-pill-badge method-pill-zip">Metode B • Permanen (Magisk / KSU / APatch)</span>
+              <h4 class="method-title">Flashable ZIP Modul</h4>
+            </div>
+            <p class="method-desc">Menyimpan arsip modul ZIP standar yang siap di-flash secara permanen di semua root manager.</p>
+            <div class="method-steps-box">
+              <ol class="method-steps-list">
+                <li>Klik tombol <strong>Save ZIP</strong> di bawah untuk menyimpan file modul.</li>
+                <li>Buka aplikasi Root Manager (<strong>Magisk</strong>, <strong>KernelSU</strong>, atau <strong>APatch</strong>).</li>
+                <li>Masuk ke menu <strong>Modules / Modul</strong> &rarr; pilih <strong>Install from storage</strong>.</li>
+                <li>Pilih file ZIP yang baru disimpan, tunggu proses flashing, lalu tekan <strong>Reboot</strong>.</li>
+              </ol>
+            </div>
+            <button type="button" id="btnHeroExportZip" class="morphe-pill-btn morphe-pill-outline btn-block">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Save ZIP Module</span>
+            </button>
+          </div>
         </div>
+
         <div id="heroMountAlert" class="morphe-alert hidden" role="alert"></div>
       </div>
 
@@ -383,11 +419,51 @@
           </div>
           <div class="source-detail-row">
             <span>Execution Engine</span>
-            <strong id="infoEngineStatus">On-Device Daemon (v2.1.9)</strong>
+            <strong id="infoEngineStatus">On-Device Daemon (v2.1.12)</strong>
           </div>
           <div class="source-detail-row">
             <span>Viewport Telemetry</span>
             <span id="viewportResolutionText" class="morphe-muted-hint">Resolving...</span>
+          </div>
+        </div>
+
+        <!-- Panduan Hierarki Alur Kerja -->
+        <div class="morphe-hierarchy-guide-box">
+          <h4 class="guide-title">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            Panduan Hierarki 5 Langkah Alur Kerja
+          </h4>
+          <div class="hierarchy-flow">
+            <div class="hierarchy-step-item">
+              <div class="step-num-badge">1</div>
+              <div class="step-content">
+                <strong>Akses &amp; Pilih Aplikasi:</strong> Buka patcher di browser/Termux, tentukan aplikasi yang ingin dipatch (YouTube, Music, Reddit, Twitter, dsb.) dan tentukan patch source (Anddea, Morphe, RVX, Official).
+              </div>
+            </div>
+            <div class="hierarchy-step-item">
+              <div class="step-num-badge">2</div>
+              <div class="step-content">
+                <strong>Cocokkan Versi APK:</strong> Pilih versi target dengan badge <em>[👍 Recommended]</em> agar patch bekerja stabil tanpa force close.
+              </div>
+            </div>
+            <div class="hierarchy-step-item">
+              <div class="step-num-badge">3</div>
+              <div class="step-content">
+                <strong>Kurasi Patch &amp; Opsi:</strong> Tentukan patch yang aktif (atau gunakan tombol Golden Preset 👍). Tekan ikon gear ⚙️ untuk konfigurasi custom package, branding icon, dsb.
+              </div>
+            </div>
+            <div class="hierarchy-step-item">
+              <div class="step-num-badge">4</div>
+              <div class="step-content">
+                <strong>Kompilasi Modul (Engine):</strong> Tekan tombol "Patch". Daemon Rust/C memproses APK, menyuntikkan dex patch bytecode, dan merakit zip modul.
+              </div>
+            </div>
+            <div class="hierarchy-step-item">
+              <div class="step-num-badge">5</div>
+              <div class="step-content">
+                <strong>Aktivasi / Install Modul ZIP:</strong> Pilih <em>Live Hot-Mount</em> untuk langsung pakai tanpa reboot, ATAU simpan <em>ZIP</em> dan flash via Magisk / KernelSU / APatch lalu reboot.
+              </div>
+            </div>
           </div>
         </div>
 
@@ -638,10 +714,10 @@
     </div>
   </div>
 
-  <script src="js/state.js?v=2.1.11"></script>
-  <script src="js/api.js?v=2.1.11"></script>
-  <script src="js/ui-morphe.js?v=2.1.11"></script>
-  <script src="js/ui-tui.js?v=2.1.11"></script>
-  <script src="app.js?v=2.1.11"></script>
+  <script src="js/state.js?v=2.1.12"></script>
+  <script src="js/api.js?v=2.1.12"></script>
+  <script src="js/ui-morphe.js?v=2.1.12"></script>
+  <script src="js/ui-tui.js?v=2.1.12"></script>
+  <script src="app.js?v=2.1.12"></script>
 </body>
 </html>
