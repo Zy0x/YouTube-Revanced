@@ -1,3 +1,11 @@
+## v2.1.7 (2026-10-11)
+
+### UI Simplification & Clean Info Architecture
+- **Distraction-Free 1:1 Morphe Layout**: Removed the global top bar, extra summary chips, and redundant row badges across Home, Version Selection, Expert Mode Patches, and Progress screens to match `MorpheApp/morphe-manager` 1:1.
+- **Dedicated System & App Info `(i)` Sheet**: Consolidated all secondary technical metadata (package name, installed device version, active patch source & channel, enabled patch count, execution engine, and viewport telemetry) into a clean `(i)` modal dialog.
+- **Monochrome Material SVG Icons**: Replaced colorful emojis with clean, monochrome Material 3 SVG icons across all toolbars, checkboxes, gear buttons, and bottom sheets.
+- **Collapsible Search Drawers**: Hidden version and patch search bars by default behind the circular `[🔍]` icon button so the primary screens remain uncluttered.
+
 ## v2.1.6 (2026-10-11)
 
 ### Features & Architecture

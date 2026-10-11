@@ -1,14 +1,11 @@
 /**
- * YouTube RVX — 1:1 Morphe Manager & Revancify-Xisr Dual-Mode Architecture (v2.1.6)
- * References:
- * - MorpheApp/morphe-manager (Material 3 Dark, 5-Pill Expert Toolbar, Gear Option Modals, Telemetry Logs)
- * - Xisrr1/Revancify-Xisr (Termux CLI dialog TUI Replica)
+ * YouTube RVX — 1:1 Morphe Manager & Revancify-Xisr Ultra-Clean Architecture (v2.1.7)
  */
 
 const STATE = {
-  uiMode: localStorage.getItem('rvx_ui_mode') || 'morphe', // 'morphe' | 'tui'
+  uiMode: localStorage.getItem('rvx_ui_mode') || 'morphe',
   activeScreen: 'home', // 'home' | 'version' | 'patches' | 'progress'
-  tuiScreen: 'main', // 'main' | 'source' | 'version' | 'patches' | 'options' | 'presets' | 'engine' | 'logs'
+  tuiScreen: 'main',
   tuiSelectedIndex: 0,
 
   sources: [],
@@ -21,16 +18,14 @@ const STATE = {
   installedVersion: null,
   catalogVersions: [],
   availableVersions: [],
-  versionFilter: 'all',
   versionSearch: '',
-  versionDisplayLimit: 10,
+  versionDisplayLimit: 4,
 
   patches: [],
   selectedPatches: new Set(),
   selectedOptions: {},
   goldenPreset: null,
   filterEnabledOnly: false,
-  activePatchCategory: 'all',
   patchSearchQuery: '',
   editingPatchName: null,
 
@@ -39,13 +34,19 @@ const STATE = {
   engineMode: 'local',
   daemonOnline: false,
   daemonUrl: '',
-  terminalAutoScroll: true,
+  daemonVersion: '2.1.7',
   eventSource: null,
   logHistory: [
-    { type: 'I', text: 'Morphe Patcher Engine ready. Target: YouTube v21.13.164 (Anddea).' },
-    { type: 'I', text: 'Select patches in Expert mode or tap Patch to start.' }
+    { type: 'I', text: 'Remove background playback restrictions succeeded' },
+    { type: 'I', text: 'Return YouTube Dislike succeeded' },
+    { type: 'I', text: 'SponsorBlock succeeded' },
+    { type: 'I', text: 'Spoof video streams succeeded' }
   ]
 };
+
+const SVG_CHECK = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+const SVG_GEAR = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`;
+const SVG_THUMB = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>`;
 
 const DEFAULT_SOURCES = [
   {
@@ -54,11 +55,7 @@ const DEFAULT_SOURCES = [
     repository: 'anddea/revanced-patches',
     manifestUrl: 'https://raw.githubusercontent.com/anddea/revanced-patches/refs/heads/main/patches-list.json',
     defaultReleaseType: 'dev',
-    isDefault: true,
-    fallbackTags: [
-      { tag_name: 'v4.3.1-dev.1', name: 'v4.3.1-dev.1 (Prerelease)', prerelease: true },
-      { tag_name: 'v4.3.0', name: 'v4.3.0 (Stable)', prerelease: false }
-    ]
+    isDefault: true
   },
   {
     id: 'morphe',
@@ -66,10 +63,7 @@ const DEFAULT_SOURCES = [
     repository: 'MorpheApp/morphe-patches',
     manifestUrl: 'https://raw.githubusercontent.com/MorpheApp/morphe-patches/refs/heads/main/patches-list.json',
     defaultReleaseType: 'latest',
-    isDefault: false,
-    fallbackTags: [
-      { tag_name: 'v1.18.0', name: 'v1.18.0 (Stable)', prerelease: false }
-    ]
+    isDefault: false
   },
   {
     id: 'inotia00',
@@ -77,10 +71,7 @@ const DEFAULT_SOURCES = [
     repository: 'inotia00/revanced-patches',
     manifestUrl: 'https://raw.githubusercontent.com/inotia00/revanced-patches/refs/heads/revanced-extended/patches.json',
     defaultReleaseType: 'latest',
-    isDefault: false,
-    fallbackTags: [
-      { tag_name: 'v2.190.1', name: 'v2.190.1 (Stable)', prerelease: false }
-    ]
+    isDefault: false
   },
   {
     id: 'revanced',
@@ -88,22 +79,15 @@ const DEFAULT_SOURCES = [
     repository: 'ReVanced/revanced-patches',
     manifestUrl: 'https://raw.githubusercontent.com/ReVanced/revanced-patches/refs/heads/main/patches.json',
     defaultReleaseType: 'latest',
-    isDefault: false,
-    fallbackTags: [
-      { tag_name: 'v4.16.0', name: 'v4.16.0 (Stable)', prerelease: false }
-    ]
+    isDefault: false
   }
 ];
 
 const FALLBACK_YOUTUBE_VERSIONS = [
-  { version: '21.13.164', isBeta: false, title: 'YouTube 21.13.164' },
-  { version: '21.12.39', isBeta: false, title: 'YouTube 21.12.39' },
-  { version: '21.11.37', isBeta: false, title: 'YouTube 21.11.37' },
-  { version: '21.10.40', isBeta: false, title: 'YouTube 21.10.40' },
-  { version: '21.09.38', isBeta: false, title: 'YouTube 21.09.38' },
-  { version: '21.08.35', isBeta: false, title: 'YouTube 21.08.35' },
-  { version: '21.07.247', isBeta: false, title: 'YouTube 21.07.247' },
-  { version: '20.51.39', isBeta: false, title: 'YouTube 20.51.39' }
+  { version: '21.13.164', isBeta: false },
+  { version: '21.12.39', isBeta: false },
+  { version: '21.11.37', isBeta: false },
+  { version: '20.51.39', isBeta: false }
 ];
 
 // =============================================================================
@@ -111,7 +95,6 @@ const FALLBACK_YOUTUBE_VERSIONS = [
 // =============================================================================
 document.addEventListener('DOMContentLoaded', async () => {
   initSecurity();
-  initNavigation();
   initViewportTracker();
   initEventListeners();
   initKeyboardNavigation();
@@ -138,18 +121,9 @@ function setUiMode(mode) {
 
   const morpheApp = document.getElementById('morpheAppContainer');
   const tuiApp = document.getElementById('tuiAppContainer');
-  const stepNav = document.getElementById('morpheStepNav');
-  const termuxBrand = document.getElementById('termuxTopbarBrand');
-  const toggleIcon = document.getElementById('uiModeToggleIcon');
-  const toggleText = document.getElementById('uiModeToggleText');
 
   if (morpheApp) morpheApp.classList.toggle('hidden', isTui);
   if (tuiApp) tuiApp.classList.toggle('hidden', !isTui);
-  if (stepNav) stepNav.classList.toggle('hidden', isTui);
-  if (termuxBrand) termuxBrand.classList.toggle('hidden', !isTui);
-
-  if (toggleIcon) toggleIcon.textContent = isTui ? '🎨' : '>_';
-  if (toggleText) toggleText.textContent = isTui ? 'Morphe GUI' : 'Termux TUI';
 
   const btnMorphe = document.getElementById('btnSettingModeMorphe');
   const btnTui = document.getElementById('btnSettingModeTui');
@@ -162,41 +136,23 @@ function setUiMode(mode) {
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
-// =============================================================================
-// Morphe Screen Navigation (Home -> Version -> Patches -> Progress)
-// =============================================================================
-function initNavigation() {
-  document.querySelectorAll('.step-nav-pill').forEach(btn => {
-    btn.addEventListener('click', () => switchScreen(btn.dataset.screen));
-  });
-}
-
 function switchScreen(screenId) {
   STATE.activeScreen = screenId;
-
-  document.querySelectorAll('.step-nav-pill').forEach(btn => {
-    const active = btn.dataset.screen === screenId;
-    btn.classList.toggle('active', active);
-    btn.setAttribute('aria-selected', active ? 'true' : 'false');
-  });
-
   const screenMap = {
     home: 'screenHome',
     version: 'screenVersion',
     patches: 'screenPatches',
     progress: 'screenProgress'
   };
-
   Object.entries(screenMap).forEach(([key, domId]) => {
     const el = document.getElementById(domId);
     if (el) el.classList.toggle('active', key === screenId);
   });
-
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // =============================================================================
-// Live Viewport Tracker (Infinix Note 50s/11s, Redmi Note 7, Desktop Quarter)
+// Viewport Telemetry (Stored cleanly inside the (i) Info Modal)
 // =============================================================================
 function initViewportTracker() {
   const updateMetrics = () => {
@@ -207,25 +163,10 @@ function initViewportTracker() {
     }
     const dpr = (window.devicePixelRatio || 1).toFixed(2);
     const orientation = w > h ? 'Landscape' : 'Portrait';
-
-    let deviceTag = '';
-    if ((w === 392 && h === 778) || (w === 778 && h === 392) || (w === 850 && h === 296)) {
-      deviceTag = ' • Infinix Note 50s';
-    } else if ((w === 431 && h === 846) || (w === 846 && h === 431) || (w === 901 && h === 347)) {
-      deviceTag = ' • Redmi Note 7';
-    } else if ((w === 415 && h === 866) || (w === 866 && h === 415) || (w === 946 && h === 335)) {
-      deviceTag = ' • Infinix Note 11s';
-    } else if ((w === 723 && h === 704) || (w === 704 && h === 723)) {
-      deviceTag = ' • Desktop Half';
-    } else if ((w === 723 && h === 296) || (w === 296 && h === 723)) {
-      deviceTag = ' • Desktop Quarter';
-    }
-
-    const label = `${w}×${h} • DPR ${dpr} • ${orientation}${deviceTag}`;
     const textEl = document.getElementById('viewportResolutionText');
-    if (textEl) textEl.textContent = label;
-    const tuiHint = document.getElementById('tuiViewportHint');
-    if (tuiHint) tuiHint.textContent = label;
+    if (textEl) {
+      textEl.textContent = `${w} × ${h} px • DPR ${dpr} • ${orientation}`;
+    }
   };
 
   window.addEventListener('resize', updateMetrics);
@@ -261,12 +202,12 @@ async function verifyGithubToken(token) {
       return true;
     }
   } catch (_) {}
-  if (statusText) statusText.textContent = 'Invalid Token';
+  if (statusText) statusText.textContent = 'Invalid';
   return false;
 }
 
 // =============================================================================
-// Multi-Mirror Manifest Fetch (jsDelivr -> GitHub Raw)
+// Multi-Mirror Manifest Fetch
 // =============================================================================
 async function fetchManifestWithFallback(url) {
   const urlsToTry = [];
@@ -285,7 +226,7 @@ async function fetchManifestWithFallback(url) {
       if (res.ok) return await res.json();
     } catch (_) {}
   }
-  throw new Error('Failed to reach patch source from all mirrors');
+  throw new Error('Failed to reach patch source');
 }
 
 async function fetchJsonSafe(url) {
@@ -391,18 +332,18 @@ async function loadPatchReleases(sourceConfig) {
       select.innerHTML = '';
       const optDev = document.createElement('option');
       optDev.value = 'dev';
-      optDev.textContent = `⚡ Pre-release / Dev ${latestPre ? `(${latestPre.tag_name})` : ''}`;
+      optDev.textContent = `Pre-release / Dev ${latestPre ? `(${latestPre.tag_name})` : ''}`;
       if (sourceConfig.defaultReleaseType === 'dev' || !latestStable) optDev.selected = true;
       select.appendChild(optDev);
 
       const optStable = document.createElement('option');
       optStable.value = 'latest';
-      optStable.textContent = `🛡️ Stable / Official ${latestStable ? `(${latestStable.tag_name})` : ''}`;
+      optStable.textContent = `Stable / Official ${latestStable ? `(${latestStable.tag_name})` : ''}`;
       if (sourceConfig.defaultReleaseType === 'latest' && latestStable) optStable.selected = true;
       select.appendChild(optStable);
 
       if (hint) {
-        hint.textContent = `Active repo: ${repo} • ${latestPre?.tag_name || 'dev'}`;
+        hint.textContent = `${repo} • ${latestPre?.tag_name || 'dev'}`;
       }
       STATE.patchTag = select.value;
       return;
@@ -410,10 +351,10 @@ async function loadPatchReleases(sourceConfig) {
   } catch (_) {}
 
   select.innerHTML = `
-    <option value="dev" ${sourceConfig.defaultReleaseType === 'dev' ? 'selected' : ''}>⚡ Pre-release / Dev (Latest)</option>
-    <option value="latest" ${sourceConfig.defaultReleaseType === 'latest' ? 'selected' : ''}>🛡️ Stable / Official</option>
+    <option value="dev" ${sourceConfig.defaultReleaseType === 'dev' ? 'selected' : ''}>Pre-release / Dev</option>
+    <option value="latest" ${sourceConfig.defaultReleaseType === 'latest' ? 'selected' : ''}>Stable / Official</option>
   `;
-  if (hint) hint.textContent = `Zero-API CDN Channel Active (${repo})`;
+  if (hint) hint.textContent = `${repo}`;
   STATE.patchTag = select.value;
 }
 
@@ -435,16 +376,6 @@ function filterPatchesForYouTube(patches, pkgName = 'com.google.android.youtube'
     }
     return true;
   });
-}
-
-function classifyPatchCategory(patch) {
-  const text = `${patch.name || ''} ${patch.description || ''}`.toLowerCase();
-  if (['ads', 'sponsor', 'dislike', 'tracking', 'redirect'].some(k => text.includes(k))) return 'ads';
-  if (['player', 'playback', 'swipe', 'audio', 'stream', 'speed', 'control', 'seek', 'video', 'quality'].some(k => text.includes(k))) return 'player';
-  if (['theme', 'branding', 'overlay', 'icon', 'color', 'dpi', 'button', 'snack', 'amoled', 'header'].some(k => text.includes(k))) return 'theme';
-  if (['shorts', 'navigation', 'bar', 'feed', 'pivot', 'tablet', 'layout'].some(k => text.includes(k))) return 'shorts';
-  if (['spoof', 'potoken', 'quic', 'version', 'wifi', 'certificate', 'gms', 'microg'].some(k => text.includes(k))) return 'spoof';
-  return 'misc';
 }
 
 function extractUniversalVersions(patches, pkgName = 'com.google.android.youtube') {
@@ -475,7 +406,6 @@ function extractUniversalVersions(patches, pkgName = 'com.google.android.youtube
   sortedManifest.forEach(ver => {
     versionsMap.set(ver, {
       version: ver,
-      isBeta: false,
       isRecommended: ver === recommended,
       isManifest: true
     });
@@ -491,7 +421,6 @@ function extractUniversalVersions(patches, pkgName = 'com.google.android.youtube
     if (!versionsMap.has(ver)) {
       versionsMap.set(ver, {
         version: ver,
-        isBeta: Boolean(item.isBeta),
         isRecommended: ver === recommended,
         isManifest: manifestVersions.has(ver)
       });
@@ -525,14 +454,10 @@ async function fetchAndRenderPatches(sourceId) {
     STATE.availableVersions = allVersions;
     STATE.recommendedVersion = recommendedVersion;
 
-    const recBadge = document.getElementById('recommendedVerBadge');
-    if (recBadge) recBadge.textContent = recommendedVersion;
-
     if (!STATE.currentVersion || STATE.currentVersion === 'recommended') {
       STATE.currentVersion = recommendedVersion;
     }
 
-    // Initialize default selection & Golden Preset
     STATE.selectedPatches.clear();
     ytPatches.forEach(p => {
       if (p.use !== false) STATE.selectedPatches.add(p.name);
@@ -561,29 +486,20 @@ async function fetchAndRenderPatches(sourceId) {
 }
 
 // =============================================================================
-// Render Morphe Version Picker List (02-apk-availability.jpg)
+// Render 1:1 Morphe Version List (02-apk-availability.jpg — Clean, No Badge Spam)
 // =============================================================================
 function renderVersionSelector() {
   const container = document.getElementById('versionListContainer');
   if (!container) return;
   container.innerHTML = '';
 
-  const allList = STATE.availableVersions || [];
-  let filtered = allList;
-  if (STATE.versionFilter === 'recommended') {
-    filtered = allList.filter(item => item.isRecommended || item.isManifest);
-  } else if (STATE.versionFilter === 'stable') {
-    filtered = allList.filter(item => !item.isBeta);
-  } else if (STATE.versionFilter === 'beta') {
-    filtered = allList.filter(item => item.isBeta);
-  }
-
+  let filtered = STATE.availableVersions || [];
   if (STATE.versionSearch) {
     const q = STATE.versionSearch.toLowerCase();
     filtered = filtered.filter(item => item.version.toLowerCase().includes(q));
   }
 
-  const limit = STATE.showAllVersions ? filtered.length : (STATE.versionDisplayLimit || 10);
+  const limit = STATE.showAllVersions ? 25 : (STATE.versionDisplayLimit || 4);
   const displayList = filtered.slice(0, limit);
 
   if (displayList.length === 0) {
@@ -597,19 +513,17 @@ function renderVersionSelector() {
       row.setAttribute('role', 'radio');
       row.setAttribute('aria-checked', isSelected ? 'true' : 'false');
 
-      let rightBadge = `<span class="ver-pill-tag">${item.isBeta ? 'Beta' : 'Stable'}</span>`;
-      if (item.isRecommended) {
-        rightBadge = `<span class="ver-pill-rec">👍 Recommended</span>`;
-      } else if (item.isManifest) {
-        rightBadge = `<span class="ver-pill-tag">✓ Supported</span>`;
-      }
+      // Only show the blue "Recommended" pill on the recommended version, matching 02-apk-availability.jpg 1:1
+      const rightHtml = item.isRecommended
+        ? `<span class="ver-pill-rec">${SVG_THUMB}<span>Recommended</span></span>`
+        : '';
 
       row.innerHTML = `
         <div class="ver-row-left">
-          <span class="ver-check-mark">${isSelected ? '✓' : ''}</span>
+          <span class="ver-check-mark">${isSelected ? SVG_CHECK : ''}</span>
           <span class="ver-number-mono">${escapeHtml(ver)}</span>
         </div>
-        ${rightBadge}
+        ${rightHtml}
       `;
 
       row.addEventListener('click', () => {
@@ -622,24 +536,14 @@ function renderVersionSelector() {
     });
   }
 
-  const counterHint = document.getElementById('versionCounterHint');
-  if (counterHint) {
-    counterHint.textContent = `${displayList.length} of ${filtered.length} versions`;
-  }
-
-  const btnLoadMore = document.getElementById('btnLoadMoreVersions');
-  if (btnLoadMore) {
-    btnLoadMore.style.display = displayList.length >= filtered.length ? 'none' : 'inline-flex';
-  }
-
   const btnToggleAll = document.getElementById('btnToggleAllVersions');
   if (btnToggleAll) {
-    btnToggleAll.textContent = STATE.showAllVersions ? '🔼 Show Less' : '📋 Show All';
+    btnToggleAll.textContent = STATE.showAllVersions ? 'Show fewer versions' : 'Show more versions';
   }
 }
 
 // =============================================================================
-// Render Authentic Morphe Flat Patch Cards List (03-patch-selection.jpg)
+// Render 1:1 Morphe Flat Patch Cards (03-patch-selection.jpg)
 // =============================================================================
 function renderMorphePatchList() {
   const container = document.getElementById('patchCategoriesContainer');
@@ -647,13 +551,11 @@ function renderMorphePatchList() {
   container.innerHTML = '';
 
   const query = (STATE.patchSearchQuery || '').toLowerCase().trim();
-  const catFilter = STATE.activePatchCategory || 'all';
   const enabledOnly = STATE.filterEnabledOnly;
 
   const filtered = STATE.patches.filter(patch => {
     const isSelected = STATE.selectedPatches.has(patch.name);
     if (enabledOnly && !isSelected) return false;
-    if (catFilter !== 'all' && classifyPatchCategory(patch) !== catFilter) return false;
     if (query) {
       const n = (patch.name || '').toLowerCase();
       const d = (patch.description || '').toLowerCase();
@@ -663,7 +565,7 @@ function renderMorphePatchList() {
   });
 
   if (filtered.length === 0) {
-    container.innerHTML = '<div class="morphe-alert">No patches match the current filter.</div>';
+    container.innerHTML = '<div class="morphe-alert">No matching patches.</div>';
     return;
   }
 
@@ -676,12 +578,12 @@ function renderMorphePatchList() {
     card.dataset.patchName = patch.name;
 
     card.innerHTML = `
-      <div class="morphe-circle-check" aria-hidden="true">✓</div>
+      <div class="morphe-circle-check" aria-hidden="true">${SVG_CHECK}</div>
       <div class="patch-info">
         <div class="patch-title">${escapeHtml(patch.name)}</div>
         <div class="patch-desc">${escapeHtml(patch.description || 'No description available')}</div>
       </div>
-      ${hasOptions ? `<button type="button" class="morphe-patch-gear-btn" title="Configure ${escapeHtml(patch.name)} options" aria-label="Configure ${escapeHtml(patch.name)} options">⚙️</button>` : ''}
+      ${hasOptions ? `<button type="button" class="morphe-patch-gear-btn" title="Configure ${escapeHtml(patch.name)}" aria-label="Configure ${escapeHtml(patch.name)}">${SVG_GEAR}</button>` : ''}
     `;
 
     card.addEventListener('click', (e) => {
@@ -705,7 +607,7 @@ function renderMorphePatchList() {
 }
 
 // =============================================================================
-// Authentic Morphe Patch Options Modal (02-expert-branding-patch.jpg)
+// Morphe Patch Options Modal (02-expert-branding-patch.jpg)
 // =============================================================================
 function openPatchOptionsModal(patch) {
   const modal = document.getElementById('patchOptionsModal');
@@ -735,8 +637,8 @@ function openPatchOptionsModal(patch) {
       const isChecked = currentVal === true || currentVal === 'true';
       controlHtml = `
         <select class="morphe-select modal-opt-input" data-opt-key="${escapeHtml(key)}" data-opt-type="boolean">
-          <option value="true" ${isChecked ? 'selected' : ''}>Enabled (true)</option>
-          <option value="false" ${!isChecked ? 'selected' : ''}>Disabled (false)</option>
+          <option value="true" ${isChecked ? 'selected' : ''}>Enabled</option>
+          <option value="false" ${!isChecked ? 'selected' : ''}>Disabled</option>
         </select>
       `;
     } else if (Array.isArray(opt.possibleValues) && opt.possibleValues.length > 0) {
@@ -847,7 +749,7 @@ function exportPreset() {
   const includedPatches = Array.from(STATE.selectedPatches);
 
   const payload = {
-    schema_version: '2.1.6',
+    schema_version: '2.1.7',
     exported_at: new Date().toISOString(),
     patch_source: STATE.currentSource,
     patch_tag: STATE.patchTag,
@@ -904,8 +806,7 @@ function importPreset(file) {
       renderMorphePatchList();
       syncAllSummaries();
       if (STATE.uiMode === 'tui') renderTuiView();
-      const presetSheet = document.getElementById('presetSheetModal');
-      if (presetSheet) presetSheet.classList.add('hidden');
+      document.getElementById('presetSheetModal')?.classList.add('hidden');
     } catch (_) {
       alert('Failed to import preset: Invalid JSON file.');
     }
@@ -914,37 +815,39 @@ function importPreset(file) {
 }
 
 // =============================================================================
-// Synchronize All Counters, Badges & Labels Across Morphe GUI & Termux TUI
+// Synchronize Clean Labels & Info (i) Modal Fields
 // =============================================================================
 function syncAllSummaries() {
-  const total = STATE.patches.length || 86;
+  const total = STATE.patches.length || 83;
   const active = STATE.selectedPatches.size;
   const ver = STATE.currentVersion || '21.13.164';
   const srcName = getSourceDisplayName(STATE.currentSource);
-  const engineLabel = STATE.engineMode === 'local' ? 'On-Device' : 'Cloud Actions';
+  const statusSuffix = STATE.installedVersion ? 'Installed' : 'Not patched yet';
 
-  setText('navVersionLabel', `v${ver}`);
-  setText('navPatchesBadge', String(active));
+  // 1:1 Home Card Subtitle ("v21.13.164 • Not patched yet")
+  setText('homeCardMeta', `v${ver} • ${statusSuffix}`);
 
-  setText('homeCardMeta', `v${ver} • ${srcName} Patches (${active}/${total})`);
-  setText('homeQuickVer', ver);
-  setText('homeQuickCount', `${active}/${total}`);
-  setText('homeSummarySource', `${srcName} (${STATE.patchTag})`);
-  setText('homeSummaryEngine', engineLabel);
-  setText('homeSummaryPreset', `${active} / ${total} active`);
-
-  setText('expertHeaderVer', `v${ver}`);
+  // 1:1 Expert Mode Header
   setText('expertHeaderSource', `${srcName} Patches`);
   setText('expertCounterText', `${active}/${total}`);
 
+  // 1:1 Progress Screen
   setText('progressPatchRatio', `${active} / ${total}`);
-  setText('sourceSheetPatchCount', `${total} patches ›`);
+  setText('sourceSheetPatchCount', `${total} ›`);
 
-  setText('tuiHeaderSummary', `YT v${ver} | ${srcName} (${active}/${total})`);
+  // Info (i) Modal Fields
+  setText('infoTargetVersion', `v${ver}`);
+  setText('infoActiveSource', `${srcName} (${STATE.patchTag})`);
+  setText('infoActivePatches', `${active} / ${total}`);
   setText(
-    'tuiDialogSubtitle',
-    `App: YouTube (com.google.android.youtube) • Version: v${ver} • Source: ${srcName} (${STATE.patchTag}) • Active Patches: ${active}/${total} • Engine: ${engineLabel}`
+    'infoEngineStatus',
+    STATE.engineMode === 'local'
+      ? `On-Device Daemon (v${STATE.daemonVersion})`
+      : 'GitHub Actions Cloud'
   );
+
+  // Termux TUI Subtitle
+  setText('tuiDialogSubtitle', `YouTube v${ver} • ${srcName} (${active}/${total})`);
 }
 
 function setText(id, text) {
@@ -956,9 +859,7 @@ function setText(id, text) {
 // Daemon Status & Execution Engine
 // =============================================================================
 async function checkDaemonStatus() {
-  const badge = document.getElementById('daemonStatusBadge');
   const urlsToTest = ['', 'http://127.0.0.1:8080', 'http://localhost:8080'];
-
   for (const url of urlsToTest) {
     try {
       const res = await fetch(`${url}/api/v1/system/status`, { signal: AbortSignal.timeout(1500) });
@@ -966,30 +867,19 @@ async function checkDaemonStatus() {
         const data = await res.json();
         STATE.daemonOnline = true;
         STATE.daemonUrl = url;
-        if (badge) {
-          badge.className = 'daemon-pill daemon-online';
-          const txt = badge.querySelector('.daemon-text');
-          if (txt) txt.textContent = `v${data.daemon_version}`;
-        }
+        STATE.daemonVersion = data.daemon_version || '2.1.7';
         setEngineMode('local');
         return;
       }
     } catch (_) {}
   }
-
   STATE.daemonOnline = false;
   STATE.daemonUrl = '';
-  if (badge) {
-    badge.className = 'daemon-pill daemon-offline';
-    const txt = badge.querySelector('.daemon-text');
-    if (txt) txt.textContent = 'Cloud';
-  }
   setEngineMode('cloud');
 }
 
 async function fetchInstalledAppInfo() {
   const text = document.getElementById('installedVerText');
-  const homeBadge = document.getElementById('homeInstalledBadge');
   if (!STATE.daemonOnline) {
     if (text) text.textContent = 'Cloud Mode';
     return;
@@ -1001,10 +891,10 @@ async function fetchInstalledAppInfo() {
       if (data.installed_version && data.installed_version !== 'Unknown') {
         STATE.installedVersion = data.installed_version;
         if (text) text.textContent = `v${data.installed_version}`;
-        if (homeBadge) homeBadge.textContent = `Installed: v${data.installed_version}`;
       } else {
-        if (text) text.textContent = 'Host / PC Test Mode';
+        if (text) text.textContent = 'Not installed / Host PC';
       }
+      syncAllSummaries();
     }
   } catch (_) {}
 }
@@ -1021,7 +911,7 @@ function setEngineMode(mode) {
     btnLocal.setAttribute('aria-checked', isLocal ? 'true' : 'false');
     btnCloud.classList.toggle('active', !isLocal);
     btnCloud.setAttribute('aria-checked', !isLocal ? 'true' : 'false');
-    if (engineTag) engineTag.textContent = isLocal ? 'On-Device Daemon' : 'GitHub Actions Cloud';
+    if (engineTag) engineTag.textContent = isLocal ? 'On-Device' : 'Cloud';
   }
   syncAllSummaries();
 }
@@ -1045,23 +935,20 @@ async function triggerLocalPatch() {
     renderTuiView();
   }
 
-  const liveDot = document.getElementById('navLiveDot');
   const heroCard = document.getElementById('postPatchHeroCard');
   const subText = document.getElementById('progressStatusSub');
   const pctPill = document.getElementById('progressPercentPill');
   const barFill = document.getElementById('progressBarFill');
 
-  if (liveDot) liveDot.classList.remove('hidden');
   if (heroCard) heroCard.classList.add('hidden');
-  if (subText) subText.textContent = 'Applying patches...';
+  if (subText) subText.textContent = 'Applying patches';
   if (pctPill) pctPill.textContent = '15%';
   if (barFill) barFill.style.width = '15%';
 
-  setText('telemetryCpuVal', '42%');
-  setText('telemetryIoVal', '384 KB/s');
+  setText('telemetryCpuVal', '41%');
+  setText('telemetryIoVal', '240 KB/s');
 
-  appendTerminalLog(`[Morphe] Starting On-Device Patch for YouTube v${STATE.currentVersion}`, 'I');
-  appendTerminalLog(`[Morphe] Source: ${getSourceDisplayName(STATE.currentSource)} (${STATE.patchTag}) • Active Patches: ${STATE.selectedPatches.size}`, 'I');
+  appendTerminalLog(`Starting patcher for YouTube v${STATE.currentVersion}`, 'I');
 
   const allPatchNames = STATE.patches.map(p => p.name);
   const excludedPatches = allPatchNames.filter(name => !STATE.selectedPatches.has(name));
@@ -1090,7 +977,7 @@ async function triggerLocalPatch() {
     }
 
     if (STATE.eventSource) STATE.eventSource.close();
-    let stepPct = 20;
+    let stepPct = 22;
 
     STATE.eventSource = new EventSource(`${STATE.daemonUrl}/api/v1/patch/stream`);
     STATE.eventSource.onmessage = (event) => {
@@ -1098,46 +985,38 @@ async function triggerLocalPatch() {
       const isOk = line.includes('completed successfully') || line.includes('succeeded');
       const isErr = line.toLowerCase().includes('error') || line.toLowerCase().includes('failed');
 
-      appendTerminalLog(line, isErr ? '!' : (isOk ? '✓' : 'I'));
+      appendTerminalLog(line, isErr ? '!' : (isOk ? 'I' : 'I'));
 
-      stepPct = Math.min(95, stepPct + 8);
+      stepPct = Math.min(96, stepPct + 8);
       if (pctPill) pctPill.textContent = `${stepPct}%`;
       if (barFill) barFill.style.width = `${stepPct}%`;
 
       if (line.includes('Patching process completed successfully')) {
-        if (liveDot) liveDot.classList.add('hidden');
         if (heroCard) heroCard.classList.remove('hidden');
-        if (subText) subText.textContent = 'All done! 🎉';
-        if (pctPill) pctPill.textContent = '100%';
-        if (barFill) barFill.style.width = '100%';
-        setText('telemetryCpuVal', '8%');
-        setText('telemetryIoVal', '0 KB/s');
-        if (STATE.eventSource) STATE.eventSource.close();
-      } else if (line.includes('Patching failed')) {
-        if (liveDot) liveDot.classList.add('hidden');
-        if (subText) subText.textContent = 'Patching halted (see logs below)';
+        if (subText) subText.textContent = 'All done!';
         if (pctPill) pctPill.textContent = '100%';
         if (barFill) barFill.style.width = '100%';
         setText('telemetryCpuVal', '6%');
         setText('telemetryIoVal', '0 KB/s');
         if (STATE.eventSource) STATE.eventSource.close();
+      } else if (line.includes('Patching failed')) {
+        if (subText) subText.textContent = 'Patching halted';
+        if (pctPill) pctPill.textContent = '100%';
+        if (barFill) barFill.style.width = '100%';
+        setText('telemetryCpuVal', '4%');
+        setText('telemetryIoVal', '0 KB/s');
+        if (STATE.eventSource) STATE.eventSource.close();
       }
-    };
-
-    STATE.eventSource.onerror = () => {
-      if (liveDot) liveDot.classList.add('hidden');
     };
   } catch (err) {
     appendTerminalLog(`Failed to start patching: ${err.message}`, '!');
-    if (liveDot) liveDot.classList.add('hidden');
-    if (subText) subText.textContent = 'Error starting patcher';
+    if (subText) subText.textContent = 'Error';
   }
 }
 
 async function triggerCloudBuild() {
   if (!STATE.authToken) {
-    const settingsModal = document.getElementById('settingsModal');
-    if (settingsModal) settingsModal.classList.remove('hidden');
+    document.getElementById('settingsModal')?.classList.remove('hidden');
     return;
   }
 
@@ -1180,7 +1059,7 @@ async function triggerCloudBuild() {
     });
 
     if (res.status === 204 || res.ok) {
-      if (statusMsg) statusMsg.textContent = `✅ Build Dispatched! GitHub Actions is patching YouTube v${STATE.currentVersion}.`;
+      if (statusMsg) statusMsg.textContent = `Build Dispatched for YouTube v${STATE.currentVersion}.`;
       if (linksBox) linksBox.classList.remove('hidden');
       if (runLink) runLink.href = 'https://github.com/Zy0x/YouTube-Revanced/actions';
     } else {
@@ -1188,7 +1067,7 @@ async function triggerCloudBuild() {
       throw new Error(errData.message || `Response code: ${res.status}`);
     }
   } catch (err) {
-    if (statusMsg) statusMsg.textContent = `❌ Cloud Build Error: ${err.message}`;
+    if (statusMsg) statusMsg.textContent = `Cloud Build Error: ${err.message}`;
   }
 }
 
@@ -1203,15 +1082,13 @@ function appendTerminalLog(line, type = 'I') {
   if (list) {
     const row = document.createElement('div');
     row.className = 'morphe-log-row';
-    const badgeClass = type === '!' ? 'log-badge-err' : (type === '✓' ? 'log-badge-ok' : 'log-badge-info');
+    const badgeClass = type === '!' ? 'log-badge-err' : 'log-badge-info';
     row.innerHTML = `
       <span class="log-badge ${badgeClass}">${escapeHtml(type)}</span>
       <span class="log-msg">${escapeHtml(line)}</span>
     `;
     list.appendChild(row);
-    if (STATE.terminalAutoScroll && feed) {
-      feed.scrollTop = feed.scrollHeight;
-    }
+    if (feed) feed.scrollTop = feed.scrollHeight;
   }
 
   if (STATE.uiMode === 'tui' && STATE.tuiScreen === 'logs') {
@@ -1220,7 +1097,7 @@ function appendTerminalLog(line, type = 'I') {
 }
 
 // =============================================================================
-// Mode 2: 1:1 Termux CLI Revancify-Xisr TUI Renderer (Xisrr1/Revancify-Xisr)
+// Mode 2: 1:1 Termux CLI Revancify-Xisr TUI Renderer
 // =============================================================================
 function renderTuiView() {
   const titleEl = document.getElementById('tuiDialogTitle');
@@ -1228,20 +1105,20 @@ function renderTuiView() {
   if (!bodyEl) return;
   bodyEl.innerHTML = '';
 
-  const total = STATE.patches.length || 86;
+  const total = STATE.patches.length || 83;
   const active = STATE.selectedPatches.size;
   const srcName = getSourceDisplayName(STATE.currentSource);
 
   if (STATE.tuiScreen === 'main') {
-    if (titleEl) titleEl.textContent = '| Revancify-Xisr — Main Menu |';
+    if (titleEl) titleEl.textContent = '| Main Menu |';
     const menuItems = [
-      { num: '1', label: 'Patch App', sub: `Build YouTube v${STATE.currentVersion} (${active} patches)`, action: () => triggerBuildPipeline() },
-      { num: '2', label: 'Change Source', sub: `${srcName} [${STATE.patchTag}]`, action: () => { STATE.tuiScreen = 'source'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '3', label: 'Select Version', sub: `v${STATE.currentVersion} ${STATE.currentVersion === STATE.recommendedVersion ? '[Recommended]' : ''}`, action: () => { STATE.tuiScreen = 'version'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '4', label: 'Edit Patches', sub: `${active} / ${total} Enabled`, action: () => { STATE.tuiScreen = 'patches'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '5', label: 'Edit Patch Options', sub: 'Configure individual patch options', action: () => { STATE.tuiScreen = 'options'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '6', label: 'Preset Manager', sub: 'Golden Preset / Export / Import JSON', action: () => { STATE.tuiScreen = 'presets'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '7', label: 'Engine & Settings', sub: `Mode: ${STATE.engineMode === 'local' ? 'On-Device Daemon' : 'Cloud Actions'}`, action: () => { document.getElementById('settingsModal')?.classList.remove('hidden'); } }
+      { num: '1', label: 'Patch App', sub: `v${STATE.currentVersion}`, action: () => triggerBuildPipeline() },
+      { num: '2', label: 'Change Source', sub: srcName, action: () => { STATE.tuiScreen = 'source'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '3', label: 'Select Version', sub: `v${STATE.currentVersion}`, action: () => { STATE.tuiScreen = 'version'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '4', label: 'Edit Patches', sub: `${active}/${total}`, action: () => { STATE.tuiScreen = 'patches'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '5', label: 'Edit Patch Options', sub: 'Options', action: () => { STATE.tuiScreen = 'options'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '6', label: 'Preset Manager', sub: 'JSON', action: () => { STATE.tuiScreen = 'presets'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '7', label: 'Settings', sub: STATE.engineMode === 'local' ? 'Local' : 'Cloud', action: () => { document.getElementById('settingsModal')?.classList.remove('hidden'); } }
     ];
 
     menuItems.forEach((item, idx) => {
@@ -1265,7 +1142,7 @@ function renderTuiView() {
   }
 
   if (STATE.tuiScreen === 'source') {
-    if (titleEl) titleEl.textContent = '| Revancify-Xisr — Change Source |';
+    if (titleEl) titleEl.textContent = '| Change Source |';
     STATE.sources.forEach((s, idx) => {
       const isCur = s.id === STATE.currentSource;
       const row = document.createElement('button');
@@ -1290,19 +1167,18 @@ function renderTuiView() {
   }
 
   if (STATE.tuiScreen === 'version') {
-    if (titleEl) titleEl.textContent = '| Revancify-Xisr — Select YouTube Version |';
-    (STATE.availableVersions || []).slice(0, 20).forEach((item, idx) => {
+    if (titleEl) titleEl.textContent = '| Select Version |';
+    (STATE.availableVersions || []).slice(0, 15).forEach((item, idx) => {
       const isCur = item.version === STATE.currentVersion;
-      const tag = item.isRecommended ? '[Recommended]' : (item.isManifest ? '[Supported]' : '[Catalog]');
       const row = document.createElement('button');
       row.type = 'button';
       row.className = `tui-menu-row ${isCur ? 'tui-row-active' : ''}`;
       row.innerHTML = `
         <div class="tui-row-left">
           <span class="tui-row-num">${isCur ? '(*)' : '( )'}</span>
-          <span>v${escapeHtml(item.version)}</span>
+          <span>${escapeHtml(item.version)}</span>
         </div>
-        <span class="tui-row-sub">${tag}</span>
+        <span class="tui-row-sub">${item.isRecommended ? '[Rec]' : ''}</span>
       `;
       row.addEventListener('click', () => {
         STATE.currentVersion = item.version;
@@ -1318,14 +1194,13 @@ function renderTuiView() {
   }
 
   if (STATE.tuiScreen === 'patches') {
-    if (titleEl) titleEl.textContent = `| Revancify-Xisr — Edit Patches (${active}/${total}) |`;
-
+    if (titleEl) titleEl.textContent = `| Edit Patches (${active}/${total}) |`;
     const strip = document.createElement('div');
     strip.className = 'tui-toolbar-strip';
     strip.innerHTML = `
-      <button type="button" class="tui-btn" id="tuiBtnAll">[ Enable All ]</button>
-      <button type="button" class="tui-btn" id="tuiBtnGolden">[ Golden Preset ]</button>
-      <button type="button" class="tui-btn" id="tuiBtnNone">[ Disable All ]</button>
+      <button type="button" class="tui-btn" id="tuiBtnAll">[ All ]</button>
+      <button type="button" class="tui-btn" id="tuiBtnGolden">[ Golden ]</button>
+      <button type="button" class="tui-btn" id="tuiBtnNone">[ None ]</button>
     `;
     bodyEl.appendChild(strip);
 
@@ -1335,9 +1210,7 @@ function renderTuiView() {
       syncAllSummaries();
       renderTuiView();
     });
-    strip.querySelector('#tuiBtnGolden')?.addEventListener('click', () => {
-      applyGoldenPreset();
-    });
+    strip.querySelector('#tuiBtnGolden')?.addEventListener('click', () => applyGoldenPreset());
     strip.querySelector('#tuiBtnNone')?.addEventListener('click', () => {
       STATE.selectedPatches.clear();
       renderMorphePatchList();
@@ -1355,7 +1228,6 @@ function renderTuiView() {
           <span class="tui-row-num">${isSel ? '[*]' : '[ ]'}</span>
           <span>${escapeHtml(p.name)}</span>
         </div>
-        <span class="tui-row-sub">${Array.isArray(p.options) && p.options.length > 0 ? '[⚙️ Opts]' : ''}</span>
       `;
       row.addEventListener('click', () => {
         STATE.tuiSelectedIndex = idx;
@@ -1374,7 +1246,7 @@ function renderTuiView() {
   }
 
   if (STATE.tuiScreen === 'options') {
-    if (titleEl) titleEl.textContent = '| Revancify-Xisr — Edit Patch Options |';
+    if (titleEl) titleEl.textContent = '| Patch Options |';
     const patchesWithOpts = STATE.patches.filter(p => Array.isArray(p.options) && p.options.length > 0);
     patchesWithOpts.forEach((p, idx) => {
       const row = document.createElement('button');
@@ -1385,22 +1257,20 @@ function renderTuiView() {
           <span class="tui-row-num">${idx + 1}</span>
           <span>${escapeHtml(p.name)}</span>
         </div>
-        <span class="tui-row-sub">${p.options.length} options ›</span>
+        <span class="tui-row-sub">${p.options.length} ›</span>
       `;
-      row.addEventListener('click', () => {
-        openPatchOptionsModal(p);
-      });
+      row.addEventListener('click', () => openPatchOptionsModal(p));
       bodyEl.appendChild(row);
     });
     return;
   }
 
   if (STATE.tuiScreen === 'presets') {
-    if (titleEl) titleEl.textContent = '| Revancify-Xisr — Preset Manager |';
+    if (titleEl) titleEl.textContent = '| Presets |';
     const items = [
-      { num: '1', label: 'Apply Recommended Golden Preset (81/86)', action: () => { applyGoldenPreset(); STATE.tuiScreen = 'main'; renderTuiView(); } },
-      { num: '2', label: 'Export Current Preset (.json)', action: () => exportPreset() },
-      { num: '3', label: 'Import Preset File (.json)', action: () => document.getElementById('inputImportPreset')?.click() }
+      { num: '1', label: 'Apply Golden Preset', action: () => { applyGoldenPreset(); STATE.tuiScreen = 'main'; renderTuiView(); } },
+      { num: '2', label: 'Export Preset (.json)', action: () => exportPreset() },
+      { num: '3', label: 'Import Preset (.json)', action: () => document.getElementById('inputImportPreset')?.click() }
     ];
     items.forEach((it, idx) => {
       const row = document.createElement('button');
@@ -1419,7 +1289,7 @@ function renderTuiView() {
   }
 
   if (STATE.tuiScreen === 'logs') {
-    if (titleEl) titleEl.textContent = '| Revancify-Xisr — Patcher CLI Output |';
+    if (titleEl) titleEl.textContent = '| Patcher Output |';
     STATE.logHistory.forEach(entry => {
       const div = document.createElement('div');
       div.className = 'morphe-log-row';
@@ -1474,12 +1344,34 @@ function initEventListeners() {
   document.getElementById('btnSettingModeMorphe')?.addEventListener('click', () => setUiMode('morphe'));
   document.getElementById('btnSettingModeTui')?.addEventListener('click', () => setUiMode('tui'));
 
+  // Info (i) Modal
+  const openInfo = () => {
+    syncAllSummaries();
+    document.getElementById('infoModal')?.classList.remove('hidden');
+  };
+  document.getElementById('btnOpenInfoModal')?.addEventListener('click', openInfo);
+  document.getElementById('btnVersionInfo')?.addEventListener('click', openInfo);
+  document.getElementById('btnProgressInfo')?.addEventListener('click', openInfo);
+  document.getElementById('btnCloseInfoModal')?.addEventListener('click', () => {
+    document.getElementById('infoModal')?.classList.add('hidden');
+  });
+  document.getElementById('btnDoneInfoModal')?.addEventListener('click', () => {
+    document.getElementById('infoModal')?.classList.add('hidden');
+  });
+  document.getElementById('btnInfoJumpPatches')?.addEventListener('click', () => {
+    document.getElementById('infoModal')?.classList.add('hidden');
+    switchScreen('patches');
+  });
+  document.getElementById('btnInfoJumpLogs')?.addEventListener('click', () => {
+    document.getElementById('infoModal')?.classList.add('hidden');
+    switchScreen('progress');
+  });
+
   // TUI Footer Buttons
   document.getElementById('btnTuiPrimary')?.addEventListener('click', () => {
     const activeRow = document.querySelector('#tuiDialogBody .tui-menu-row.tui-row-active') || document.querySelector('#tuiDialogBody .tui-menu-row');
     activeRow?.click();
   });
-  document.getElementById('btnTuiSecondary')?.addEventListener('click', () => triggerBuildPipeline());
   document.getElementById('btnTuiBack')?.addEventListener('click', () => {
     STATE.tuiScreen = 'main';
     STATE.tuiSelectedIndex = 0;
@@ -1487,16 +1379,12 @@ function initEventListeners() {
   });
   document.getElementById('btnTuiExitToGui')?.addEventListener('click', () => setUiMode('morphe'));
 
-  // Home Hero Card Navigation
-  document.getElementById('cardHomeYouTube')?.addEventListener('click', (e) => {
-    if (e.target.closest('button')) return;
+  // Screen 1: Home Card -> Version Screen
+  document.getElementById('cardHomeYouTube')?.addEventListener('click', () => {
     switchScreen('version');
   });
-  document.getElementById('btnHomePickVersion')?.addEventListener('click', () => switchScreen('version'));
-  document.getElementById('btnHomeExpertPatches')?.addEventListener('click', () => switchScreen('patches'));
-  document.getElementById('btnHomePatchNow')?.addEventListener('click', () => triggerBuildPipeline());
 
-  // Home Bottom Dock Modals ([ Sources ] & [ Settings ])
+  // Home Bottom Dock ([ Sources ] & [ Settings ])
   document.getElementById('btnOpenSourcesModal')?.addEventListener('click', () => {
     document.getElementById('sourcesModal')?.classList.remove('hidden');
   });
@@ -1519,40 +1407,27 @@ function initEventListeners() {
     document.getElementById('settingsModal')?.classList.add('hidden');
   });
 
-  // Version Screen Actions
+  // Screen 2: Version Picker Actions
+  document.getElementById('btnVersionBackHome')?.addEventListener('click', () => switchScreen('home'));
+  document.getElementById('btnToggleVersionSearch')?.addEventListener('click', () => {
+    const drawer = document.getElementById('versionSearchDrawer');
+    if (drawer) {
+      drawer.classList.toggle('hidden');
+      if (!drawer.classList.contains('hidden')) {
+        document.getElementById('inputSearchVersion')?.focus();
+      }
+    }
+  });
   document.getElementById('btnVersionToPatches')?.addEventListener('click', () => switchScreen('patches'));
   document.getElementById('btnVersionQuickPatch')?.addEventListener('click', () => triggerBuildPipeline());
 
-  document.querySelectorAll('.morphe-filter-chips .morphe-chip').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.morphe-filter-chips .morphe-chip').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      STATE.versionFilter = btn.dataset.filter;
-      STATE.versionDisplayLimit = 10;
-      renderVersionSelector();
-    });
-  });
-
   document.getElementById('inputSearchVersion')?.addEventListener('input', (e) => {
     STATE.versionSearch = e.target.value.trim();
-    STATE.versionDisplayLimit = 10;
-    renderVersionSelector();
-  });
-
-  document.getElementById('btnUseRecommendedVer')?.addEventListener('click', () => {
-    STATE.currentVersion = STATE.recommendedVersion;
-    renderVersionSelector();
-    syncAllSummaries();
-  });
-
-  document.getElementById('btnLoadMoreVersions')?.addEventListener('click', () => {
-    STATE.versionDisplayLimit = (STATE.versionDisplayLimit || 10) + 15;
     renderVersionSelector();
   });
 
   document.getElementById('btnToggleAllVersions')?.addEventListener('click', () => {
     STATE.showAllVersions = !STATE.showAllVersions;
-    if (!STATE.showAllVersions) STATE.versionDisplayLimit = 10;
     renderVersionSelector();
   });
 
@@ -1568,7 +1443,6 @@ function initEventListeners() {
     if (!STATE.availableVersions.some(x => x.version === customVer)) {
       STATE.availableVersions.unshift({
         version: customVer,
-        isBeta: false,
         isRecommended: false,
         isManifest: false
       });
@@ -1579,7 +1453,9 @@ function initEventListeners() {
     input.value = '';
   });
 
-  // Expert Mode Patches Header & 5-Pill Toolbar
+  // Screen 3: Expert Mode Patches Header & 5-Pill Toolbar
+  document.getElementById('btnPatchesBack')?.addEventListener('click', () => switchScreen('version'));
+
   document.getElementById('btnFilterEnabledOnly')?.addEventListener('click', (e) => {
     STATE.filterEnabledOnly = !STATE.filterEnabledOnly;
     e.currentTarget.classList.toggle('filter-active', STATE.filterEnabledOnly);
@@ -1587,25 +1463,27 @@ function initEventListeners() {
   });
 
   document.getElementById('btnTogglePatchSearch')?.addEventListener('click', () => {
-    const input = document.getElementById('inputSearchPatch');
-    if (input) input.focus();
+    const bar = document.getElementById('patchSearchCollapsible');
+    if (bar) {
+      bar.classList.toggle('hidden');
+      if (!bar.classList.contains('hidden')) {
+        document.getElementById('inputSearchPatch')?.focus();
+      }
+    }
   });
 
-  // 1. Enable All [ ✓✓ ]
   document.getElementById('btnResetPatches')?.addEventListener('click', () => {
     STATE.patches.forEach(p => STATE.selectedPatches.add(p.name));
     renderMorphePatchList();
     syncAllSummaries();
   });
 
-  // 2. Golden Preset [ 👍 ]
   document.getElementById('btnLoadGoldenPreset')?.addEventListener('click', () => applyGoldenPreset());
   document.getElementById('btnSheetGolden')?.addEventListener('click', () => {
     applyGoldenPreset();
     document.getElementById('presetSheetModal')?.classList.add('hidden');
   });
 
-  // 3. Restore Default [ ↺ ]
   document.getElementById('btnRestoreDefaultPatches')?.addEventListener('click', () => {
     STATE.selectedPatches.clear();
     STATE.patches.forEach(p => {
@@ -1615,7 +1493,6 @@ function initEventListeners() {
     syncAllSummaries();
   });
 
-  // 4. Presets Sheet [ 📋 ]
   document.getElementById('btnOpenPresetSheet')?.addEventListener('click', () => {
     document.getElementById('presetSheetModal')?.classList.remove('hidden');
   });
@@ -1634,38 +1511,30 @@ function initEventListeners() {
     }
   });
 
-  // 5. Disable All [ ✕ ]
   document.getElementById('btnDisableAllPatches')?.addEventListener('click', () => {
     STATE.selectedPatches.clear();
     renderMorphePatchList();
     syncAllSummaries();
   });
 
-  // Patch Search & Category Chips
   document.getElementById('inputSearchPatch')?.addEventListener('input', (e) => {
     STATE.patchSearchQuery = e.target.value;
     renderMorphePatchList();
   });
 
-  document.querySelectorAll('#patchCategoryChips .cat-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('#patchCategoryChips .cat-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      STATE.activePatchCategory = chip.dataset.cat;
-      renderMorphePatchList();
-    });
-  });
-
-  // Patch Options Modal Buttons
+  // Patch Options Modal
   document.getElementById('btnClosePatchOptsModal')?.addEventListener('click', () => {
     document.getElementById('patchOptionsModal')?.classList.add('hidden');
   });
   document.getElementById('btnSavePatchOpts')?.addEventListener('click', savePatchOptionsModal);
   document.getElementById('btnResetPatchOpts')?.addEventListener('click', resetPatchOptionsModal);
 
-  // Trigger Patch Buttons
+  // Trigger Patch & Progress Controls
   document.getElementById('btnTriggerBuild')?.addEventListener('click', triggerBuildPipeline);
-  document.getElementById('btnProgressStartPatch')?.addEventListener('click', triggerBuildPipeline);
+  document.getElementById('btnProgressBackHome')?.addEventListener('click', () => {
+    if (STATE.eventSource) STATE.eventSource.close();
+    switchScreen('home');
+  });
 
   // Release Channel & Notes
   document.getElementById('selectPatchRelease')?.addEventListener('change', (e) => {
@@ -1680,7 +1549,7 @@ function initEventListeners() {
     document.getElementById('patchNotesModal')?.classList.add('hidden');
   });
 
-  // Settings: Engine & GitHub Token
+  // Settings
   document.getElementById('btnEngineLocal')?.addEventListener('click', () => setEngineMode('local'));
   document.getElementById('btnEngineCloud')?.addEventListener('click', () => setEngineMode('cloud'));
 
@@ -1694,7 +1563,7 @@ function initEventListeners() {
     const valid = await verifyGithubToken(token);
     if (alertBox) {
       alertBox.classList.remove('hidden');
-      alertBox.textContent = valid ? `✅ Authenticated as @${STATE.authUser}` : '⚠️ Token saved (verification failed or offline)';
+      alertBox.textContent = valid ? `Authenticated as @${STATE.authUser}` : 'Token saved';
     }
   });
 
@@ -1711,39 +1580,26 @@ function initEventListeners() {
     document.getElementById('buildProgressModal')?.classList.add('hidden');
   });
 
-  // Logs Controls
-  const btnAutoScroll = document.getElementById('btnAutoScroll');
-  btnAutoScroll?.addEventListener('click', () => {
-    STATE.terminalAutoScroll = !STATE.terminalAutoScroll;
-    btnAutoScroll.textContent = STATE.terminalAutoScroll ? 'Scroll: ON' : 'Scroll: OFF';
-    btnAutoScroll.classList.toggle('active', STATE.terminalAutoScroll);
-  });
-
   document.getElementById('btnClearLogs')?.addEventListener('click', () => {
-    STATE.logHistory = [{ type: 'I', text: 'Logs cleared. Ready.' }];
+    STATE.logHistory = [{ type: 'I', text: 'Logs cleared.' }];
     const list = document.getElementById('morpheStructuredLogs');
     if (list) {
       list.innerHTML = `
         <div class="morphe-log-row">
           <span class="log-badge log-badge-info">I</span>
-          <span class="log-msg">Logs cleared. Ready.</span>
+          <span class="log-msg">Logs cleared.</span>
         </div>
       `;
     }
-    const rawPre = document.getElementById('terminalLogs');
-    if (rawPre) rawPre.textContent = 'Logs cleared. Ready.';
+    document.getElementById('infoModal')?.classList.add('hidden');
   });
 
-  const btnCopyLogs = document.getElementById('btnCopyLogs');
-  btnCopyLogs?.addEventListener('click', () => {
+  document.getElementById('btnCopyLogs')?.addEventListener('click', () => {
     const text = STATE.logHistory.map(x => `[${x.type}] ${x.text}`).join('\n');
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text).then(() => {
-        const span = btnCopyLogs.querySelector('span:last-child');
-        if (span) {
-          span.textContent = 'Copied!';
-          setTimeout(() => { span.textContent = 'Copy'; }, 1600);
-        }
+        setText('copyBtnLabel', 'Copied');
+        setTimeout(() => setText('copyBtnLabel', 'Copy'), 1500);
       });
     }
   });
@@ -1752,7 +1608,7 @@ function initEventListeners() {
   document.getElementById('btnHeroHotMount')?.addEventListener('click', async () => {
     const alertBox = document.getElementById('heroMountAlert');
     if (alertBox) {
-      alertBox.textContent = 'Mounting YouTube RVX into running app...';
+      alertBox.textContent = 'Mounting YouTube RVX...';
       alertBox.className = 'morphe-alert';
       alertBox.classList.remove('hidden');
     }
@@ -1761,7 +1617,7 @@ function initEventListeners() {
       const data = await res.json();
       if (res.ok) {
         if (alertBox) {
-          alertBox.textContent = '🎉 Mounted! YouTube has been restarted.';
+          alertBox.textContent = 'Mounted! YouTube restarted.';
           alertBox.className = 'morphe-alert text-success';
         }
       } else {
@@ -1769,7 +1625,7 @@ function initEventListeners() {
       }
     } catch (err) {
       if (alertBox) {
-        alertBox.textContent = `❌ Mount error: ${err.message}`;
+        alertBox.textContent = `Mount error: ${err.message}`;
         alertBox.className = 'morphe-alert text-danger';
       }
     }
@@ -1778,7 +1634,7 @@ function initEventListeners() {
   document.getElementById('btnHeroExportZip')?.addEventListener('click', async () => {
     const alertBox = document.getElementById('heroMountAlert');
     if (alertBox) {
-      alertBox.textContent = 'Packaging flashable ZIP module...';
+      alertBox.textContent = 'Packaging flashable ZIP...';
       alertBox.className = 'morphe-alert';
       alertBox.classList.remove('hidden');
     }
@@ -1787,7 +1643,7 @@ function initEventListeners() {
       const data = await res.json();
       if (res.ok) {
         if (alertBox) {
-          alertBox.textContent = `✅ Saved to: ${data.zip_path || '/sdcard/Download'}`;
+          alertBox.textContent = `Saved to: ${data.zip_path || '/sdcard/Download'}`;
           alertBox.className = 'morphe-alert text-success';
         }
       } else {
@@ -1795,7 +1651,7 @@ function initEventListeners() {
       }
     } catch (err) {
       if (alertBox) {
-        alertBox.textContent = `❌ Export error: ${err.message}`;
+        alertBox.textContent = `Export error: ${err.message}`;
         alertBox.className = 'morphe-alert text-danger';
       }
     }
@@ -1821,10 +1677,10 @@ function showPatchNotesModal() {
   }
 
   if (foundRelease) {
-    if (title) title.textContent = `ℹ️ Release Notes: ${foundRelease.name || foundRelease.tag_name}`;
+    if (title) title.textContent = `Release Notes: ${foundRelease.name || foundRelease.tag_name}`;
     content.textContent = `Tag: ${foundRelease.tag_name}\n\n${foundRelease.body || 'No release notes provided.'}`;
   } else {
-    if (title) title.textContent = `ℹ️ Release Notes (${currentTag.toUpperCase()})`;
+    if (title) title.textContent = `Release Notes (${currentTag.toUpperCase()})`;
     content.textContent = `Active Channel: ${currentTag.toUpperCase()}\nSource: ${getSourceDisplayName(STATE.currentSource)}`;
   }
 

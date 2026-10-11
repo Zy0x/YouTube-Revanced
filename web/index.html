@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <meta name="theme-color" content="#0B0C10">
-  <meta name="description" content="1:1 Morphe Manager & Revancify-Xisr Dual-Mode Patcher for YouTube RVX Magisk, KernelSU, and APatch.">
-  <title>Morphe Manager & Revancify-Xisr — YouTube RVX</title>
+  <meta name="description" content="Morphe Manager & Revancify-Xisr Patcher for YouTube RVX.">
+  <title>Morphe Manager</title>
 
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23E53935'><path d='M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z'/></svg>">
-  <link rel="stylesheet" href="style.css?v=2.1.6">
+  <link rel="stylesheet" href="style.css?v=2.1.7">
 </head>
 <body class="mode-morphe">
 
@@ -19,128 +19,54 @@
     <span class="bokeh-circle b2"></span>
     <span class="bokeh-circle b3"></span>
     <span class="bokeh-circle b4"></span>
-    <span class="bokeh-circle b5"></span>
   </div>
 
   <!-- =====================================================================
-       GLOBAL TOP NAVIGATION & DUAL-UI SWITCHER (MORPHE GUI <-> TERMUX TUI)
-       ===================================================================== -->
-  <header class="global-topbar" role="banner">
-    <div class="topbar-inner">
-      <!-- Morphe Step Navigation Pills -->
-      <nav class="morphe-step-nav" id="morpheStepNav" role="tablist" aria-label="Morphe Manager Screens">
-        <button type="button" class="step-nav-pill active" role="tab" aria-selected="true" data-screen="home" id="navBtnHome">
-          <span class="step-icon">🏠</span>
-          <span class="step-text">Home</span>
-        </button>
-        <button type="button" class="step-nav-pill" role="tab" aria-selected="false" data-screen="version" id="navBtnVersion">
-          <span class="step-icon">🎯</span>
-          <span class="step-text" id="navVersionLabel">v21.13.164</span>
-        </button>
-        <button type="button" class="step-nav-pill" role="tab" aria-selected="false" data-screen="patches" id="navBtnPatches">
-          <span class="step-icon">🛠️</span>
-          <span class="step-text">Patches</span>
-          <span class="step-badge" id="navPatchesBadge">81</span>
-        </button>
-        <button type="button" class="step-nav-pill" role="tab" aria-selected="false" data-screen="progress" id="navBtnProgress">
-          <span class="step-icon">🪄</span>
-          <span class="step-text">Patcher</span>
-          <span class="step-live-dot hidden" id="navLiveDot"></span>
-        </button>
-      </nav>
-
-      <!-- Termux Header Title (Visible in TUI Mode) -->
-      <div class="termux-topbar-brand hidden" id="termuxTopbarBrand">
-        <span class="termux-prompt">~ $</span>
-        <span class="termux-cmd">revancify-xisr</span>
-      </div>
-
-      <!-- Right Status & UI Mode Toggle -->
-      <div class="topbar-actions">
-        <span id="daemonStatusBadge" class="daemon-pill daemon-offline" title="Daemon Status">
-          <span class="daemon-dot"></span>
-          <span class="daemon-text">Offline</span>
-        </span>
-        <button type="button" id="btnToggleUiMode" class="ui-mode-toggle-btn" title="Switch between Morphe Manager GUI and Termux Revancify-Xisr TUI">
-          <span id="uiModeToggleIcon">&gt;_</span>
-          <span id="uiModeToggleText">Termux TUI</span>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- =====================================================================
-       MODE 1: 1:1 AUTHENTIC MORPHE MANAGER INTERFACE
+       MODE 1: 1:1 ULTRA-CLEAN MORPHE MANAGER INTERFACE
        ===================================================================== -->
   <main id="morpheAppContainer" class="morphe-shell" role="main">
 
     <!-- -------------------------------------------------------------------
          SCREEN 1: MORPHE HOME ("What app do you want to patch?")
-         Reference: MorpheApp/morphe-manager docs/images/common/choose-app.jpg
+         1:1 Reference: docs/images/common/choose-app.jpg
          ------------------------------------------------------------------- -->
-    <section id="screenHome" class="morphe-screen active" aria-label="Morphe Home Screen">
+    <section id="screenHome" class="morphe-screen active" aria-label="Morphe Home">
+      <!-- Subtle Top-Right Info (i) & TUI Toggle -->
+      <div class="home-top-utility">
+        <button type="button" id="btnToggleUiMode" class="icon-circle-btn" title="Switch to Termux Revancify-Xisr TUI" aria-label="Switch to Termux TUI">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        </button>
+        <button type="button" id="btnOpenInfoModal" class="icon-circle-btn" title="System & App Info" aria-label="Information">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </button>
+      </div>
+
       <div class="morphe-home-center">
         <h1 class="morphe-home-greeting">What app do you want to patch?</h1>
 
-        <!-- Authentic Morphe YouTube Horizontal Gradient Card -->
-        <div class="morphe-yt-hero-card" id="cardHomeYouTube" role="button" tabindex="0" aria-label="Select YouTube to patch">
-          <div class="yt-hero-main">
-            <div class="yt-app-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="32" height="32" fill="#FFFFFF">
-                <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/>
-              </svg>
-            </div>
-            <div class="yt-hero-info">
-              <div class="yt-hero-title-row">
-                <h2 class="yt-hero-title">YouTube</h2>
-                <span class="yt-hero-status-pill" id="homeInstalledBadge">Ready to patch</span>
-              </div>
-              <p class="yt-hero-pkg">com.google.android.youtube</p>
-              <p class="yt-hero-meta" id="homeCardMeta">v21.13.164 • Anddea Patches (81/86)</p>
-            </div>
-            <div class="yt-hero-chevron" aria-hidden="true">›</div>
+        <!-- 1:1 Clean Morphe YouTube Gradient Card (Only Icon + Title + 1 Subtitle Line) -->
+        <div class="morphe-yt-card" id="cardHomeYouTube" role="button" tabindex="0" aria-label="YouTube">
+          <div class="yt-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="#FFFFFF">
+              <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/>
+            </svg>
           </div>
-
-          <!-- Quick Jump Pills inside Card -->
-          <div class="yt-hero-quick-actions">
-            <button type="button" class="yt-quick-pill" id="btnHomePickVersion">
-              🎯 Version: <strong id="homeQuickVer">21.13.164</strong>
-            </button>
-            <button type="button" class="yt-quick-pill" id="btnHomeExpertPatches">
-              🛠️ Expert mode (<strong id="homeQuickCount">81/86</strong>)
-            </button>
-            <button type="button" class="yt-quick-pill yt-quick-pill-primary" id="btnHomePatchNow">
-              🪄 Patch
-            </button>
-          </div>
-        </div>
-
-        <!-- Active Summary Info Strip -->
-        <div class="morphe-home-summary-strip">
-          <div class="summary-chip">
-            <span class="summary-chip-label">Source</span>
-            <strong class="summary-chip-val" id="homeSummarySource">Anddea (dev)</strong>
-          </div>
-          <div class="summary-chip">
-            <span class="summary-chip-label">Engine</span>
-            <strong class="summary-chip-val" id="homeSummaryEngine">On-Device</strong>
-          </div>
-          <div class="summary-chip">
-            <span class="summary-chip-label">Preset</span>
-            <strong class="summary-chip-val" id="homeSummaryPreset">Golden (81)</strong>
+          <div class="yt-card-text">
+            <h2 class="yt-card-title">YouTube</h2>
+            <p class="yt-card-sub" id="homeCardMeta">v21.13.164 • Ready to patch</p>
           </div>
         </div>
       </div>
 
-      <!-- Authentic Morphe Home Bottom Bar: [ Sources ] & [ Settings ] -->
+      <!-- 1:1 Morphe Home Bottom Bar: [ Sources ] & [ Settings ] -->
       <div class="morphe-bottom-dock">
         <div class="morphe-dock-inner morphe-dock-two">
           <button type="button" class="morphe-pill-btn morphe-pill-outline" id="btnOpenSourcesModal">
-            <span class="pill-icon">📁</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
             <span>Sources</span>
           </button>
           <button type="button" class="morphe-pill-btn morphe-pill-outline" id="btnOpenSettingsModal">
-            <span class="pill-icon">⚙️</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             <span>Settings</span>
           </button>
         </div>
@@ -149,57 +75,56 @@
 
     <!-- -------------------------------------------------------------------
          SCREEN 2: MORPHE TARGET VERSION SELECTION
-         Reference: MorpheApp/morphe-manager 02-apk-availability.jpg
+         1:1 Reference: docs/images/patching-expert-mode/02-apk-availability.jpg
          ------------------------------------------------------------------- -->
     <section id="screenVersion" class="morphe-screen" aria-label="Target YouTube Version">
-      <div class="morphe-dialog-card">
-        <h2 class="morphe-dialog-title">Select target YouTube version</h2>
-        <p class="morphe-dialog-sub">
-          Choose the target APK version for <code class="mono-code">com.google.android.youtube</code>.
-          Installed on device: <strong id="installedVerText">Detecting...</strong>
+      <div class="version-top-bar">
+        <button type="button" id="btnVersionBackHome" class="icon-circle-btn" aria-label="Back to Home" title="Back">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        </button>
+        <div class="version-top-right">
+          <button type="button" id="btnToggleVersionSearch" class="icon-circle-btn" aria-label="Search or custom version" title="Search or custom version">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </button>
+          <button type="button" id="btnVersionInfo" class="icon-circle-btn" aria-label="Version Info" title="Info">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="morphe-version-center">
+        <h2 class="morphe-version-heading">Need help finding an original unpatched APK?</h2>
+        <p class="morphe-version-subheading">
+          To patch <strong>YouTube</strong>, you need an unpatched APK of versions:
         </p>
 
-        <!-- Quick Match + Filter Row -->
-        <div class="morphe-ver-toolbar">
-          <div class="morphe-filter-chips" role="tablist" aria-label="Version Filters">
-            <button type="button" class="morphe-chip active" data-filter="all">All</button>
-            <button type="button" class="morphe-chip" data-filter="recommended">👍 Recommended</button>
-            <button type="button" class="morphe-chip" data-filter="stable">🛡️ Stable</button>
-            <button type="button" class="morphe-chip" data-filter="beta">⚡ Beta</button>
-          </div>
-          <div class="morphe-ver-search-row">
-            <input type="search" id="inputSearchVersion" class="morphe-input" placeholder="🔍 Search version (e.g. 21.13.164)..." aria-label="Search version">
-            <button type="button" id="btnUseRecommendedVer" class="morphe-chip-action" title="Select Recommended Version">
-              👍 Rec (<span id="recommendedVerBadge">21.13.164</span>)
-            </button>
+        <!-- Collapsible Search & Custom Version Box (Hidden until 🔍 is tapped) -->
+        <div id="versionSearchDrawer" class="version-search-drawer hidden">
+          <input type="search" id="inputSearchVersion" class="morphe-input" placeholder="Search version (e.g. 21.13.164)..." aria-label="Search version">
+          <div class="morphe-custom-ver-row">
+            <input type="text" id="inputCustomVersion" class="morphe-input" placeholder="Or enter custom version..." aria-label="Custom version">
+            <button type="button" id="btnApplyCustomVersion" class="morphe-chip-action">Apply</button>
           </div>
         </div>
 
-        <!-- Authentic Morphe Bordered Version List -->
+        <!-- 1:1 Morphe Bordered Version List -->
         <div id="versionListContainer" class="morphe-version-list" role="radiogroup" aria-label="YouTube Versions">
           <!-- Populated dynamically by app.js -->
         </div>
 
-        <!-- Show More / Custom Version Input -->
-        <div class="morphe-ver-footer">
-          <div class="morphe-ver-pagination">
-            <button type="button" id="btnLoadMoreVersions" class="morphe-text-btn">➕ Show More</button>
-            <button type="button" id="btnToggleAllVersions" class="morphe-text-btn">📋 Show All</button>
-            <span id="versionCounterHint" class="morphe-muted-hint">Loading...</span>
-          </div>
-          <div class="morphe-custom-ver-row">
-            <input type="text" id="inputCustomVersion" class="morphe-input morphe-input-sm" placeholder="Custom version (e.g. 21.07.247)" aria-label="Custom version">
-            <button type="button" id="btnApplyCustomVersion" class="morphe-chip-action">Use Custom</button>
-          </div>
+        <div class="version-more-row">
+          <button type="button" id="btnToggleAllVersions" class="morphe-subtle-link">Show more versions</button>
         </div>
 
-        <!-- Authentic Morphe Full-Width Stacked Pill Buttons -->
-        <div class="morphe-dialog-actions">
-          <button type="button" id="btnVersionToPatches" class="morphe-pill-btn morphe-pill-sky btn-block">
-            <span>🛠️ Select patches in Expert mode</span>
+        <!-- 1:1 Morphe Stacked Pill Action Buttons -->
+        <div class="morphe-version-actions">
+          <button type="button" id="btnVersionToPatches" class="morphe-pill-btn morphe-pill-slate-blue btn-block">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Select patches (Expert mode)</span>
           </button>
-          <button type="button" id="btnVersionQuickPatch" class="morphe-pill-btn morphe-pill-wand btn-block">
-            <span>🪄 Patch immediately with current preset</span>
+          <button type="button" id="btnVersionQuickPatch" class="morphe-pill-btn morphe-pill-outline btn-block">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8 19 13"/><path d="M15 9h0"/><path d="M17.8 6.2 19 5"/><path d="m3 21 9-9"/><path d="M12.2 6.2 11 5"/></svg>
+            <span>Quick patch with default preset</span>
           </button>
         </div>
       </div>
@@ -207,84 +132,72 @@
 
     <!-- -------------------------------------------------------------------
          SCREEN 3: MORPHE EXPERT MODE — PATCH SELECTION
-         Reference: MorpheApp/morphe-manager 03-patch-selection.jpg
+         1:1 Reference: docs/images/patching-expert-mode/03-patch-selection.jpg
          ------------------------------------------------------------------- -->
     <section id="screenPatches" class="morphe-screen" aria-label="Expert Mode Patch Selection">
 
-      <!-- Authentic Crimson-Burgundy YouTube Top Bar -->
+      <!-- 1:1 Edge-to-Edge Crimson-Burgundy YouTube Top Header -->
       <div class="morphe-expert-header">
         <div class="expert-header-left">
-          <div class="yt-app-icon yt-app-icon-sm" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="#FFFFFF">
-              <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/>
-            </svg>
-          </div>
+          <button type="button" id="btnPatchesBack" class="expert-back-icon" aria-label="Back to Version Selection" title="Back">
+            <div class="yt-card-icon yt-card-icon-sm" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="#FFFFFF">
+                <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/>
+              </svg>
+            </div>
+          </button>
           <div class="expert-header-titles">
-            <h2 class="expert-app-name">YouTube <span class="expert-ver-tag" id="expertHeaderVer">v21.13.164</span></h2>
+            <h2 class="expert-app-name">YouTube</h2>
             <p class="expert-mode-sub">Expert mode</p>
             <p class="expert-source-sub" id="expertHeaderSource">Anddea Patches</p>
           </div>
         </div>
         <div class="expert-header-right">
-          <button type="button" id="btnFilterEnabledOnly" class="expert-counter-pill" title="Filter enabled patches only">
-            <span class="filter-funnel-icon">▽</span>
-            <span id="expertCounterText">81/86</span>
+          <button type="button" id="btnFilterEnabledOnly" class="expert-counter-pill" title="Filter enabled patches">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            <span id="expertCounterText">78/83</span>
           </button>
-          <button type="button" id="btnTogglePatchSearch" class="expert-search-circle" aria-label="Search patches" title="Toggle Search Bar">
-            🔍
+          <button type="button" id="btnTogglePatchSearch" class="expert-search-circle" aria-label="Search patches" title="Search patches">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           </button>
         </div>
       </div>
 
-      <!-- Authentic 5-Button Morphe Action Pill Row -->
-      <div class="morphe-five-toolbar" role="toolbar" aria-label="Patch Bulk Actions">
-        <button type="button" id="btnResetPatches" class="five-pill five-pill-blue" title="Enable all patches">
-          <span class="five-icon">✓✓</span>
-          <span class="five-label">All</span>
+      <!-- 1:1 Authentic 5-Icon Pill Row (Icon-Only, Clean & Uncluttered) -->
+      <div class="morphe-five-toolbar" role="toolbar" aria-label="Patch Quick Actions">
+        <button type="button" id="btnResetPatches" class="five-pill five-pill-blue" title="Enable all patches" aria-label="Enable all patches">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/></svg>
         </button>
-        <button type="button" id="btnLoadGoldenPreset" class="five-pill five-pill-purple" title="Apply Recommended Golden Preset">
-          <span class="five-icon">👍</span>
-          <span class="five-label">Golden</span>
+        <button type="button" id="btnLoadGoldenPreset" class="five-pill five-pill-purple" title="Enable recommended patches (Golden Preset)" aria-label="Recommended patches">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
         </button>
-        <button type="button" id="btnRestoreDefaultPatches" class="five-pill five-pill-slate" title="Restore default patch selection">
-          <span class="five-icon">↺</span>
-          <span class="five-label">Default</span>
+        <button type="button" id="btnRestoreDefaultPatches" class="five-pill five-pill-slate" title="Reset to default selection" aria-label="Reset to default">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
         </button>
-        <button type="button" id="btnOpenPresetSheet" class="five-pill five-pill-slate" title="Export or Import JSON Preset">
-          <span class="five-icon">📋</span>
-          <span class="five-label">Presets</span>
+        <button type="button" id="btnOpenPresetSheet" class="five-pill five-pill-slate" title="Export or Import Preset JSON" aria-label="Presets">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         </button>
-        <button type="button" id="btnDisableAllPatches" class="five-pill five-pill-red" title="Disable all patches">
-          <span class="five-icon">✕</span>
-          <span class="five-label">None</span>
+        <button type="button" id="btnDisableAllPatches" class="five-pill five-pill-red" title="Disable all patches" aria-label="Disable all patches">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="14" y2="15"/></svg>
         </button>
         <input type="file" id="inputImportPreset" accept=".json,application/json" class="hidden" aria-hidden="true">
       </div>
 
-      <!-- Search & Category Filter Row -->
-      <div id="patchSearchCollapsible" class="morphe-patch-filter-bar">
-        <input type="search" id="inputSearchPatch" class="morphe-input" placeholder="🔍 Search patch title or description..." aria-label="Search patches">
-        <div class="morphe-cat-chips" id="patchCategoryChips" role="tablist" aria-label="Patch Categories">
-          <button type="button" class="cat-chip active" data-cat="all">All</button>
-          <button type="button" class="cat-chip" data-cat="ads">🛡️ Ads &amp; Sponsor</button>
-          <button type="button" class="cat-chip" data-cat="player">▶️ Player</button>
-          <button type="button" class="cat-chip" data-cat="theme">🎨 Appearance</button>
-          <button type="button" class="cat-chip" data-cat="shorts">⚡ Shorts</button>
-          <button type="button" class="cat-chip" data-cat="spoof">🔧 Spoofing</button>
-          <button type="button" class="cat-chip" data-cat="misc">🧩 Misc</button>
-        </div>
+      <!-- Collapsible Search Bar (Hidden by default, opens when 🔍 is tapped) -->
+      <div id="patchSearchCollapsible" class="morphe-patch-filter-bar hidden">
+        <input type="search" id="inputSearchPatch" class="morphe-input" placeholder="Search patch title or description..." aria-label="Search patches">
       </div>
 
-      <!-- Authentic Morphe Flat Patch Cards Container -->
+      <!-- 1:1 Morphe Flat Patch Cards Container -->
       <div id="patchCategoriesContainer" class="morphe-patch-cards-list" role="region" aria-label="Patch List">
         <!-- Dynamically populated by app.js -->
       </div>
 
-      <!-- Authentic Morphe Bottom Floating [ 🪄 Patch ] Button -->
+      <!-- 1:1 Morphe Bottom Floating [ 🪄 Patch ] Pill -->
       <div class="morphe-bottom-dock">
-        <div class="morphe-dock-inner morphe-dock-single">
-          <button type="button" id="btnTriggerBuild" class="morphe-pill-btn morphe-pill-wand morphe-wand-main">
-            <span class="pill-icon">🪄</span>
+        <div class="morphe-dock-inner">
+          <button type="button" id="btnTriggerBuild" class="morphe-pill-btn morphe-pill-slate-blue btn-block">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8 19 13"/><path d="M15 9h0"/><path d="M17.8 6.2 19 5"/><path d="m3 21 9-9"/><path d="M12.2 6.2 11 5"/></svg>
             <span class="btn-text">Patch</span>
           </button>
         </div>
@@ -293,27 +206,20 @@
 
     <!-- -------------------------------------------------------------------
          SCREEN 4: MORPHE APPLYING PATCHES & LIVE LOGS
-         Reference: MorpheApp/morphe-manager 05-patching-progress.jpg & 06-patching-finished-logs.jpg
+         1:1 Reference: docs/images/patching-expert-mode/05-patching-progress.jpg
          ------------------------------------------------------------------- -->
     <section id="screenProgress" class="morphe-screen" aria-label="Patching Progress and Logs">
 
-      <!-- Top Progress Header -->
-      <div class="morphe-progress-header">
-        <div class="progress-header-top">
-          <div class="progress-app-info">
-            <div class="yt-app-icon yt-app-icon-sm" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="#FFFFFF">
-                <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/>
-              </svg>
-            </div>
-            <div>
-              <h2 class="progress-app-title">YouTube</h2>
-              <p class="progress-app-sub" id="progressStatusSub">Ready to patch</p>
-            </div>
+      <!-- Clean Top Progress Header (No Box Border, Matches 05-patching-progress.jpg) -->
+      <div class="morphe-progress-top">
+        <div class="progress-title-row">
+          <div>
+            <h2 class="progress-yt-title">YouTube</h2>
+            <p class="progress-yt-status" id="progressStatusSub">Applying patches</p>
           </div>
           <div class="progress-pills-right">
-            <span class="progress-stat-pill" id="progressPatchRatio">81 / 86</span>
-            <span class="progress-stat-pill" id="progressPercentPill">100%</span>
+            <span class="progress-blue-pill" id="progressPatchRatio">78 / 83</span>
+            <span class="progress-blue-pill" id="progressPercentPill">100%</span>
           </div>
         </div>
         <div class="morphe-coral-progress-track">
@@ -321,27 +227,27 @@
         </div>
       </div>
 
-      <!-- Authentic 3 Telemetry Mini-Cards (Memory / Storage I/O / CPU) -->
+      <!-- 1:1 3 Telemetry Mini-Cards (Memory / Storage I/O / CPU) -->
       <div class="morphe-telemetry-grid">
         <div class="telemetry-card">
-          <div class="telemetry-label"><span class="telemetry-dot"></span>Memory usage</div>
-          <div class="telemetry-value" id="telemetryMemVal">512 MB <small>/ 1024</small></div>
-          <div class="telemetry-bars" aria-hidden="true">
-            <span style="height:35%"></span><span style="height:45%"></span><span style="height:60%"></span><span style="height:50%"></span><span style="height:70%"></span><span style="height:55%"></span>
+          <div class="telemetry-label"><span class="telemetry-dot dot-blue"></span>Memory usage</div>
+          <div class="telemetry-value" id="telemetryMemVal">514 MB <small>/ 1024</small></div>
+          <div class="telemetry-bars bars-blue" aria-hidden="true">
+            <span style="height:25%"></span><span style="height:35%"></span><span style="height:40%"></span><span style="height:50%"></span><span style="height:65%"></span><span style="height:80%"></span>
           </div>
         </div>
         <div class="telemetry-card">
-          <div class="telemetry-label"><span class="telemetry-dot"></span>Storage I/O</div>
+          <div class="telemetry-label"><span class="telemetry-dot dot-grey"></span>Storage I/O</div>
           <div class="telemetry-value" id="telemetryIoVal">0 <small>KB/s</small></div>
-          <div class="telemetry-bars" aria-hidden="true">
-            <span style="height:20%"></span><span style="height:30%"></span><span style="height:25%"></span><span style="height:40%"></span><span style="height:15%"></span><span style="height:25%"></span>
+          <div class="telemetry-bars bars-grey" aria-hidden="true">
+            <span style="height:12%"></span><span style="height:75%"></span><span style="height:55%"></span><span style="height:12%"></span><span style="height:12%"></span><span style="height:15%"></span>
           </div>
         </div>
         <div class="telemetry-card">
-          <div class="telemetry-label"><span class="telemetry-dot"></span>CPU usage</div>
-          <div class="telemetry-value" id="telemetryCpuVal">14%</div>
-          <div class="telemetry-bars" aria-hidden="true">
-            <span style="height:25%"></span><span style="height:40%"></span><span style="height:35%"></span><span style="height:55%"></span><span style="height:30%"></span><span style="height:20%"></span>
+          <div class="telemetry-label"><span class="telemetry-dot dot-pink"></span>CPU usage</div>
+          <div class="telemetry-value" id="telemetryCpuVal">41%</div>
+          <div class="telemetry-bars bars-pink" aria-hidden="true">
+            <span style="height:55%"></span><span style="height:20%"></span><span style="height:15%"></span><span style="height:25%"></span><span style="height:85%"></span><span style="height:80%"></span>
           </div>
         </div>
       </div>
@@ -351,32 +257,31 @@
         <div class="complete-banner-top">
           <div class="complete-check-circle">✓</div>
           <div>
-            <h3 class="complete-banner-title">Patching complete! ✨</h3>
-            <p class="complete-banner-sub">Your customized YouTube RVX APK is ready to mount or save.</p>
+            <h3 class="complete-banner-title">Patching complete!</h3>
+            <p class="complete-banner-sub">Press a button below to mount or save your module.</p>
           </div>
         </div>
         <div class="complete-banner-actions">
           <button type="button" id="btnHeroHotMount" class="morphe-pill-btn morphe-pill-sky">
-            📲 Mount Instantly (No Reboot)
+            Mount Instantly
           </button>
           <button type="button" id="btnHeroExportZip" class="morphe-pill-btn morphe-pill-outline">
-            💾 Save Flashable ZIP
+            Save ZIP
           </button>
         </div>
         <div id="heroMountAlert" class="morphe-alert hidden" role="alert"></div>
       </div>
 
-      <!-- Authentic Morphe Patcher Logs Card -->
+      <!-- 1:1 Morphe Patcher Logs Card -->
       <div class="morphe-logs-card">
         <div class="logs-card-tabs">
           <button type="button" class="logs-tab-pill active">
             <span class="logs-tab-dot"></span>
             <span>Patcher logs</span>
           </button>
-          <div class="logs-card-actions">
-            <button type="button" id="btnAutoScroll" class="logs-mini-btn active" title="Toggle Auto-Scroll">Scroll: ON</button>
-            <button type="button" id="btnClearLogs" class="logs-mini-btn" title="Clear Logs">Clear</button>
-          </div>
+          <button type="button" id="btnProgressInfo" class="icon-circle-btn icon-circle-sm" title="Build Details & Log Controls" aria-label="Build Info">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </button>
         </div>
 
         <!-- Structured [I] Log Feed -->
@@ -384,36 +289,39 @@
           <div id="morpheStructuredLogs" class="structured-logs-list">
             <div class="morphe-log-row">
               <span class="log-badge log-badge-info">I</span>
-              <span class="log-msg">Morphe Patcher Engine ready. Target: YouTube v21.13.164 (Anddea).</span>
+              <span class="log-msg">Remove background playback restrictions succeeded</span>
             </div>
             <div class="morphe-log-row">
               <span class="log-badge log-badge-info">I</span>
-              <span class="log-msg">Tap 'Start Patch' below to launch the build pipeline.</span>
+              <span class="log-msg">Return YouTube Dislike succeeded</span>
+            </div>
+            <div class="morphe-log-row">
+              <span class="log-badge log-badge-info">I</span>
+              <span class="log-msg">SponsorBlock succeeded</span>
+            </div>
+            <div class="morphe-log-row">
+              <span class="log-badge log-badge-info">I</span>
+              <span class="log-msg">Spoof video streams succeeded</span>
             </div>
           </div>
           <pre id="terminalLogs" class="sr-only">Ready.</pre>
         </div>
       </div>
 
-      <!-- Authentic Morphe Progress Bottom 2-Button Bar -->
+      <!-- 1:1 Morphe Bottom 2-Button Bar: [ ✕ Cancel / Home ] & [ 📋 Copy ] -->
       <div class="morphe-bottom-dock">
         <div class="morphe-dock-inner morphe-dock-two">
-          <button type="button" id="btnProgressStartPatch" class="morphe-pill-btn morphe-pill-wand">
-            <span class="pill-icon">🪄</span>
-            <span>Start Patch</span>
+          <button type="button" id="btnProgressBackHome" class="morphe-pill-btn morphe-pill-cancel">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <span>Cancel</span>
           </button>
           <button type="button" id="btnCopyLogs" class="morphe-pill-btn morphe-pill-outline">
-            <span class="pill-icon">📋</span>
-            <span>Copy</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span id="copyBtnLabel">Copy</span>
           </button>
         </div>
       </div>
     </section>
-
-    <!-- Subtle Viewport Telemetry Pill -->
-    <div class="viewport-indicator" id="viewportIndicator" title="Live Screen Dimensions & DPR">
-      <span id="viewportResolutionText">Resolving viewport...</span>
-    </div>
 
   </main>
 
@@ -423,92 +331,124 @@
        ===================================================================== -->
   <section id="tuiAppContainer" class="tui-shell hidden" aria-label="Revancify-Xisr Termux TUI">
     <div class="tui-terminal-frame">
-
-      <!-- Termux Status Header -->
-      <div class="tui-termux-statusbar">
-        <span class="tui-status-left">TERMUX • Revancify-Xisr v2.1.6</span>
-        <span class="tui-status-right" id="tuiHeaderSummary">YT v21.13.164 | Anddea (81/86)</span>
-      </div>
-
-      <!-- Authentic dialog --backtitle & Box Frame -->
       <div class="tui-dialog-window" role="dialog" aria-labelledby="tuiDialogTitle">
         <div class="tui-dialog-titlebar">
           <span class="tui-box-corner">┌──</span>
-          <span class="tui-dialog-title" id="tuiDialogTitle">| Revancify-Xisr — Main Menu |</span>
+          <span class="tui-dialog-title" id="tuiDialogTitle">| Revancify-Xisr |</span>
           <span class="tui-box-corner">──┐</span>
         </div>
 
         <div class="tui-dialog-subtitle" id="tuiDialogSubtitle">
-          App: YouTube (com.google.android.youtube) • Version: v21.13.164 • Source: Anddea (dev) • Active Patches: 81/86
+          YouTube v21.13.164 • Anddea (78/83)
         </div>
 
-        <!-- Dynamic TUI Body (Main Menu / Radio List / Checklist / Console Output) -->
         <div class="tui-dialog-body" id="tuiDialogBody">
           <!-- Populated dynamically by app.js -->
         </div>
 
-        <!-- Authentic dialog Bottom Separator & < Select > < Back > Buttons -->
         <div class="tui-dialog-footer">
-          <button type="button" class="tui-btn tui-btn-active" id="btnTuiPrimary">
-            &lt; Select &gt;
-          </button>
-          <button type="button" class="tui-btn" id="btnTuiSecondary">
-            &lt; Patch Now &gt;
-          </button>
-          <button type="button" class="tui-btn" id="btnTuiBack">
-            &lt; Main Menu &gt;
-          </button>
-          <button type="button" class="tui-btn" id="btnTuiExitToGui">
-            &lt; Morphe GUI &gt;
-          </button>
+          <button type="button" class="tui-btn tui-btn-active" id="btnTuiPrimary">&lt; Select &gt;</button>
+          <button type="button" class="tui-btn" id="btnTuiBack">&lt; Back &gt;</button>
+          <button type="button" class="tui-btn" id="btnTuiExitToGui">&lt; Morphe GUI &gt;</button>
         </div>
-      </div>
-
-      <div class="tui-key-hints">
-        <span>Touch any row or use Keyboard ↑/↓/Enter</span>
-        <span id="tuiViewportHint"></span>
       </div>
     </div>
   </section>
 
   <!-- =====================================================================
-       AUTHENTIC MORPHE MODALS & BOTTOM SHEETS
+       MODALS & BOTTOM SHEETS (Information (i), Sources, Patch Options, Settings)
        ===================================================================== -->
 
-  <!-- 1. Authentic Morphe Sources Bottom Sheet (morphe_ref_5_sources.jpg) -->
+  <!-- 0. Clean System & Build Info (i) Modal (Houses all technical details neatly) -->
+  <div id="infoModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalInfoTitle">
+    <div class="modal-card morphe-sheet-card">
+      <div class="sheet-grab-handle" aria-hidden="true"></div>
+      <div class="modal-header">
+        <h3 id="modalInfoTitle" class="modal-title">System &amp; App Information</h3>
+        <button type="button" id="btnCloseInfoModal" class="btn-close" aria-label="Close Info">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="morphe-source-details-box">
+          <div class="source-detail-row">
+            <span>Package Name</span>
+            <code class="mono-code">com.google.android.youtube</code>
+          </div>
+          <div class="source-detail-row">
+            <span>Target Version</span>
+            <strong id="infoTargetVersion">v21.13.164</strong>
+          </div>
+          <div class="source-detail-row">
+            <span>Installed on Device</span>
+            <strong id="installedVerText">Detecting...</strong>
+          </div>
+          <div class="source-detail-row">
+            <span>Active Patch Source</span>
+            <strong id="infoActiveSource">Anddea (dev)</strong>
+          </div>
+          <div class="source-detail-row">
+            <span>Enabled Patches</span>
+            <strong id="infoActivePatches">78 / 83</strong>
+          </div>
+          <div class="source-detail-row">
+            <span>Execution Engine</span>
+            <strong id="infoEngineStatus">On-Device Daemon (v2.1.7)</strong>
+          </div>
+          <div class="source-detail-row">
+            <span>Viewport Telemetry</span>
+            <span id="viewportResolutionText" class="morphe-muted-hint">Resolving...</span>
+          </div>
+        </div>
+
+        <div class="source-detail-actions">
+          <button type="button" id="btnInfoJumpPatches" class="morphe-pill-btn morphe-pill-outline btn-sm">
+            Expert Patches
+          </button>
+          <button type="button" id="btnInfoJumpLogs" class="morphe-pill-btn morphe-pill-outline btn-sm">
+            Patcher Logs
+          </button>
+          <button type="button" id="btnClearLogs" class="morphe-pill-btn morphe-pill-outline btn-sm">
+            Clear Logs
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnDoneInfoModal" class="morphe-pill-btn morphe-pill-sky btn-block">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. Authentic Morphe Sources Bottom Sheet (01-sources-sheet.jpg) -->
   <div id="sourcesModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalSourcesTitle">
     <div class="modal-card morphe-sheet-card">
       <div class="sheet-grab-handle" aria-hidden="true"></div>
       <div class="modal-header">
-        <h3 id="modalSourcesTitle" class="modal-title">📁 Patch Sources</h3>
+        <h3 id="modalSourcesTitle" class="modal-title">Sources</h3>
         <button type="button" id="btnCloseSourcesModal" class="btn-close" aria-label="Close Sources">&times;</button>
       </div>
       <div class="modal-body">
-        <!-- Source Cards Selector -->
         <div id="sourceCardsGrid" class="morphe-sources-list" role="radiogroup" aria-label="Select Patch Source">
           <!-- Populated by app.js -->
         </div>
 
-        <!-- Morphe Source Details Sheet Box (Matches morphe_ref_5_sources.jpg) -->
         <div class="morphe-source-details-box">
           <div class="source-detail-row">
-            <span>Available YouTube Patches</span>
-            <strong id="sourceSheetPatchCount">86 patches ›</strong>
+            <span>Patches</span>
+            <strong id="sourceSheetPatchCount">83 ›</strong>
           </div>
           <div class="source-detail-row">
-            <label for="selectPatchRelease">Release Channel (.mpp)</label>
+            <label for="selectPatchRelease">Channel</label>
             <select id="selectPatchRelease" class="morphe-select" aria-label="Release Channel">
-              <option value="dev" selected>⚡ Pre-release / Dev</option>
-              <option value="latest">🛡️ Stable / Official</option>
+              <option value="dev" selected>Pre-release / Dev</option>
+              <option value="latest">Stable / Official</option>
             </select>
           </div>
           <p id="patchReleaseHint" class="morphe-muted-hint">Loading release channels...</p>
           <div class="source-detail-actions">
             <button type="button" id="btnViewPatchNotes" class="morphe-pill-btn morphe-pill-outline btn-sm">
-              ℹ️ Release Notes
+              Release notes
             </button>
             <a id="linkSourceRepo" href="https://github.com/anddea/revanced-patches" target="_blank" rel="noopener noreferrer" class="morphe-pill-btn morphe-pill-outline btn-sm">
-              🌐 Open in browser
+              Open in browser
             </a>
           </div>
         </div>
@@ -519,7 +459,7 @@
     </div>
   </div>
 
-  <!-- 2. Authentic Morphe Patch Options Modal (morphe_ref_7_patch_opts.jpg) -->
+  <!-- 2. Authentic Morphe Patch Options Modal (02-expert-branding-patch.jpg) -->
   <div id="patchOptionsModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalPatchOptsTitle">
     <div class="modal-card morphe-sheet-card">
       <div class="modal-header">
@@ -530,40 +470,37 @@
         <button type="button" id="btnClosePatchOptsModal" class="btn-close" aria-label="Close Patch Options">&times;</button>
       </div>
       <div class="modal-body" id="modalPatchOptsBody">
-        <!-- Populated dynamically when clicking ⚙️ on a patch card -->
+        <!-- Populated dynamically when clicking gear icon on a patch card -->
       </div>
       <div class="modal-footer modal-footer-split">
-        <button type="button" id="btnResetPatchOpts" class="morphe-pill-btn morphe-pill-outline">↺ Reset defaults</button>
-        <button type="button" id="btnSavePatchOpts" class="morphe-pill-btn morphe-pill-sky">Save &amp; Close</button>
+        <button type="button" id="btnResetPatchOpts" class="morphe-pill-btn morphe-pill-outline">Reset</button>
+        <button type="button" id="btnSavePatchOpts" class="morphe-pill-btn morphe-pill-sky">Save</button>
       </div>
     </div>
   </div>
 
-  <!-- 3. Authentic Morphe Settings & Execution Engine Modal -->
+  <!-- 3. Authentic Morphe Settings Sheet -->
   <div id="settingsModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalSettingsTitle">
     <div class="modal-card morphe-sheet-card">
       <div class="sheet-grab-handle" aria-hidden="true"></div>
       <div class="modal-header">
-        <h3 id="modalSettingsTitle" class="modal-title">⚙️ Morphe Settings</h3>
+        <h3 id="modalSettingsTitle" class="modal-title">Settings</h3>
         <button type="button" id="btnCloseSettingsModal" class="btn-close" aria-label="Close Settings">&times;</button>
       </div>
       <div class="modal-body">
-        <!-- Execution Engine Selector -->
         <div class="settings-group">
           <div class="settings-group-header">
             <span class="settings-group-title">Execution Engine</span>
-            <span class="settings-badge" id="engineModeTag">On-Device Daemon</span>
+            <span class="settings-badge" id="engineModeTag">On-Device</span>
           </div>
           <div class="engine-pills-grid" role="radiogroup" aria-label="Execution Engine">
             <button type="button" id="btnEngineLocal" class="engine-pill active" role="radio" aria-checked="true">
-              <span class="engine-pill-icon">📱</span>
               <span class="engine-pill-text">
                 <strong>On-Device</strong>
                 <small>Local Morphe CLI</small>
               </span>
             </button>
             <button type="button" id="btnEngineCloud" class="engine-pill" role="radio" aria-checked="false">
-              <span class="engine-pill-icon">☁️</span>
               <span class="engine-pill-text">
                 <strong>Cloud Build</strong>
                 <small>GitHub Actions</small>
@@ -572,21 +509,18 @@
           </div>
         </div>
 
-        <!-- Interface Style Switcher -->
         <div class="settings-group">
           <div class="settings-group-header">
             <span class="settings-group-title">Interface Mode</span>
           </div>
           <div class="engine-pills-grid">
             <button type="button" id="btnSettingModeMorphe" class="engine-pill active">
-              <span class="engine-pill-icon">🎨</span>
               <span class="engine-pill-text">
                 <strong>Morphe Manager</strong>
                 <small>1:1 Native GUI</small>
               </span>
             </button>
             <button type="button" id="btnSettingModeTui" class="engine-pill">
-              <span class="engine-pill-icon">&gt;_</span>
               <span class="engine-pill-text">
                 <strong>Revancify-Xisr</strong>
                 <small>1:1 Termux TUI</small>
@@ -595,18 +529,16 @@
           </div>
         </div>
 
-        <!-- GitHub PAT Configuration for Cloud Mode -->
         <div class="settings-group">
           <div class="settings-group-header">
-            <span class="settings-group-title">🔐 Cloud GitHub Token (PAT)</span>
+            <span class="settings-group-title">Cloud GitHub Token</span>
             <span id="authStatusText" class="settings-badge">Guest</span>
           </div>
-          <p class="morphe-muted-hint">Only required when dispatching builds to GitHub Actions Cloud.</p>
           <input type="password" id="inputGithubToken" class="morphe-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
           <div id="authAlert" class="morphe-alert hidden" role="alert"></div>
           <div class="settings-inline-btns">
-            <button type="button" id="btnClearAuth" class="morphe-pill-btn morphe-pill-outline btn-sm">Clear Token</button>
-            <button type="button" id="btnSaveAuth" class="morphe-pill-btn morphe-pill-sky btn-sm">Save Token</button>
+            <button type="button" id="btnClearAuth" class="morphe-pill-btn morphe-pill-outline btn-sm">Clear</button>
+            <button type="button" id="btnSaveAuth" class="morphe-pill-btn morphe-pill-sky btn-sm">Save</button>
           </div>
         </div>
       </div>
@@ -616,24 +548,23 @@
     </div>
   </div>
 
-  <!-- 4. Presets Manager Sheet (Export / Import / Golden Preset) -->
+  <!-- 4. Presets Manager Sheet -->
   <div id="presetSheetModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalPresetTitle">
     <div class="modal-card morphe-sheet-card">
       <div class="modal-header">
-        <h3 id="modalPresetTitle" class="modal-title">📋 Patch Presets</h3>
+        <h3 id="modalPresetTitle" class="modal-title">Presets</h3>
         <button type="button" id="btnClosePresetSheet" class="btn-close" aria-label="Close Presets">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="morphe-muted-hint">Save your custom patch selection &amp; options to a JSON file, or restore the Golden Preset.</p>
-        <div class="morphe-dialog-actions">
+        <div class="morphe-version-actions">
           <button type="button" id="btnSheetGolden" class="morphe-pill-btn morphe-pill-sky btn-block">
-            👍 Apply Recommended Golden Preset (81/86)
+            Apply Recommended Golden Preset
           </button>
           <button type="button" id="btnExportPreset" class="morphe-pill-btn morphe-pill-outline btn-block">
-            💾 Export Current Preset (.json)
+            Export Preset (.json)
           </button>
           <button type="button" id="btnImportPreset" class="morphe-pill-btn morphe-pill-outline btn-block">
-            📂 Import Preset File (.json)
+            Import Preset (.json)
           </button>
         </div>
       </div>
@@ -644,7 +575,7 @@
   <div id="patchNotesModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalPatchNotesTitle">
     <div class="modal-card morphe-sheet-card">
       <div class="modal-header">
-        <h3 id="modalPatchNotesTitle" class="modal-title">ℹ️ Patch Release Notes</h3>
+        <h3 id="modalPatchNotesTitle" class="modal-title">Release Notes</h3>
         <button type="button" id="btnClosePatchNotesModal" class="btn-close" aria-label="Close Notes">&times;</button>
       </div>
       <div class="modal-body">
@@ -660,7 +591,7 @@
   <div id="buildProgressModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalProgressTitle">
     <div class="modal-card morphe-sheet-card">
       <div class="modal-header">
-        <h3 id="modalProgressTitle" class="modal-title">🚀 Cloud Build Dispatch</h3>
+        <h3 id="modalProgressTitle" class="modal-title">Cloud Build Dispatch</h3>
         <button type="button" id="btnCloseProgressModal" class="btn-close" aria-label="Close Progress">&times;</button>
       </div>
       <div class="modal-body">
@@ -677,6 +608,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=2.1.6"></script>
+  <script src="app.js?v=2.1.7"></script>
 </body>
 </html>
