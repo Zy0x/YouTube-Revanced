@@ -1,3 +1,12 @@
+## v2.1.9 (2026-10-12)
+
+### High-Performance Rust Core & Modular Overhaul
+- **Unified Native Rust Multi-Call Engine**: Migrated module lifecycle and heavy operations into Rust CLI subcommands (`service`, `action`, `install`, `uninstall`, `pack`, `server`) inside `rvx-daemon`.
+- **Ultra-Thin POSIX `.sh` Bridges**: Rebuilt `customize.sh`, `service.sh`, `action.sh`, and `uninstall.sh` into 2-line POSIX bridges utilizing `exec` to immediately transfer control to the native Rust core with zero execution overhead while retaining 100% compatibility with Magisk, KernelSU, APatch, and all root manager derivatives.
+- **In-Memory Flashable Module ZIP Packaging**: Added native multi-threaded DEFLATE compression via the Rust `zip` crate in `rvx-daemon pack`, eliminating dependencies on external shell `zip` utilities.
+- **Full Modular Codebase Architecture (< 1,000 Lines Limit)**: Modularized web scripts and stylesheets into cleanly bounded modules (`web/js/state.js`, `web/js/api.js`, `web/js/ui-morphe.js`, `web/js/ui-tui.js`, `web/css/base.css`, `web/css/morphe.css`, `web/css/tui.css`, `web/css/responsive.css`), guaranteeing every file in the codebase is strictly under 1,000 lines.
+- **Project File Cleanup**: Removed redundant duplicate data files and legacy cache artifacts.
+
 ## v2.1.8 (2026-10-12)
 
 ### Local Launcher & Cross-Device Testing

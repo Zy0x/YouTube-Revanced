@@ -214,7 +214,17 @@ EOF
 
 MODULE_ZIP="$BUILD_DIR/YouTube.RVX.v$TARGET_VERSION.zip"
 rm -f "$MODULE_ZIP"
-(cd "$MODULE_DIR" && zip -r9 -q "$MODULE_ZIP" .)
+
+if [ -f "$WORKDIR/bin/rvx-daemon" ]; then
+    echo "⚡ Creating Flashable Module ZIP via native Rust Pack..."
+    "$WORKDIR/bin/rvx-daemon" pack --modpath "$MODULE_DIR" --output "$MODULE_ZIP"
+elif cargo --version >/dev/null 2>&1; then
+    echo "⚡ Creating Flashable Module ZIP via native Rust Pack..."
+    cargo run --release --manifest-path "$WORKDIR/daemon/Cargo.toml" -- pack --modpath "$MODULE_DIR" --output "$MODULE_ZIP"
+else
+    echo "📦 Packaging Flashable Module ZIP via fallback zip..."
+    (cd "$MODULE_DIR" && zip -r9 -q "$MODULE_ZIP" .)
+fi
 
 echo "✅ Flashable Module completed: $MODULE_ZIP"
 

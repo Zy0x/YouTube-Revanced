@@ -62,15 +62,16 @@ Supports both **ROOT** and **NON-ROOT** versions! 🚀
 3. **Export settings** (Optional)  
 4. Enjoy ✨  
 
-### 📱 On-Device WebUI Patcher (`rvx-daemon`)
+### 📱 On-Device WebUI Patcher & Native Rust Core (`rvx-daemon`)
 After flashing the module in **KernelSU**, **APatch**, or **Magisk**:
 - **KernelSU / APatch**: Tap the **WebUI** button inside the module card.
 - **Magisk**: Tap the **Action** button in Magisk to open `http://127.0.0.1:8080` in your browser.
 - **Features**:
-  - ⚡ 100% On-device patching with zero cloud runner limits or GitHub API quota restrictions.
-  - 💻 Live terminal console drawer streaming Morphe CLI logs in real-time.
-  - 🚀 **Instant Hot-Mount** without rebooting your device.
-  - 💾 **Export Flashable ZIP** directly to `/sdcard/Download/`.  
+  - ⚡ **Native Rust Multi-Call Engine**: Zero-overhead service, action, installer, uninstaller, and packager.
+  - 💻 **Live Terminal Console**: Real-time streaming Morphe CLI logs.
+  - 🚀 **Instant Hot-Mount**: Bind mount patched APK directly without rebooting.
+  - 📦 **In-Memory ZIP Packaging**: Hyper-fast module compression using native Rust DEFLATE engine.
+  - 💾 **Export Flashable ZIP**: Direct export to `/sdcard/Download/`.  
 
 ---
 
@@ -89,6 +90,26 @@ After flashing the module in **KernelSU**, **APatch**, or **Magisk**:
 - FIX Problem for Buffering Issue: Change spoof client — Go to Settings > ReVanced > Misc > Spoof client, and try switching to a different client (e.g., Android VR, iOS, or Android TV). Some clients handle seeking/forwarding better than others.
 - For Non-Root, if during installation it displays "Package incompatible" or something similar, try uninstalling the old version first and reinstalling it cleanly.
 - New Issue For Non-Root Devices, If you encounter a "Playback ID: XXXXX" error or experience problems while seeking video, try going to RVX - Misc and disabling the PoToken Provider, then spoofing the video stream with another client.
+
+## 🏛️ System Architecture & Developer Guidelines
+
+### 1. High-Performance Native Rust Core + Ultra-Thin POSIX Bridges
+Magisk, KernelSU, and APatch root managers strictly require shell entrypoints (`customize.sh`, `service.sh`, `action.sh`, `uninstall.sh`). To combine maximum native execution speed with 100% ecosystem compatibility:
+- **Zero-Overhead `exec` Bridges**: Each `.sh` file is an ultra-thin 2-line POSIX bridge that immediately replaces the shell process (`exec "$MODPATH/bin/rvx-daemon" <subcommand>`) in kernel space.
+- **Rust Subcommands**:
+  - `rvx-daemon service`   : Boot-completed detection, auto-sync version, SELinux labelling, bind mount, background WebUI autostart.
+  - `rvx-daemon action`    : Terminal status inspector, fast re-mount, and dashboard launcher.
+  - `rvx-daemon install`   : Module installation, stock APK staging, unmounting stale mounts, immediate live-mount without rebooting.
+  - `rvx-daemon uninstall` : Clean mount detachment and stock app restoration.
+  - `rvx-daemon pack`      : In-memory flashable module ZIP compression via Rust `zip` crate.
+  - `rvx-daemon server`    : Axum + Tokio HTTP/SSE WebUI server.
+
+### 2. Modular Design & Strict < 1000 Lines Limit
+To ensure maximum maintainability and prevent code bloat:
+- **Strict Line Limit**: All project scripts and code files (`.rs`, `.js`, `.css`, `.sh`, `.bat`, `.py`) **must strictly remain under 1,000 lines of code**.
+- **Modular JavaScript**: Split cleanly into `web/js/state.js`, `web/js/api.js`, `web/js/ui-morphe.js`, `web/js/ui-tui.js`, and `web/app.js`.
+- **Modular Stylesheets**: Split cleanly into `web/css/base.css`, `web/css/morphe.css`, `web/css/tui.css`, `web/css/responsive.css`, and `web/style.css`.
+- **Modular Rust CLI**: Split into `daemon/src/cli/` submodules (`service.rs`, `action.rs`, `install.rs`, `uninstall.rs`, `pack.rs`).
 
 ## 📜 Sources & References  
 - 🔧 [Revancify Tools](https://github.com/decipher3114/Revancify)

@@ -39,7 +39,7 @@ async fn get_status(State(state): State<AppState>) -> impl IntoResponse {
 
     Json(json!({
         "status": "online",
-        "daemon_version": "2.1.8",
+        "daemon_version": "2.1.9",
         "is_patching": is_patching,
         "jre_ready": jre_ready,
         "is_android": cfg!(target_os = "android") || cfg!(target_family = "unix"),
@@ -190,22 +190,23 @@ async fn export_zip(State(state): State<AppState>) -> impl IntoResponse {
         state.modpath.join("YouTube-RVX-Flashable.zip")
     };
 
-    #[cfg(unix)]
-    {
-        let cmd = format!(
-            "cd \"{}\" && zip -r9 \"{}\" module.prop service.sh action.sh customize.sh app META-INF >/dev/null 2>&1",
-            state.modpath.display(),
-            export_path.display()
-        );
-        let _ = run_shell_command(&cmd).await;
+    match crate::cli::run_pack(state.modpath.clone(), Some(export_path.clone())).await {
+        Ok(_) => {
+            state.log(format!("💾 Native Rust pack complete: {}", export_path.display()));
+            (
+                StatusCode::OK,
+                Json(json!({
+                    "success": true,
+                    "path": export_path.to_string_lossy()
+                })),
+            )
+        }
+        Err(e) => {
+            state.log(format!("❌ Native Rust pack failed: {}", e));
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "error": format!("Pack failed: {}", e) })),
+            )
+        }
     }
-
-    state.log(format!("💾 Exported flashable module ZIP to: {}", export_path.display()));
-    (
-        StatusCode::OK,
-        Json(json!({
-            "success": true,
-            "path": export_path.to_string_lossy()
-        })),
-    )
 }

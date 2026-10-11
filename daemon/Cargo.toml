@@ -1,6 +1,6 @@
 [package]
 name = "rvx-daemon"
-version = "2.1.8"
+version = "2.1.9"
 edition = "2021"
 authors = ["ReVanced Team"]
 description = "High-performance on-device patcher daemon for YouTube RVX Magisk/KernelSU/APatch modules"
@@ -18,6 +18,7 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 futures-util = "0.3"
 flate2 = "1.0"
 tar = "0.4"
+zip = { version = "2.4", default-features = false, features = ["deflate"] }
 clap = { version = "4.5", features = ["derive"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

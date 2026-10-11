@@ -1,0 +1,141 @@
+/* ==========================================================================
+   YouTube RVX — Base Tokens, Resets & Bokeh Canvas
+   Version: 2.1.9
+   ========================================================================== */
+
+:root {
+  --morphe-bg: #0B0C10;
+  --morphe-surface: #13151B;
+  --morphe-card: #171920;
+  --morphe-card-hover: #1D2029;
+  --morphe-border: rgba(255, 255, 255, 0.1);
+  --morphe-border-strong: rgba(255, 255, 255, 0.16);
+
+  --morphe-text: #F2F4F8;
+  --morphe-text-sub: #9EA4B0;
+  --morphe-text-muted: #6C727F;
+
+  --morphe-sky: #A4C9FF;
+  --morphe-blue-check: #386BB0;
+  --morphe-slate-blue: #3C5168;
+  --morphe-slate-blue-hover: #48607A;
+  --morphe-coral: #E46962;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--morphe-bg);
+  color: var(--morphe-text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.45;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Authentic Morphe Floating Bokeh Canvas */
+.morphe-bokeh-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.bokeh-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.bokeh-circle.b1 { width: 240px; height: 240px; top: 8%; left: -40px; }
+.bokeh-circle.b2 { width: 200px; height: 200px; top: 3%; right: -30px; }
+.bokeh-circle.b3 { width: 210px; height: 210px; bottom: 16%; left: 10%; }
+.bokeh-circle.b4 { width: 170px; height: 170px; bottom: 8%; right: 15%; }
+
+/* Shell Container */
+.morphe-shell {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 14px 96px;
+}
+
+@media (min-width: 768px) {
+  .morphe-shell {
+    max-width: 820px;
+    padding: 0 24px 104px;
+  }
+}
+
+.morphe-screen {
+  display: none;
+}
+
+.morphe-screen.active {
+  display: block;
+}
+
+/* Touch-First Circular Buttons */
+.icon-circle-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--morphe-text-sub);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.icon-circle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--morphe-text);
+}
+
+.icon-circle-sm {
+  width: 38px;
+  height: 38px;
+}
