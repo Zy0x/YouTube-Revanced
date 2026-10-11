@@ -4,258 +4,361 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <meta name="theme-color" content="#000000">
-  <meta name="description" content="Interactive Cloud Builder Dashboard for YouTube ReVanced (RVX) powered by Morphe CLI & Anddea Patches">
-  <title>YouTube RVX Cloud Builder</title>
+  <meta name="description" content="Morphe-inspired on-device patcher and web dashboard for YouTube RVX Magisk, KernelSU, and APatch modules.">
+  <title>YouTube RVX Patcher</title>
   
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FF0000'><path d='M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z'/></svg>">
-  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238B5CF6'><path d='M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z'/></svg>">
+  <link rel="stylesheet" href="style.css?v=2.1.4">
 </head>
 <body>
 
-  <!-- Top Header Navigation -->
-  <header class="navbar" role="banner">
+  <!-- Top App Bar Navigation -->
+  <header class="app-navbar" role="banner">
     <div class="nav-container">
       <div class="brand">
-        <span class="brand-icon" aria-hidden="true">📺</span>
-        <div>
-          <h1 class="brand-title">RVX Builder</h1>
-          <p class="brand-subtitle">Cloud Patcher & Management</p>
+        <div class="brand-avatar" aria-hidden="true">
+          <span>⚡</span>
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-title">RVX <span class="brand-highlight">Morphe</span></h1>
+          <p class="brand-subtitle">On-Device & Cloud Patcher</p>
         </div>
       </div>
       <div class="nav-actions">
-        <button id="btnToggleTerminal" class="btn-chip" aria-label="Terminal Logs" title="View Real-Time Terminal Output">
-          <span class="terminal-dot">💻</span>
-          <span id="terminalDrawerBadge">Terminal</span>
-        </button>
-        <button id="btnAuthModal" class="btn-chip" aria-label="Security & Access Settings" title="Manage GitHub Access Token">
+        <span id="daemonStatusBadge" class="status-pill status-pill-offline" title="Checking daemon status...">
+          <span class="status-dot"></span>
+          <span class="status-pill-text">Daemon Offline</span>
+        </span>
+        <button id="btnAuthModal" class="nav-btn-chip" aria-label="Security & GitHub Settings" title="Manage GitHub Access Token">
           <span id="authStatusIcon">🔒</span>
-          <span id="authStatusText">Locked</span>
+          <span id="authStatusText">Guest</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="main-content" role="main">
-
-    <!-- Engine Mode Switcher Bar -->
-    <div class="engine-switch-card">
-      <div class="engine-switch-header">
-        <span class="engine-switch-title">Patch Execution Engine:</span>
-        <span id="daemonStatusBadge" class="badge badge-info">Detecting daemon...</span>
-      </div>
-      <div class="engine-switch-pills" role="tablist" aria-label="Patch Engine Mode">
-        <button type="button" id="btnEngineLocal" class="btn-engine active" role="tab" aria-selected="true" title="On-Device Local Patching (Morphe CLI on Android, zero API quota, instant live mount)">
-          <span class="status-indicator online"></span>
-          <span>📱 On-Device (Local Daemon)</span>
-        </button>
-        <button type="button" id="btnEngineCloud" class="btn-engine" role="tab" aria-selected="false" title="Cloud GitHub Actions Dispatch (Requires GitHub Token)">
-          <span>☁️ Cloud (GitHub Actions)</span>
-        </button>
-      </div>
+  <!-- Morphe Tab Bar (Step-Based Flow) -->
+  <nav class="morphe-tabbar" role="tablist" aria-label="Patcher Sections">
+    <div class="tabbar-container">
+      <button type="button" class="tab-btn active" role="tab" id="tabBtnSource" aria-selected="true" aria-controls="tabPaneSource" data-tab="source">
+        <span class="tab-icon">📱</span>
+        <span class="tab-label">1. Version & Source</span>
+      </button>
+      <button type="button" class="tab-btn" role="tab" id="tabBtnPatches" aria-selected="false" aria-controls="tabPanePatches" data-tab="patches">
+        <span class="tab-icon">⚡</span>
+        <span class="tab-label">2. Patches</span>
+        <span id="tabPatchCountBadge" class="tab-badge">0</span>
+      </button>
+      <button type="button" class="tab-btn" role="tab" id="tabBtnTerminal" aria-selected="false" aria-controls="tabPaneTerminal" data-tab="terminal">
+        <span class="tab-icon">💻</span>
+        <span class="tab-label">3. Output & Logs</span>
+        <span id="tabTerminalLiveBadge" class="tab-badge-live hidden">LIVE</span>
+      </button>
     </div>
+  </nav>
 
-    <!-- Hero Card: Target & Source Selection -->
-    <section class="card config-card" aria-labelledby="section-config">
-      <h2 id="section-config" class="card-title">1. Patch Source & YouTube Version</h2>
-      
-      <!-- Source Provider & Patch Release Tag Grid -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 16px;">
-        <!-- Source Provider Selector -->
-        <div class="form-group" style="margin-bottom: 0;">
-          <label for="selectSource" class="form-label">Patch Source:</label>
-          <select id="selectSource" class="form-control" aria-label="Select Patch Source">
-            <option value="anddea" selected>⭐ Anddea Patches (Default - Full Features)</option>
-            <option value="morphe">Morphe Official (MorpheApp)</option>
-            <option value="inotia00">Inotia00 (ReVanced Extended)</option>
-            <option value="revanced">ReVanced Official</option>
-          </select>
-          <p id="sourceDesc" class="form-hint">Primary patch source featuring full customization and rich features.</p>
+  <!-- App Layout Container -->
+  <div class="app-layout">
+
+    <!-- Landscape Left Rail (Active in landscape short viewports) -->
+    <aside class="landscape-rail" id="landscapeRail" aria-label="Landscape Navigation Rail">
+      <div class="rail-header">
+        <div class="brand-avatar-sm">⚡</div>
+        <div>
+          <div class="rail-title">RVX Morphe</div>
+          <div id="railStatusText" class="rail-sub">Local Engine</div>
         </div>
+      </div>
+      <div class="rail-tabs" role="tablist">
+        <button type="button" class="rail-tab-btn active" data-tab="source">📱 1. Version & Source</button>
+        <button type="button" class="rail-tab-btn" data-tab="patches">⚡ 2. Patches (<span id="railPatchCount">0</span>)</button>
+        <button type="button" class="rail-tab-btn" data-tab="terminal">💻 3. Output & Terminal</button>
+      </div>
+      <div class="rail-action-box">
+        <div class="rail-summary-label" id="railSummaryLabel">YouTube v21.13.164</div>
+        <button type="button" id="btnRailTrigger" class="btn btn-morphe-primary btn-block">
+          ⚡ Patch On Device
+        </button>
+      </div>
+    </aside>
 
-        <!-- Patch Release Version / Channel Selector -->
-        <div class="form-group" style="margin-bottom: 0;">
-          <div class="label-with-badge" style="margin-bottom: 6px;">
-            <label for="selectPatchRelease" class="form-label" style="margin-bottom: 0;">Patch Release / Channel (.mpp):</label>
-            <span id="patchTagBadge" class="badge badge-warning">Prerelease</span>
+    <!-- Main Content Pane -->
+    <main class="main-content-pane" role="main">
+
+      <!-- ===================================================================
+           TAB 1: SOURCE & YOUTUBE VERSION
+           =================================================================== -->
+      <section id="tabPaneSource" class="tab-pane active" role="tabpanel" aria-labelledby="tabBtnSource">
+        
+        <!-- Engine Switcher Card -->
+        <div class="morphe-card engine-card">
+          <div class="card-headline">
+            <span class="headline-title">Execution Mode</span>
+            <span class="headline-tag" id="engineModeTag">Zero-Cloud / On-Device</span>
           </div>
-          <div style="display: flex; gap: 8px;">
-            <select id="selectPatchRelease" class="form-control" aria-label="Select Patch Release or Channel" style="flex: 1;">
-              <option value="dev" selected>⚡ Prerelease / Dev (Latest)</option>
-              <option value="latest">🛡️ Stable / Latest (Official)</option>
-            </select>
-            <button type="button" id="btnViewPatchNotes" class="btn btn-secondary" title="View Release Notes for This Patch" style="min-height: 48px; padding: 0 14px;" aria-label="View Patch Release Notes">
-              ℹ️
+          <div class="engine-pills-grid" role="radiogroup" aria-label="Execution Engine">
+            <button type="button" id="btnEngineLocal" class="engine-pill active" role="radio" aria-checked="true">
+              <div class="engine-pill-icon">📱</div>
+              <div class="engine-pill-content">
+                <div class="engine-pill-title">On-Device (Local Daemon)</div>
+                <div class="engine-pill-desc">Patches directly on your phone with zero API limits</div>
+              </div>
+            </button>
+            <button type="button" id="btnEngineCloud" class="engine-pill" role="radio" aria-checked="false">
+              <div class="engine-pill-icon">☁️</div>
+              <div class="engine-pill-content">
+                <div class="engine-pill-title">Cloud (GitHub Actions)</div>
+                <div class="engine-pill-desc">Build remotely via GitHub Actions runner</div>
+              </div>
             </button>
           </div>
-          <p id="patchReleaseHint" class="form-hint">Loading .mpp release history from GitHub...</p>
-        </div>
-      </div>
-
-      <!-- Version Selector -->
-      <div class="form-group">
-        <div class="label-with-badge" style="margin-bottom: 8px;">
-          <div>
-            <label class="form-label" style="margin-bottom: 2px;">Select Target YouTube Version:</label>
-            <p class="form-hint" style="margin: 0;">Directly supported from complete APKMirror releases & Morphe CLI patcher</p>
-          </div>
-          <span id="versionLoadingBadge" class="badge badge-info">Loading versions...</span>
         </div>
 
-        <!-- Filter & Search Toolbar for YouTube Versions -->
-        <div class="version-filter-bar" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; justify-content: space-between;">
-          <div class="filter-pills" style="display: flex; gap: 6px; flex-wrap: wrap;" role="tablist" aria-label="Version Filters">
-            <button type="button" class="btn-filter-pill active" data-filter="all" id="filterVerAll">All</button>
-            <button type="button" class="btn-filter-pill" data-filter="recommended" id="filterVerRec">⭐ Recommended</button>
-            <button type="button" class="btn-filter-pill" data-filter="stable" id="filterVerStable">🛡️ Stable Only</button>
-            <button type="button" class="btn-filter-pill" data-filter="beta" id="filterVerBeta">⚡ Beta</button>
+        <!-- Target Hero Card (Installed + Recommended Auto-Match) -->
+        <div class="morphe-card target-hero-card">
+          <div class="target-hero-left">
+            <div class="target-icon">📺</div>
+            <div>
+              <div class="target-title">Target YouTube Package</div>
+              <div class="target-pkg">com.google.android.youtube</div>
+              <div class="target-meta">
+                <span id="targetInstalledLabel">Installed on device: <b id="installedVerText">Detecting...</b></span>
+              </div>
+            </div>
           </div>
-          <div style="flex: 1; min-width: 180px; max-width: 260px;">
-            <input type="search" id="inputSearchVersion" class="form-control" placeholder="🔍 Search version number..." style="min-height: 40px; font-size: 0.88rem; padding: 6px 12px;">
+          <div class="target-hero-actions">
+            <button type="button" id="btnUseInstalledVer" class="btn btn-sm btn-morphe-outline" title="Set Target to Installed Version">
+              📲 Use Installed
+            </button>
+            <button type="button" id="btnUseRecommendedVer" class="btn btn-sm btn-morphe-violet" title="Set Target to Recommended Version">
+              ⭐ Use Recommended (<span id="recommendedVerBadge">21.13.164</span>)
+            </button>
           </div>
         </div>
 
-        <div id="versionListContainer" class="version-list-grid" role="radiogroup" aria-label="List of Compatible YouTube Versions">
+        <!-- Patch Source Selector -->
+        <div class="morphe-card">
+          <div class="card-headline">
+            <span class="headline-title">Patch Source Bundle (.mpp)</span>
+            <span class="headline-tag" id="sourceTagBadge">Anddea</span>
+          </div>
+          <div id="sourceCardsGrid" class="source-cards-grid" role="radiogroup" aria-label="Select Patch Source">
+            <!-- Dynamically populated by JavaScript -->
+          </div>
+          <div class="patch-channel-row">
+            <div class="channel-select-wrap">
+              <label for="selectPatchRelease" class="control-label">Release Channel:</label>
+              <select id="selectPatchRelease" class="form-control" aria-label="Select Patch Release Channel">
+                <option value="dev" selected>⚡ Prerelease / Dev (Latest)</option>
+                <option value="latest">🛡️ Stable / Latest (Official)</option>
+              </select>
+            </div>
+            <button type="button" id="btnViewPatchNotes" class="btn btn-morphe-outline" title="View Patch Release Notes" aria-label="Release Notes">
+              ℹ️ Notes
+            </button>
+          </div>
+          <p id="patchReleaseHint" class="card-hint">Loading release manifests via jsDelivr CDN...</p>
+        </div>
+
+        <!-- YouTube Version Catalog & Search -->
+        <div class="morphe-card">
+          <div class="card-headline">
+            <span class="headline-title">Select YouTube Version</span>
+            <span id="selectedVersionBadge" class="badge badge-primary">v21.13.164</span>
+          </div>
+
+          <!-- Filter Pills & Search -->
+          <div class="version-controls-bar">
+            <div class="filter-pills" role="tablist" aria-label="Filter Versions">
+              <button type="button" class="btn-filter-pill active" data-filter="all">All</button>
+              <button type="button" class="btn-filter-pill" data-filter="recommended">⭐ Recommended</button>
+              <button type="button" class="btn-filter-pill" data-filter="stable">🛡️ Stable</button>
+              <button type="button" class="btn-filter-pill" data-filter="beta">⚡ Beta</button>
+            </div>
+            <div class="version-search-wrap">
+              <input type="search" id="inputSearchVersion" class="form-control" placeholder="🔍 Search version (e.g. 21.13)..." aria-label="Search Version">
+            </div>
+          </div>
+
+          <!-- Version Grid -->
+          <div id="versionListContainer" class="version-cards-grid" role="radiogroup" aria-label="Compatible YouTube Versions">
+            <!-- Dynamically populated by JavaScript -->
+          </div>
+
+          <!-- Custom Version Toolbar -->
+          <div class="version-footer-toolbar">
+            <div class="load-more-wrap">
+              <button type="button" id="btnLoadMoreVersions" class="btn btn-morphe-outline">➕ Load 24 More</button>
+              <button type="button" id="btnToggleAllVersions" class="btn btn-morphe-outline">📋 Show All</button>
+              <span id="versionCounterHint" class="version-count-text">Showing versions...</span>
+            </div>
+            <div class="custom-ver-input-box">
+              <input type="text" id="inputCustomVersion" class="form-control" placeholder="Custom version (e.g. 21.07.247)" aria-label="Manual Version">
+              <button type="button" id="btnApplyCustomVersion" class="btn btn-morphe-violet">Apply</button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ===================================================================
+           TAB 2: PATCH CUSTOMIZATION & PRESETS
+           =================================================================== -->
+      <section id="tabPanePatches" class="tab-pane" role="tabpanel" aria-labelledby="tabBtnPatches">
+        
+        <!-- Preset Actions Bar -->
+        <div class="morphe-card preset-card">
+          <div class="preset-buttons-wrap">
+            <button type="button" id="btnLoadGoldenPreset" class="btn btn-morphe-primary">
+              ⚡ My Preset (81 Patches)
+            </button>
+            <button type="button" id="btnResetPatches" class="btn btn-morphe-outline">
+              🔄 Reset Defaults
+            </button>
+            <button type="button" id="btnExportPreset" class="btn btn-morphe-outline">
+              💾 Export Preset
+            </button>
+            <button type="button" id="btnImportPreset" class="btn btn-morphe-outline">
+              📂 Import Preset
+            </button>
+            <input type="file" id="inputImportPreset" accept=".json,application/json" style="display: none;" aria-hidden="true">
+          </div>
+        </div>
+
+        <!-- Search & Filter Bar -->
+        <div class="morphe-card patch-search-card">
+          <div class="patch-header-row">
+            <div>
+              <div class="headline-title">Available Patches</div>
+              <p class="card-hint"><span id="activePatchCount">0</span> active patches selected</p>
+            </div>
+            <div class="patch-search-input-wrap">
+              <input type="search" id="inputSearchPatch" class="form-control" placeholder="🔍 Search patch name or feature..." aria-label="Search patches">
+            </div>
+          </div>
+        </div>
+
+        <!-- Categories List Accordion -->
+        <div id="patchCategoriesContainer" class="categories-container">
           <!-- Dynamically populated by JavaScript -->
         </div>
 
-        <!-- Additional Toolbar: Show All Versions & Custom Input -->
-        <div class="version-custom-toolbar" style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border-subtle); display: flex; flex-direction: column; gap: 12px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <button type="button" id="btnLoadMoreVersions" class="btn btn-secondary" style="min-height: 48px; padding: 10px 16px;">
-                <span>➕</span>
-                <span id="btnLoadMoreVersionsText">Load 24 More</span>
-              </button>
-              <button type="button" id="btnToggleAllVersions" class="btn btn-secondary" style="min-height: 48px; padding: 10px 16px;">
-                <span id="btnToggleAllVersionsIcon">📋</span>
-                <span id="btnToggleAllVersionsText">Show All Versions</span>
-              </button>
+      </section>
+
+      <!-- ===================================================================
+           TAB 3: TERMINAL & OUTPUT LOGS
+           =================================================================== -->
+      <section id="tabPaneTerminal" class="tab-pane" role="tabpanel" aria-labelledby="tabBtnTerminal">
+        
+        <!-- Post-Patch Completion Card (Displays prominently when finished) -->
+        <div id="postPatchHeroCard" class="morphe-card post-patch-hero hidden">
+          <div class="post-patch-header">
+            <div class="post-patch-icon">🎉</div>
+            <div>
+              <div class="post-patch-title">Patching Completed Successfully!</div>
+              <p class="post-patch-sub">Your YouTube RVX APK is ready. Choose an action below:</p>
             </div>
-            <span id="versionCounterHint" class="form-hint" style="margin: 0;">Showing versions...</span>
           </div>
+          <div class="post-patch-actions-grid">
+            <button type="button" id="btnHeroHotMount" class="btn btn-morphe-primary btn-lg">
+              🚀 Mount Instantly (No Reboot)
+            </button>
+            <button type="button" id="btnHeroExportZip" class="btn btn-morphe-outline btn-lg">
+              💾 Save Flashable ZIP (/sdcard/Download)
+            </button>
+          </div>
+          <div id="heroMountAlert" class="alert hidden" role="alert"></div>
+        </div>
 
-          <!-- Custom Version Input -->
-          <div style="background-color: var(--bg-surface-2); padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-            <label for="inputCustomVersion" class="form-label" style="margin-bottom: 6px;">✍️ Use Custom YouTube Version (Manual):</label>
-            <div style="display: flex; gap: 8px;">
-              <input type="text" id="inputCustomVersion" class="form-control" placeholder="e.g. 21.07.247 or 20.51.39" style="min-height: 48px; font-family: monospace;">
-              <button type="button" id="btnApplyCustomVersion" class="btn btn-primary" style="min-height: 48px; white-space: nowrap; padding: 0 18px;">
-                Apply
-              </button>
+        <!-- Live Terminal Card -->
+        <div class="morphe-card terminal-card">
+          <div class="terminal-card-header">
+            <div class="terminal-title-group">
+              <span class="terminal-indicator-dot"></span>
+              <span class="headline-title">Live Terminal Console</span>
+              <span id="patchStatusBadge" class="badge badge-info hidden">Running...</span>
             </div>
-            <p class="form-hint" style="margin-top: 6px;">Morphe CLI supports patching any compatible version automatically.</p>
+            <div class="terminal-ctrls">
+              <button type="button" id="btnAutoScroll" class="btn-ctrl active" title="Toggle Auto-Scroll">📜 Scroll: ON</button>
+              <button type="button" id="btnClearLogs" class="btn-ctrl" title="Clear Terminal Logs">🧹 Clear</button>
+              <button type="button" id="btnCopyLogs" class="btn-ctrl" title="Copy Logs to Clipboard">📋 Copy</button>
+            </div>
+          </div>
+          <div id="terminalBody" class="terminal-screen" role="log" aria-live="polite">
+            <pre id="terminalLogs" class="terminal-font">Ready. Tap 'Patch On Device' to initiate the on-device Morphe CLI engine.</pre>
           </div>
         </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Floating Bottom Action Bar (Mobile-First Touch Target >= 48px) -->
+  <footer class="floating-bottom-bar" role="contentinfo">
+    <div class="bottom-bar-container">
+      <div class="bottom-bar-summary">
+        <span class="summary-target" id="bottomBarTarget">v21.13.164</span>
+        <span class="summary-dot">•</span>
+        <span class="summary-patches" id="bottomBarPatches">81 patches</span>
+        <span class="summary-dot">•</span>
+        <span class="summary-engine" id="bottomBarEngine">Local</span>
       </div>
-    </section>
-
-    <!-- Preset Action Bar -->
-    <section class="preset-bar" aria-label="Preset Actions">
-      <button id="btnLoadGoldenPreset" class="btn btn-primary" aria-label="Load My Preset (Golden Preset)">
-        <span aria-hidden="true">⚡</span> My Preset (81 Patches)
-      </button>
-      <button id="btnResetPatches" class="btn btn-secondary" aria-label="Reset Patches to Default">
-        <span aria-hidden="true">🔄</span> Reset Defaults
-      </button>
-      <button id="btnExportPreset" class="btn btn-secondary" aria-label="Export Custom Preset to JSON File">
-        <span aria-hidden="true">💾</span> Export Preset
-      </button>
-      <button id="btnImportPreset" class="btn btn-secondary" aria-label="Import Custom Preset from JSON File">
-        <span aria-hidden="true">📂</span> Import Preset
-      </button>
-      <input type="file" id="inputImportPreset" accept=".json,application/json" style="display: none;" aria-hidden="true">
-    </section>
-
-    <!-- Patch Customization & Categories -->
-    <section class="card" aria-labelledby="section-patches">
-      <div class="patches-header">
-        <div>
-          <h2 id="section-patches" class="card-title">2. Patch Customization</h2>
-          <p class="form-hint"><span id="activePatchCount">0</span> active patches selected</p>
-        </div>
-        <div class="search-box">
-          <input type="search" id="inputSearchPatch" class="form-control search-input" placeholder="Search patch name or feature..." aria-label="Search patch name or feature">
-        </div>
+      <div class="bottom-bar-actions">
+        <button type="button" id="btnTriggerBuild" class="btn btn-morphe-primary btn-cta">
+          <span class="btn-icon">⚡</span>
+          <span class="btn-text">Patch On Device</span>
+        </button>
       </div>
-
-      <!-- Accordion Categories Container -->
-      <div id="patchCategoriesContainer" class="categories-list">
-        <!-- Dynamically populated by JavaScript -->
-      </div>
-    </section>
-
-  </main>
-
-  <!-- Sticky Bottom Build Bar -->
-  <footer class="bottom-bar" role="contentinfo">
-    <div class="bottom-container">
-      <div class="build-mode-selector" style="display: flex; gap: 8px; flex-wrap: wrap;">
-        <select id="selectBuildMode" class="form-control form-control-sm" aria-label="Execution Mode" style="min-width: 140px;">
-          <option value="test" selected>🧪 Test Build (Artifact)</option>
-          <option value="release">🚀 Publish Release</option>
-        </select>
-        <select id="selectArch" class="form-control form-control-sm" aria-label="Target Architecture" style="min-width: 130px;">
-          <option value="all" selected>📦 Universal (All Devices)</option>
-          <option value="arm64-v8a">⚡ arm64-v8a (64-bit)</option>
-        </select>
-      </div>
-      <button id="btnTriggerBuild" class="btn btn-build" aria-label="Trigger Cloud Build on GitHub">
-        <span class="btn-icon">⚡</span>
-        <span class="btn-text">Build on GitHub</span>
-      </button>
+    </div>
+    
+    <!-- Responsive Viewport Indicator Badge (For Testing Infinix, Redmi & Desktop Quarter) -->
+    <div class="viewport-indicator" id="viewportIndicator" title="Live Screen Dimensions & DPR">
+      <span id="viewportResolutionText">Resolving...</span>
     </div>
   </footer>
 
-  <!-- Security Gatekeeper Modal -->
+  <!-- Security Gatekeeper Modal (GitHub PAT) -->
   <div id="authModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalAuthTitle">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 id="modalAuthTitle" class="modal-title">🔐 Security Gatekeeper & GitHub Access</h3>
+        <h3 id="modalAuthTitle" class="modal-title">🔐 Security & GitHub Access</h3>
         <button id="btnCloseAuthModal" class="btn-close" aria-label="Close Dialog">&times;</button>
       </div>
       <div class="modal-body">
         <p class="text-secondary">
-          To prevent unauthorized users from running builds on your repository, the <b>Build</b> button is secured with your GitHub token.
+          In <b>Cloud Mode</b>, builds are dispatched to GitHub Actions and require your personal access token. (Local On-Device patching requires no token).
         </p>
-
         <div class="form-group">
           <label for="inputGithubToken" class="form-label">GitHub Personal Access Token (PAT):</label>
           <input type="password" id="inputGithubToken" class="form-control" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
-          <p class="form-hint">
-            Token is <b>ONLY stored locally</b> in your browser (localStorage) and sent directly to <code>api.github.com</code> via HTTPS.
-          </p>
+          <p class="form-hint">Stored strictly in local browser storage; never transmitted to any third party.</p>
         </div>
-
-        <div class="form-group">
-          <label for="inputPasscode" class="form-label">Personal Web PIN / Passcode (Optional):</label>
-          <input type="password" id="inputPasscode" class="form-control" placeholder="Enter 4-6 digit PIN" maxlength="12">
-        </div>
-
         <div id="authAlert" class="alert hidden" role="alert"></div>
       </div>
       <div class="modal-footer">
-        <button id="btnClearAuth" class="btn btn-danger">Clear Token</button>
-        <button id="btnSaveAuth" class="btn btn-primary">Save & Unlock</button>
+        <button id="btnClearAuth" class="btn btn-morphe-outline">Clear Token</button>
+        <button id="btnSaveAuth" class="btn btn-morphe-violet">Save & Unlock</button>
       </div>
     </div>
   </div>
 
-  <!-- Build Progress / Log Modal -->
+  <!-- Cloud Build Progress Modal -->
   <div id="buildProgressModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalProgressTitle">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 id="modalProgressTitle" class="modal-title">🚀 Cloud Build Status</h3>
+        <h3 id="modalProgressTitle" class="modal-title">🚀 Cloud Build Dispatch</h3>
         <button id="btnCloseProgressModal" class="btn-close" aria-label="Close Dialog">&times;</button>
       </div>
       <div class="modal-body">
-        <div id="buildStatusBox" class="status-box">
-          <div class="spinner"></div>
+        <div class="status-box">
+          <div class="morphe-spinner"></div>
           <p id="buildStatusMsg" class="status-msg">Dispatching build trigger to GitHub Actions...</p>
         </div>
         <div id="buildActionLinks" class="action-links hidden">
-          <a id="linkActionsRun" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-block">
+          <a id="linkActionsRun" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-morphe-primary btn-block">
             View Workflow Run in GitHub Actions ↗
           </a>
         </div>
@@ -271,17 +374,17 @@
         <button id="btnClosePatchNotesModal" class="btn-close" aria-label="Close Dialog">&times;</button>
       </div>
       <div class="modal-body">
-        <div id="patchNotesContent" style="white-space: pre-wrap; font-family: monospace; font-size: 0.88rem; max-height: 400px; overflow-y: auto; background-color: var(--bg-surface-2); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); color: var(--text-primary);">
+        <div id="patchNotesContent" class="notes-content-box">
           Loading release notes...
         </div>
       </div>
       <div class="modal-footer">
-        <button id="btnClosePatchNotesBtn" class="btn btn-secondary">Close</button>
+        <button id="btnClosePatchNotesBtn" class="btn btn-morphe-outline">Close</button>
       </div>
     </div>
   </div>
 
-  <!-- Post-Patch Completion Modal -->
+  <!-- Post-Patch Completion Modal (Popup Fallback) -->
   <div id="patchSuccessModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalSuccessTitle">
     <div class="modal-card">
       <div class="modal-header">
@@ -293,41 +396,21 @@
           Your YouTube RVX has been patched successfully directly on your device. Choose what you want to do next:
         </p>
         <div style="display: flex; flex-direction: column; gap: 12px;">
-          <button type="button" id="btnHotMount" class="btn btn-primary" style="min-height: 52px; font-size: 1rem; justify-content: center;">
+          <button type="button" id="btnHotMount" class="btn btn-morphe-primary" style="min-height: 52px; font-size: 1rem; justify-content: center;">
             🚀 Mount Instantly (No Reboot)
           </button>
-          <button type="button" id="btnExportZip" class="btn btn-secondary" style="min-height: 52px; font-size: 1rem; justify-content: center;">
+          <button type="button" id="btnExportZip" class="btn btn-morphe-outline" style="min-height: 52px; font-size: 1rem; justify-content: center;">
             💾 Save Flashable Module ZIP (/sdcard/Download)
           </button>
         </div>
         <div id="mountAlert" class="alert hidden" role="alert" style="margin-top: 14px;"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" id="btnFinishSuccess" class="btn btn-secondary">Done</button>
+        <button type="button" id="btnFinishSuccess" class="btn btn-morphe-outline">Done</button>
       </div>
     </div>
   </div>
 
-  <!-- Live Terminal Console Drawer -->
-  <aside id="terminalDrawer" class="terminal-drawer hidden" aria-label="Live Patch Terminal Console">
-    <div class="terminal-header">
-      <div class="terminal-title">
-        <span class="terminal-icon" aria-hidden="true">📟</span>
-        <span>Terminal Output</span>
-        <span id="patchJobIndicator" class="badge badge-info hidden">Running...</span>
-      </div>
-      <div class="terminal-actions">
-        <button type="button" id="btnAutoScroll" class="btn-term-action active" title="Toggle Auto-Scroll">📜 Scroll: ON</button>
-        <button type="button" id="btnClearLogs" class="btn-term-action" title="Clear Logs">🧹 Clear</button>
-        <button type="button" id="btnCopyLogs" class="btn-term-action" title="Copy Logs">📋 Copy</button>
-        <button type="button" id="btnCloseTerminal" class="btn-term-close" aria-label="Close Terminal">&times;</button>
-      </div>
-    </div>
-    <div id="terminalBody" class="terminal-body" role="log" aria-live="polite">
-      <pre id="terminalLogs" class="terminal-pre">Ready. Tap 'Patch On Device' to start on-device patching process.</pre>
-    </div>
-  </aside>
-
-  <script src="app.js?v=2.1.3"></script>
+  <script src="app.js?v=2.1.4"></script>
 </body>
 </html>
