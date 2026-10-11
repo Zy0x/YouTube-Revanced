@@ -44,17 +44,9 @@
       <div class="morphe-home-center">
         <h1 class="morphe-home-greeting">What app do you want to patch?</h1>
 
-        <!-- 1:1 Clean Morphe YouTube Gradient Card (Only Icon + Title + 1 Subtitle Line) -->
-        <div class="morphe-yt-card" id="cardHomeYouTube" role="button" tabindex="0" aria-label="YouTube">
-          <div class="yt-card-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="#FFFFFF">
-              <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/>
-            </svg>
-          </div>
-          <div class="yt-card-text">
-            <h2 class="yt-card-title">YouTube</h2>
-            <p class="yt-card-sub" id="homeCardMeta">v21.13.164 • Ready to patch</p>
-          </div>
+        <!-- Dynamic Morphe App Cards Grid (Populated dynamically for all apps in .mpp) -->
+        <div id="homeAppsGrid" class="morphe-apps-grid" role="radiogroup" aria-label="Select Application">
+          <!-- Rendered dynamically by renderAppCards() in ui-morphe.js -->
         </div>
       </div>
 
@@ -95,7 +87,7 @@
       <div class="morphe-version-center">
         <h2 class="morphe-version-heading">Need help finding an original unpatched APK?</h2>
         <p class="morphe-version-subheading">
-          To patch <strong>YouTube</strong>, you need an unpatched APK of versions:
+          To patch <strong id="versionAppHeading">YouTube</strong>, you need an unpatched APK of versions:
         </p>
 
         <!-- Collapsible Search & Custom Version Box (Hidden until 🔍 is tapped) -->
@@ -136,18 +128,18 @@
          ------------------------------------------------------------------- -->
     <section id="screenPatches" class="morphe-screen" aria-label="Expert Mode Patch Selection">
 
-      <!-- 1:1 Edge-to-Edge Crimson-Burgundy YouTube Top Header -->
-      <div class="morphe-expert-header">
+      <!-- 1:1 Edge-to-Edge Dynamic App Top Header -->
+      <div class="morphe-expert-header" id="morpheExpertHeader">
         <div class="expert-header-left">
           <button type="button" id="btnPatchesBack" class="expert-back-icon" aria-label="Back to Version Selection" title="Back">
-            <div class="yt-card-icon yt-card-icon-sm" aria-hidden="true">
+            <div class="yt-card-icon yt-card-icon-sm" id="expertHeaderAppIcon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="#FFFFFF">
                 <path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/>
               </svg>
             </div>
           </button>
           <div class="expert-header-titles">
-            <h2 class="expert-app-name">YouTube</h2>
+            <h2 class="expert-app-name" id="expertAppName">YouTube</h2>
             <p class="expert-mode-sub">Expert mode</p>
             <p class="expert-source-sub" id="expertHeaderSource">Anddea Patches</p>
           </div>
@@ -608,10 +600,10 @@
     </div>
   </div>
 
-  <script src="js/state.js?v=2.1.9"></script>
-  <script src="js/api.js?v=2.1.9"></script>
-  <script src="js/ui-morphe.js?v=2.1.9"></script>
-  <script src="js/ui-tui.js?v=2.1.9"></script>
-  <script src="app.js?v=2.1.9"></script>
+  <script src="js/state.js?v=2.1.10"></script>
+  <script src="js/api.js?v=2.1.10"></script>
+  <script src="js/ui-morphe.js?v=2.1.10"></script>
+  <script src="js/ui-tui.js?v=2.1.10"></script>
+  <script src="app.js?v=2.1.10"></script>
 </body>
 </html>

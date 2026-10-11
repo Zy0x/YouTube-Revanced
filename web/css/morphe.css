@@ -27,28 +27,60 @@
   letter-spacing: -0.01em;
 }
 
-/* 1:1 Horizontal Gradient Card */
+/* Dynamic Morphe Apps Grid & Multi-App Cards */
+.morphe-apps-grid {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.morphe-app-card,
 .morphe-yt-card {
   width: 100%;
-  min-height: 92px;
-  background: linear-gradient(96deg, #8F2525 0%, #442E58 50%, #246E75 100%);
+  min-height: 88px;
+  background: var(--app-bg-gradient, linear-gradient(96deg, #8F2525 0%, #442E58 50%, #246E75 100%));
   border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 24px;
-  padding: 18px 20px;
+  border-radius: 22px;
+  padding: 16px 20px;
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
   cursor: pointer;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.42);
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.40);
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
+.morphe-app-card:hover,
 .morphe-yt-card:hover {
-  border-color: rgba(255, 255, 255, 0.38);
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
 }
 
+.morphe-app-card:active,
 .morphe-yt-card:active {
-  transform: scale(0.99);
+  transform: scale(0.985);
+}
+
+.morphe-app-card.active-app {
+  border-color: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25), 0 14px 34px rgba(0, 0, 0, 0.55);
+}
+
+.app-card-arrow {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 19px;
+  font-weight: 600;
+  flex-shrink: 0;
+  padding-left: 6px;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.morphe-app-card:hover .app-card-arrow {
+  transform: translateX(3px);
+  color: #FFFFFF;
 }
 
 .yt-card-icon {

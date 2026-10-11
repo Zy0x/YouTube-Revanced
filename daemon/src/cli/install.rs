@@ -43,15 +43,14 @@ pub async fn run_install(modpath: PathBuf, bootmode: Option<String>) -> anyhow::
         let _ = tokio::fs::remove_dir_all(&youtube_dir).await;
     }
 
-    // 4. Verify package is installed
+    // 4. Verify installed package
     let is_installed = run_shell_command(&format!("dumpsys package {} 2>/dev/null | grep path", PKG_NAME))
         .await
         .map_or(false, |out| !out.trim().is_empty());
 
     if !is_installed {
-        eprintln!("- YouTube app is not installed!");
-        eprintln!("- Please install YouTube from Play Store first.");
-        std::process::exit(1);
+        println!("- Note: YouTube app is not currently installed.");
+        println!("- You can patch YouTube, YouTube Music, Reddit, and more from the RVX WebUI.");
     }
 
     let stock_ver = run_shell_command(&format!("dumpsys package {} 2>/dev/null | grep versionName | cut -d= -f2 | head -n1", PKG_NAME))
@@ -74,11 +73,10 @@ pub async fn run_install(modpath: PathBuf, bootmode: Option<String>) -> anyhow::
         }
     }
 
-    if !stock_ver.is_empty() && !rv_ver.is_empty() && stock_ver != rv_ver {
-        eprintln!("- Installed YouTube version : {}", stock_ver);
-        eprintln!("- Module ReVanced version   : {}", rv_ver);
-        eprintln!("- App Version Mismatch !! Please get the module matching your YouTube version.");
-        std::process::exit(1);
+    if is_installed && !stock_ver.is_empty() && !rv_ver.is_empty() && stock_ver != rv_ver {
+        println!("- Installed YouTube version : {}", stock_ver);
+        println!("- Module RVX version        : {}", rv_ver);
+        println!("- Notice: Version mismatch detected. You can update or match versions via WebUI.");
     }
 
     // 6. Setup module app files
@@ -91,37 +89,36 @@ pub async fn run_install(modpath: PathBuf, bootmode: Option<String>) -> anyhow::
         while let Ok(Some(entry)) = entries.next_entry().await {
             let p = entry.path();
             if p.is_file() && p.extension().map_or(false, |ext| ext == "apk") {
-                let target = app_dir.join(format!("YouTubeRevanced-{}.apk", if rv_ver.is_empty() { "target" } else { &rv_ver }));
+                let fname = p.file_name().unwrap_or_default().to_string_lossy().to_string();
+                let target = app_dir.join(fname);
                 let _ = tokio::fs::rename(&p, &target).await;
-                break;
             }
         }
     }
 
-    // 7. Apply instant bind mount
-    let mut rv_apk: Option<PathBuf> = None;
+    // 7. Apply instant bind mount for all present APKs
     if let Ok(mut entries) = tokio::fs::read_dir(&app_dir).await {
         while let Ok(Some(entry)) = entries.next_entry().await {
             let p = entry.path();
             if p.extension().map_or(false, |ext| ext == "apk") {
-                rv_apk = Some(p);
-                break;
+                let fname = p.file_name().unwrap_or_default().to_string_lossy().to_string();
+                let pkg = resolve_pkg_for_apk(&fname);
+                let stock_apk = run_shell_command(&format!("pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n1", pkg))
+                    .await
+                    .unwrap_or_default()
+                    .trim()
+                    .to_string();
+
+                if !stock_apk.is_empty() {
+                    let _ = run_shell_command(&format!("chmod 644 \"{}\"", p.display())).await;
+                    let _ = run_shell_command(&format!("chown system:system \"{}\" 2>/dev/null", p.display())).await;
+                    let _ = run_shell_command(&format!("chcon u:object_r:apk_data_file:s0 \"{}\" 2>/dev/null", p.display())).await;
+                    let _ = run_shell_command(&format!("mount -o bind \"{}\" \"{}\"", p.display(), stock_apk)).await;
+                    let _ = run_shell_command(&format!("am force-stop {}", pkg)).await;
+                    println!("- Bind mounted {} successfully.", fname);
+                }
             }
         }
-    }
-
-    let stock_apk = run_shell_command(&format!("pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n1", PKG_NAME))
-        .await
-        .unwrap_or_default()
-        .trim()
-        .to_string();
-
-    if let (Some(rv), false) = (rv_apk, stock_apk.is_empty()) {
-        let _ = run_shell_command(&format!("chmod 644 \"{}\"", rv.display())).await;
-        let _ = run_shell_command(&format!("chown system:system \"{}\" 2>/dev/null", rv.display())).await;
-        let _ = run_shell_command(&format!("chcon u:object_r:apk_data_file:s0 \"{}\" 2>/dev/null", rv.display())).await;
-        let _ = run_shell_command(&format!("mount -o bind \"{}\" \"{}\"", rv.display(), stock_apk)).await;
-        let _ = run_shell_command(&format!("am force-stop {}", PKG_NAME)).await;
     }
 
     // 8. Clean legacy leftovers
@@ -138,18 +135,39 @@ pub async fn run_install(modpath: PathBuf, bootmode: Option<String>) -> anyhow::
     }
 
     println!("- Installation Successful !!");
-    println!("- You can use YouTube ReVanced without rebooting.");
-    println!("- Launching YouTube...");
-    sleep(Duration::from_secs(1)).await;
-    let _ = run_shell_command(&format!("am start -n {}/com.google.android.apps.youtube.app.WatchWhileActivity >/dev/null 2>&1", PKG_NAME)).await;
+    println!("- Patched applications can be used without rebooting.");
+    if is_installed {
+        println!("- Launching YouTube...");
+        sleep(Duration::from_secs(1)).await;
+        let _ = run_shell_command(&format!("am start -n {}/com.google.android.apps.youtube.app.WatchWhileActivity >/dev/null 2>&1", PKG_NAME)).await;
+    }
 
     Ok(())
+}
+
+fn resolve_pkg_for_apk(name: &str) -> String {
+    let lower = name.to_lowercase();
+    if lower.contains("music") || lower.contains("ytmusic") {
+        "com.google.android.apps.youtube.music".to_string()
+    } else if lower.contains("youtube") {
+        "com.google.android.youtube".to_string()
+    } else if lower.contains("reddit") {
+        "com.reddit.frontpage".to_string()
+    } else if lower.contains("twitter") {
+        "com.twitter.android".to_string()
+    } else if lower.contains("tiktok") {
+        "com.zhiliaoapp.musically".to_string()
+    } else if name.starts_with("com.") {
+        name.trim_end_matches(".apk").to_string()
+    } else {
+        "com.google.android.youtube".to_string()
+    }
 }
 
 async fn unmount_all_instances() {
     if let Ok(mounts) = tokio::fs::read_to_string("/proc/mounts").await {
         for line in mounts.lines() {
-            if line.contains(PKG_NAME) {
+            if line.contains("com.google.android.youtube") || line.contains("revanced") {
                 let parts: Vec<&str> = line.split_whitespace().collect();
                 if parts.len() >= 2 {
                     let mount_point = parts[1];

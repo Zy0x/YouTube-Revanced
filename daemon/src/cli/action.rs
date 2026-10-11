@@ -3,81 +3,65 @@ use std::time::Duration;
 use tokio::time::sleep;
 use crate::utils::run_shell_command;
 
-const PKG_NAME: &str = "com.google.android.youtube";
+fn resolve_pkg_for_apk(name: &str) -> String {
+    let lower = name.to_lowercase();
+    if lower.contains("music") || lower.contains("ytmusic") {
+        "com.google.android.apps.youtube.music".to_string()
+    } else if lower.contains("youtube") {
+        "com.google.android.youtube".to_string()
+    } else if lower.contains("reddit") {
+        "com.reddit.frontpage".to_string()
+    } else if lower.contains("twitter") {
+        "com.twitter.android".to_string()
+    } else if lower.contains("tiktok") {
+        "com.zhiliaoapp.musically".to_string()
+    } else if name.starts_with("com.") {
+        name.trim_end_matches(".apk").to_string()
+    } else {
+        "com.google.android.youtube".to_string()
+    }
+}
 
 pub async fn run_action(modpath: PathBuf) -> anyhow::Result<()> {
     println!("📱 ==========================================");
-    println!("  YouTube RVX — Root Manager Action Handler");
+    println!("  RVX Manager — Multi-App Action Handler");
     println!("==========================================");
 
-    let base_dir = modpath.join("ori");
     let app_dir = modpath.join("app");
+    let mut mounted_count = 0;
 
-    let mut rv_apk: Option<PathBuf> = None;
     if app_dir.exists() {
         if let Ok(mut entries) = tokio::fs::read_dir(&app_dir).await {
             while let Ok(Some(entry)) = entries.next_entry().await {
                 let p = entry.path();
                 if p.extension().map_or(false, |ext| ext == "apk") {
-                    rv_apk = Some(p);
-                    break;
+                    let file_name = p.file_name().unwrap_or_default().to_string_lossy().to_string();
+                    let pkg = resolve_pkg_for_apk(&file_name);
+
+                    let stock_apk = run_shell_command(&format!("pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n1", pkg))
+                        .await
+                        .unwrap_or_default()
+                        .trim()
+                        .to_string();
+
+                    if !stock_apk.is_empty() {
+                        println!("🔗 Mounting {} ({}) -> {}", file_name, pkg, stock_apk);
+                        let _ = run_shell_command(&format!("chcon u:object_r:apk_data_file:s0 \"{}\"", p.display())).await;
+                        let _ = run_shell_command(&format!("mount -o bind \"{}\" \"{}\"", p.display(), stock_apk)).await;
+                        let _ = run_shell_command(&format!("am force-stop {}", pkg)).await;
+                        mounted_count += 1;
+                    } else {
+                        println!("⚠️ Target app {} not installed on device.", pkg);
+                    }
                 }
             }
         }
     }
 
-    let rv_apk = match rv_apk {
-        Some(p) => p,
-        None => {
-            eprintln!("⚠️ ERROR: No patched APK found in {}", app_dir.display());
-            return Ok(());
-        }
-    };
-
-    let stock_ver = run_shell_command(&format!("dumpsys package {} 2>/dev/null | grep versionName | cut -d= -f2 | head -n1", PKG_NAME))
-        .await
-        .unwrap_or_default()
-        .trim()
-        .to_string();
-
-    let rv_file_name = rv_apk.file_name().unwrap_or_default().to_string_lossy();
-    let rv_ver = rv_file_name
-        .trim_end_matches(".apk")
-        .split('-')
-        .nth(1)
-        .unwrap_or("Unknown")
-        .to_string();
-
-    println!("┌──────────────────────────────────────────┐");
-    println!("  Package Name    : {}", PKG_NAME);
-    println!("  Current Version : {}", if stock_ver.is_empty() { "Not detected" } else { &stock_ver });
-    println!("  Target Version  : {}", rv_ver);
-    println!("└──────────────────────────────────────────┘\n");
-
-    let stock_apk = run_shell_command(&format!("pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n1", PKG_NAME))
-        .await
-        .unwrap_or_default()
-        .trim()
-        .to_string();
-
-    if !stock_ver.is_empty() && !rv_ver.is_empty() && stock_ver != rv_ver && base_dir.exists() {
-        println!("🔄 Reinstalling matching base stock APK...");
-        if let Ok(mut entries) = tokio::fs::read_dir(&base_dir).await {
-            while let Ok(Some(entry)) = entries.next_entry().await {
-                let p = entry.path();
-                if p.extension().map_or(false, |ext| ext == "apk") {
-                    let _ = run_shell_command(&format!("pm install -r -d \"{}\"", p.display())).await;
-                }
-            }
-        }
-    }
-
-    if !stock_apk.is_empty() {
-        println!("🔗 Applying bind mount...");
-        let _ = run_shell_command(&format!("chcon u:object_r:apk_data_file:s0 \"{}\"", rv_apk.display())).await;
-        let _ = run_shell_command(&format!("mount -o bind \"{}\" \"{}\"", rv_apk.display(), stock_apk)).await;
-        let _ = run_shell_command(&format!("am force-stop {}", PKG_NAME)).await;
-        println!("🎉 SUCCESS: YouTube RVX mounted and ready! 🚀");
+    if mounted_count > 0 {
+        println!("🎉 SUCCESS: {} RVX application(s) mounted! 🚀", mounted_count);
+    } else {
+        println!("ℹ️ No patched apps were mounted. Launching WebUI dashboard...");
     }
 
     // Launch daemon WebUI if binary present
@@ -103,10 +87,6 @@ pub async fn run_action(modpath: PathBuf) -> anyhow::Result<()> {
         let _ = run_shell_command("am start -a android.intent.action.VIEW -d \"http://127.0.0.1:8080\" >/dev/null 2>&1").await;
     }
 
-    println!("⏳ Launching YouTube app...");
-    sleep(Duration::from_secs(1)).await;
-    let _ = run_shell_command(&format!("am start -n {}/com.google.android.apps.youtube.app.WatchWhileActivity >/dev/null 2>&1", PKG_NAME)).await;
-
-    println!("🙏 Thank you for using YouTube RVX! 🎬");
+    println!("🙏 Thank you for using RVX Multi-App Module! 🎬");
     Ok(())
 }

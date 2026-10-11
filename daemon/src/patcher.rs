@@ -9,6 +9,8 @@ use crate::utils::get_java_binary;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct PatchRequest {
+    #[serde(default = "default_package")]
+    pub package_name: String,
     #[serde(default = "default_version")]
     pub target_version: String,
     #[serde(default = "default_source")]
@@ -25,6 +27,7 @@ pub struct PatchRequest {
     pub options: HashMap<String, serde_json::Value>,
 }
 
+fn default_package() -> String { "com.google.android.youtube".to_string() }
 fn default_version() -> String { "recommended".to_string() }
 fn default_source() -> String { "anddea".to_string() }
 fn default_tag() -> String { "dev".to_string() }
@@ -32,7 +35,8 @@ fn default_tag() -> String { "dev".to_string() }
 pub async fn execute_patch_job(state: AppState, req: PatchRequest) {
     state.set_patching(true);
     state.log("🚀 =================================================");
-    state.log("🚀 Starting On-Device YouTube RVX Patching Process");
+    state.log(format!("🚀 Starting On-Device RVX Patching Process ({})", req.package_name));
+    state.log(format!("  Target Package : {}", req.package_name));
     state.log(format!("  Target Version : {}", req.target_version));
     state.log(format!("  Patch Source   : {}", req.patch_source));
     state.log(format!("  Patch Tag      : {}", req.patch_tag));
@@ -92,9 +96,9 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
     state.log(format!("  Fetching patch bundle from: {}", mpp_url));
     download_file(&state.client, &mpp_url, &patch_mpp).await?;
 
-    // 4. Resolve Stock YouTube APK
-    let stock_apk = locate_or_download_stock(state, &req.target_version, &build_dir).await?;
-    state.log(format!("  Stock YouTube APK: {}", stock_apk.display()));
+    // 4. Resolve Stock APK
+    let stock_apk = locate_or_download_stock(state, &req.package_name, &req.target_version, &build_dir).await?;
+    state.log(format!("  Stock APK: {}", stock_apk.display()));
 
     // 5. Build CLI arguments
     let mut args: Vec<String> = vec![
@@ -106,10 +110,19 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
         patch_mpp.to_string_lossy().to_string(),
     ];
 
+    let app_alias = match req.package_name.as_str() {
+        "com.google.android.youtube" => "YouTube",
+        "com.google.android.apps.youtube.music" => "YouTubeMusic",
+        "com.reddit.frontpage" => "Reddit",
+        "com.twitter.android" => "Twitter",
+        "com.zhiliaoapp.musically" => "TikTok",
+        _ => req.package_name.split('.').last().unwrap_or("App"),
+    };
+
     let output_apk = if req.is_root {
-        state.modpath.join("app").join("YouTubeRevanced.apk")
+        state.modpath.join("app").join(format!("{}Revanced.apk", app_alias))
     } else {
-        build_dir.join(format!("YouTube.RVX.v{}-NonRoot.apk", req.target_version))
+        build_dir.join(format!("{}.RVX.v{}-NonRoot.apk", app_alias, req.target_version))
     };
 
     if let Some(parent) = output_apk.parent() {
@@ -222,15 +235,30 @@ fn resolve_source_urls(source: &str, tag: &str) -> (String, String) {
     }
 }
 
-async fn locate_or_download_stock(state: &AppState, version: &str, build_dir: &Path) -> Result<PathBuf, String> {
-    // 1. Check if user already supplied stock-youtube.apk
-    let local_stock = state.modpath.join("stock-youtube.apk");
-    if local_stock.exists() {
-        state.log("📂 Using provided stock-youtube.apk in module directory.");
-        return Ok(local_stock);
+async fn locate_or_download_stock(state: &AppState, package_name: &str, version: &str, build_dir: &Path) -> Result<PathBuf, String> {
+    let app_alias = match package_name {
+        "com.google.android.youtube" => "youtube",
+        "com.google.android.apps.youtube.music" => "ytmusic",
+        "com.reddit.frontpage" => "reddit",
+        "com.twitter.android" => "twitter",
+        "com.zhiliaoapp.musically" => "tiktok",
+        _ => package_name.split('.').last().unwrap_or("app"),
+    };
+
+    // 1. Check if user already supplied stock APK in module directory
+    let cands = [
+        state.modpath.join(format!("stock-{}.apk", app_alias)),
+        state.modpath.join(format!("stock-{}.apk", package_name)),
+        state.modpath.join("stock-youtube.apk"),
+    ];
+    for cand in cands {
+        if cand.exists() {
+            state.log(format!("📂 Using provided stock APK: {}", cand.display()));
+            return Ok(cand);
+        }
     }
 
-    let target_stock = build_dir.join(format!("youtube-{}.apk", version));
+    let target_stock = build_dir.join(format!("{}-{}.apk", app_alias, version));
     if target_stock.exists() {
         return Ok(target_stock);
     }
@@ -238,10 +266,11 @@ async fn locate_or_download_stock(state: &AppState, version: &str, build_dir: &P
     // 2. On Android: Check if installed package base APK can be extracted
     #[cfg(unix)]
     {
-        if let Ok(output) = crate::utils::run_shell_command("pm path com.google.android.youtube 2>/dev/null | grep base | cut -d: -f2").await {
+        let query_cmd = format!("pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n1", package_name);
+        if let Ok(output) = crate::utils::run_shell_command(&query_cmd).await {
             let path_str = output.trim();
             if !path_str.is_empty() && Path::new(path_str).exists() {
-                state.log(format!("📲 Extracted installed YouTube APK from device: {}", path_str));
+                state.log(format!("📲 Extracted installed APK ({}) from device: {}", package_name, path_str));
                 let _ = tokio::fs::copy(path_str, &target_stock).await;
                 if target_stock.exists() {
                     return Ok(target_stock);
@@ -250,18 +279,23 @@ async fn locate_or_download_stock(state: &AppState, version: &str, build_dir: &P
         }
     }
 
-    // 3. Fallback: Download via download-stock script or direct mirror
-    state.log(format!("📥 Fetching Stock YouTube v{} APK...", version));
-    let script_path = state.modpath.join("tools").join("download-stock.py");
-    if script_path.exists() {
-        let cmd = format!("python3 \"{}\" \"{}\" \"{}\"", script_path.display(), version, target_stock.display());
-        let _ = crate::utils::run_shell_command(&cmd).await;
-        if target_stock.exists() {
-            return Ok(target_stock);
+    // 3. Fallback: Download via download-stock script if YouTube
+    if package_name == "com.google.android.youtube" {
+        state.log(format!("📥 Fetching Stock YouTube v{} APK...", version));
+        let script_path = state.modpath.join("tools").join("download-stock.py");
+        if script_path.exists() {
+            let cmd = format!("python3 \"{}\" \"{}\" \"{}\"", script_path.display(), version, target_stock.display());
+            let _ = crate::utils::run_shell_command(&cmd).await;
+            if target_stock.exists() {
+                return Ok(target_stock);
+            }
         }
     }
 
-    Err(format!("Stock YouTube APK v{} could not be found or downloaded. Please place stock-youtube.apk in the module directory.", version))
+    Err(format!(
+        "Stock APK for {} (v{}) not found. Please install the app on device or place stock-{}.apk in module directory.",
+        package_name, version, app_alias
+    ))
 }
 
 async fn download_file(client: &reqwest::Client, url: &str, target: &Path) -> Result<(), String> {

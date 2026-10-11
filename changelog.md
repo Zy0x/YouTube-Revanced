@@ -1,3 +1,13 @@
+## v2.1.10 (2026-10-12)
+
+### Universal Multi-Application Support Across All `.mpp` Bundles
+- **Dynamic Multi-App Manifest Parser**: Expanded engine scope from YouTube-only to ALL supported applications in `.mpp` manifests (including YouTube `com.google.android.youtube`, YouTube Music `com.google.android.apps.youtube.music`, Reddit `com.reddit.frontpage`, Twitter/X `com.twitter.android`, TikTok `com.zhiliaoapp.musically`, and custom packages).
+- **Morphe Dynamic App Grid**: Replaced single static card with a dynamic, responsive Morphe application selection grid on Home ("What app do you want to patch?") featuring app-specific gradient themes, Material SVG icons, live patch counts, and recommended versions.
+- **Dynamic App Headers & Theming**: Screen 2 (Version Selection) and Screen 3 (Expert Mode Patches) now dynamically adjust application titles, background gradients, icon badges, and compatible version lists based on the selected application.
+- **Termux TUI Multi-App Support**: Added an interactive `[1] Select App` menu to Termux CLI Revancify-Xisr mode, allowing rapid switching between all supported applications.
+- **Multi-App Native Bind Mount Engine**: Updated Rust `service`, `action`, and `install` subcommands to automatically detect and bind-mount all patched applications present in `$MODPATH/app/` simultaneously without conflicts.
+- **Dynamic APK Extraction & Package Info**: Updated daemon endpoints and patch pipeline to extract base stock APKs and query device package info dynamically for any target application via `pm path`.
+
 ## v2.1.9 (2026-10-12)
 
 ### High-Performance Rust Core & Modular Overhaul

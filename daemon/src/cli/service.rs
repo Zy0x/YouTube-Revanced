@@ -27,15 +27,15 @@ pub async fn run_service(modpath: PathBuf) -> anyhow::Result<()> {
             sleep(Duration::from_secs(3)).await;
         }
 
-        // 3. Mount YouTube RVX
-        mount_youtube_app(&modpath).await?;
+        // 3. Mount all patched RVX apps
+        mount_all_patched_apps(&modpath).await?;
 
         // 4. Ensure background daemon is running
         start_background_daemon(&modpath).await;
 
         // 5. Post system ready notification
         let _ = run_shell_command(
-            "su -lp 2000 -c \"cmd notification post -S bigtext -t 'YouTube RVX' tag '✅ YouTube RVX is ready to use...'\" >/dev/null 2>&1"
+            "su -lp 2000 -c \"cmd notification post -S bigtext -t 'RVX Modules' tag '✅ RVX Patched Apps are ready to use...'\" >/dev/null 2>&1"
         ).await;
     }
 
@@ -64,80 +64,63 @@ async fn wait_for_boot_completed() {
 }
 
 #[cfg(unix)]
-async fn mount_youtube_app(modpath: &Path) -> anyhow::Result<()> {
+fn resolve_pkg_for_apk(name: &str) -> String {
+    let lower = name.to_lowercase();
+    if lower.contains("music") || lower.contains("ytmusic") {
+        "com.google.android.apps.youtube.music".to_string()
+    } else if lower.contains("youtube") {
+        "com.google.android.youtube".to_string()
+    } else if lower.contains("reddit") {
+        "com.reddit.frontpage".to_string()
+    } else if lower.contains("twitter") {
+        "com.twitter.android".to_string()
+    } else if lower.contains("tiktok") {
+        "com.zhiliaoapp.musically".to_string()
+    } else if name.starts_with("com.") {
+        name.trim_end_matches(".apk").to_string()
+    } else {
+        "com.google.android.youtube".to_string()
+    }
+}
+
+#[cfg(unix)]
+async fn mount_all_patched_apps(modpath: &Path) -> anyhow::Result<()> {
     let app_dir = modpath.join("app");
-    let mut rv_apk: Option<PathBuf> = None;
-
-    if app_dir.exists() {
-        if let Ok(mut entries) = tokio::fs::read_dir(&app_dir).await {
-            while let Ok(Some(entry)) = entries.next_entry().await {
-                let p = entry.path();
-                if let Some(ext) = p.extension() {
-                    if ext == "apk" {
-                        rv_apk = Some(p);
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    let rv_apk = match rv_apk {
-        Some(p) => p,
-        None => {
-            tracing::warn!("⚠️ [Service] No patched APK found in {}", app_dir.display());
-            return Ok(());
-        }
-    };
-
-    let stock_ver = run_shell_command(&format!("dumpsys package {} | grep versionName | cut -d= -f2 | head -n1", PKG_NAME))
-        .await
-        .unwrap_or_default()
-        .trim()
-        .to_string();
-
-    let rv_file_name = rv_apk.file_name().unwrap_or_default().to_string_lossy();
-    let rv_ver = rv_file_name
-        .trim_end_matches(".apk")
-        .split('-')
-        .nth(1)
-        .unwrap_or("")
-        .to_string();
-
-    // Check version mismatch
-    if !stock_ver.is_empty() && !rv_ver.is_empty() && stock_ver != rv_ver {
-        let ori_dir = modpath.join("ori");
-        if ori_dir.exists() {
-            tracing::info!("🔄 [Service] Version mismatch (stock: {}, target: {}). Reinstalling base APK...", stock_ver, rv_ver);
-            if let Ok(mut entries) = tokio::fs::read_dir(&ori_dir).await {
-                while let Ok(Some(entry)) = entries.next_entry().await {
-                    let p = entry.path();
-                    if p.extension().map_or(false, |ext| ext == "apk") {
-                        let _ = run_shell_command(&format!("pm install -r -d \"{}\"", p.display())).await;
-                    }
-                }
-            }
-        }
-    }
-
-    let stock_apk = run_shell_command(&format!("pm path {} | grep base | cut -d: -f2 | head -n1", PKG_NAME))
-        .await
-        .unwrap_or_default()
-        .trim()
-        .to_string();
-
-    if stock_apk.is_empty() {
-        tracing::error!("❌ [Service] Failed to find base APK path for {}", PKG_NAME);
+    if !app_dir.exists() {
+        tracing::warn!("⚠️ [Service] No app directory found at {}", app_dir.display());
         return Ok(());
     }
 
-    tracing::info!("🔗 [Service] Bind mounting RVX APK to {}", stock_apk);
-    let _ = run_shell_command(&format!("chcon u:object_r:apk_data_file:s0 \"{}\"", rv_apk.display())).await;
-    let mount_cmd = format!("mount -o bind \"{}\" \"{}\"", rv_apk.display(), stock_apk);
-    let _ = run_shell_command(&mount_cmd).await;
-    let _ = run_shell_command(&format!("am force-stop {}", PKG_NAME)).await;
+    let mut mounted_count = 0;
+    if let Ok(mut entries) = tokio::fs::read_dir(&app_dir).await {
+        while let Ok(Some(entry)) = entries.next_entry().await {
+            let p = entry.path();
+            if p.extension().map_or(false, |ext| ext == "apk") {
+                let file_name = p.file_name().unwrap_or_default().to_string_lossy().to_string();
+                let pkg = resolve_pkg_for_apk(&file_name);
 
-    tracing::info!("🎉 [Service] Bind mount applied successfully!");
+                let stock_apk = run_shell_command(&format!("pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n1", pkg))
+                    .await
+                    .unwrap_or_default()
+                    .trim()
+                    .to_string();
+
+                if stock_apk.is_empty() {
+                    tracing::warn!("⚠️ [Service] Target app {} not installed on device, skipping mount.", pkg);
+                    continue;
+                }
+
+                tracing::info!("🔗 [Service] Bind mounting RVX APK ({}) to {}", file_name, stock_apk);
+                let _ = run_shell_command(&format!("chcon u:object_r:apk_data_file:s0 \"{}\"", p.display())).await;
+                let mount_cmd = format!("mount -o bind \"{}\" \"{}\"", p.display(), stock_apk);
+                let _ = run_shell_command(&mount_cmd).await;
+                let _ = run_shell_command(&format!("am force-stop {}", pkg)).await;
+                mounted_count += 1;
+            }
+        }
+    }
+
+    tracing::info!("🎉 [Service] Total mounted applications: {}", mounted_count);
     Ok(())
 }
 

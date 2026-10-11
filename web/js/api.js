@@ -145,7 +145,105 @@ async function loadPatchReleases(sourceConfig) {
   STATE.patchTag = select.value;
 }
 
-function filterPatchesForYouTube(patches, pkgName = 'com.google.android.youtube') {
+function extractSupportedApps(rawList) {
+  const appMap = new Map();
+
+  rawList.forEach(patch => {
+    const compat = patch.compatiblePackages;
+    if (!compat) return;
+
+    if (Array.isArray(compat)) {
+      compat.forEach(entry => {
+        if (!entry) return;
+        const pkgId = typeof entry === 'string' ? entry : (entry.packageName || entry.name || '');
+        const pkgName = typeof entry === 'object' ? (entry.name || entry.packageName) : entry;
+        if (!pkgId) return;
+
+        if (!appMap.has(pkgId)) {
+          const meta = resolveAppMeta(pkgId, pkgName);
+          appMap.set(pkgId, {
+            ...meta,
+            packageName: pkgId,
+            patchCount: 0,
+            versions: new Set()
+          });
+        }
+        const appObj = appMap.get(pkgId);
+        appObj.patchCount++;
+
+        if (entry.targets && Array.isArray(entry.targets)) {
+          entry.targets.forEach(t => {
+            if (t && t.version) appObj.versions.add(String(t.version).trim());
+          });
+        } else if (entry.versions && Array.isArray(entry.versions)) {
+          entry.versions.forEach(v => appObj.versions.add(String(v).trim()));
+        }
+      });
+    } else if (typeof compat === 'object') {
+      Object.entries(compat).forEach(([pkgId, versions]) => {
+        if (!pkgId) return;
+        if (!appMap.has(pkgId)) {
+          const meta = resolveAppMeta(pkgId);
+          appMap.set(pkgId, {
+            ...meta,
+            packageName: pkgId,
+            patchCount: 0,
+            versions: new Set()
+          });
+        }
+        const appObj = appMap.get(pkgId);
+        appObj.patchCount++;
+        if (Array.isArray(versions)) {
+          versions.forEach(v => appObj.versions.add(String(v).trim()));
+        }
+      });
+    }
+  });
+
+  const appList = Array.from(appMap.values()).map(app => {
+    const sortedVersions = Array.from(app.versions).sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+    ).reverse();
+    return {
+      ...app,
+      availableVersionsCount: sortedVersions.length,
+      recommendedVersion: sortedVersions[0] || (app.packageName === 'com.google.android.youtube' ? '21.13.164' : 'latest')
+    };
+  });
+
+  const priorityOrder = [
+    'com.google.android.youtube',
+    'com.google.android.apps.youtube.music',
+    'com.reddit.frontpage',
+    'com.twitter.android',
+    'com.zhiliaoapp.musically'
+  ];
+
+  appList.sort((a, b) => {
+    const idxA = priorityOrder.indexOf(a.packageName);
+    const idxB = priorityOrder.indexOf(b.packageName);
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    if (idxA !== -1) return -1;
+    if (idxB !== -1) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  if (appList.length === 0) {
+    const defaultMeta = resolveAppMeta('com.google.android.youtube');
+    appList.push({
+      ...defaultMeta,
+      packageName: 'com.google.android.youtube',
+      patchCount: rawList.length,
+      availableVersionsCount: 4,
+      recommendedVersion: '21.13.164'
+    });
+  }
+
+  return appList;
+}
+
+function filterPatchesForApp(patches, pkgName) {
+  if (!pkgName) return patches;
   return patches.filter(p => {
     const compat = p.compatiblePackages;
     if (!compat) return true;
@@ -156,13 +254,20 @@ function filterPatchesForYouTube(patches, pkgName = 'com.google.android.youtube'
     }
     if (Array.isArray(compat)) {
       if (compat.length === 0) return true;
-      return compat.some(entry => entry && (entry.name === pkgName || entry === pkgName));
+      return compat.some(entry => {
+        if (!entry) return false;
+        if (typeof entry === 'string') {
+          return entry === pkgName || (KNOWN_APP_METADATA[pkgName]?.name.toLowerCase() === entry.toLowerCase());
+        }
+        return entry.packageName === pkgName || entry.name === pkgName ||
+          (KNOWN_APP_METADATA[pkgName]?.name.toLowerCase() === (entry.name || '').toLowerCase());
+      });
     }
     return true;
   });
 }
 
-function extractUniversalVersions(patches, pkgName = 'com.google.android.youtube') {
+function extractVersionsForApp(patches, pkgName) {
   const manifestVersions = new Set();
   patches.forEach(p => {
     const compat = p.compatiblePackages;
@@ -173,8 +278,18 @@ function extractUniversalVersions(patches, pkgName = 'com.google.android.youtube
       }
     } else if (Array.isArray(compat)) {
       compat.forEach(entry => {
-        if (entry && entry.name === pkgName && Array.isArray(entry.versions)) {
-          entry.versions.forEach(v => manifestVersions.add(String(v).trim()));
+        if (!entry) return;
+        const matches = typeof entry === 'string'
+          ? (entry === pkgName || KNOWN_APP_METADATA[pkgName]?.name.toLowerCase() === entry.toLowerCase())
+          : (entry.packageName === pkgName || entry.name === pkgName ||
+             KNOWN_APP_METADATA[pkgName]?.name.toLowerCase() === (entry.name || '').toLowerCase());
+
+        if (matches) {
+          if (Array.isArray(entry.targets)) {
+            entry.targets.forEach(t => t?.version && manifestVersions.add(String(t.version).trim()));
+          } else if (Array.isArray(entry.versions)) {
+            entry.versions.forEach(v => manifestVersions.add(String(v).trim()));
+          }
         }
       });
     }
@@ -184,7 +299,7 @@ function extractUniversalVersions(patches, pkgName = 'com.google.android.youtube
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
     .reverse();
 
-  const recommended = sortedManifest[0] || '21.13.164';
+  const recommended = sortedManifest[0] || (pkgName === 'com.google.android.youtube' ? '21.13.164' : 'latest');
   const versionsMap = new Map();
 
   sortedManifest.forEach(ver => {
@@ -195,21 +310,23 @@ function extractUniversalVersions(patches, pkgName = 'com.google.android.youtube
     });
   });
 
-  const catalog = (STATE.catalogVersions && STATE.catalogVersions.length > 0)
-    ? STATE.catalogVersions
-    : FALLBACK_YOUTUBE_VERSIONS;
+  if (pkgName === 'com.google.android.youtube') {
+    const catalog = (STATE.catalogVersions && STATE.catalogVersions.length > 0)
+      ? STATE.catalogVersions
+      : FALLBACK_YOUTUBE_VERSIONS;
 
-  catalog.forEach(item => {
-    const ver = typeof item === 'string' ? item : item.version;
-    if (!ver) return;
-    if (!versionsMap.has(ver)) {
-      versionsMap.set(ver, {
-        version: ver,
-        isRecommended: ver === recommended,
-        isManifest: manifestVersions.has(ver)
-      });
-    }
-  });
+    catalog.forEach(item => {
+      const ver = typeof item === 'string' ? item : item.version;
+      if (!ver) return;
+      if (!versionsMap.has(ver)) {
+        versionsMap.set(ver, {
+          version: ver,
+          isRecommended: ver === recommended,
+          isManifest: manifestVersions.has(ver)
+        });
+      }
+    });
+  }
 
   const allVersions = Array.from(versionsMap.values()).sort((a, b) => {
     if (a.isRecommended !== b.isRecommended) return a.isRecommended ? -1 : 1;
@@ -218,6 +335,43 @@ function extractUniversalVersions(patches, pkgName = 'com.google.android.youtube
   });
 
   return { allVersions, recommendedVersion: recommended };
+}
+
+function selectApp(pkgId) {
+  const foundApp = STATE.availableApps.find(a => a.packageName === pkgId) || STATE.availableApps[0];
+  if (!foundApp) return;
+
+  STATE.currentApp = foundApp;
+  const appPatches = filterPatchesForApp(STATE.allManifestPatches, foundApp.packageName);
+  STATE.patches = appPatches;
+
+  const { allVersions, recommendedVersion } = extractVersionsForApp(appPatches, foundApp.packageName);
+  STATE.availableVersions = allVersions;
+  STATE.recommendedVersion = recommendedVersion;
+  STATE.currentVersion = recommendedVersion;
+
+  STATE.selectedPatches.clear();
+  appPatches.forEach(p => {
+    if (p.use !== false && p.default !== false) STATE.selectedPatches.add(p.name);
+    if (Array.isArray(p.options)) {
+      p.options.forEach(opt => {
+        if (opt.key && opt.default !== undefined && STATE.selectedOptions[opt.key] === undefined) {
+          STATE.selectedOptions[opt.key] = opt.default;
+        }
+      });
+    }
+  });
+
+  if (foundApp.packageName === 'com.google.android.youtube' && STATE.goldenPreset) {
+    applyGoldenPresetStateOnly();
+  }
+
+  renderAppCards();
+  renderVersionSelector();
+  renderMorphePatchList();
+  syncAllSummaries();
+  fetchInstalledAppInfo();
+  if (STATE.uiMode === 'tui') renderTuiView();
 }
 
 async function fetchAndRenderPatches(sourceId) {
@@ -231,37 +385,14 @@ async function fetchAndRenderPatches(sourceId) {
   try {
     const data = await fetchManifestWithFallback(sourceConfig.manifestUrl);
     const rawList = Array.isArray(data) ? data : (data.patches || []);
-    const ytPatches = filterPatchesForYouTube(rawList, 'com.google.android.youtube');
-    STATE.patches = ytPatches;
+    STATE.allManifestPatches = rawList;
 
-    const { allVersions, recommendedVersion } = extractUniversalVersions(ytPatches);
-    STATE.availableVersions = allVersions;
-    STATE.recommendedVersion = recommendedVersion;
+    STATE.availableApps = extractSupportedApps(rawList);
+    const curPkg = STATE.currentApp?.packageName;
+    const exists = STATE.availableApps.find(a => a.packageName === curPkg);
+    const initialPkg = exists ? exists.packageName : STATE.availableApps[0].packageName;
 
-    if (!STATE.currentVersion || STATE.currentVersion === 'recommended') {
-      STATE.currentVersion = recommendedVersion;
-    }
-
-    STATE.selectedPatches.clear();
-    ytPatches.forEach(p => {
-      if (p.use !== false) STATE.selectedPatches.add(p.name);
-      if (Array.isArray(p.options)) {
-        p.options.forEach(opt => {
-          if (opt.key && opt.default !== undefined && STATE.selectedOptions[opt.key] === undefined) {
-            STATE.selectedOptions[opt.key] = opt.default;
-          }
-        });
-      }
-    });
-
-    if (STATE.goldenPreset) {
-      applyGoldenPresetStateOnly();
-    }
-
-    renderVersionSelector();
-    renderMorphePatchList();
-    syncAllSummaries();
-    if (STATE.uiMode === 'tui') renderTuiView();
+    selectApp(initialPkg);
   } catch (err) {
     if (patchContainer) {
       patchContainer.innerHTML = `<div class="morphe-alert text-danger">Failed to load patches: ${escapeHtml(err.message)}</div>`;
@@ -320,13 +451,16 @@ function exportPreset() {
   const allPatchNames = STATE.patches.map(p => p.name);
   const excludedPatches = allPatchNames.filter(name => !STATE.selectedPatches.has(name));
   const includedPatches = Array.from(STATE.selectedPatches);
+  const appAlias = STATE.currentApp?.alias || 'App';
 
   const payload = {
-    schema_version: '2.1.9',
+    schema_version: '2.1.10',
     exported_at: new Date().toISOString(),
+    package_name: STATE.currentApp?.packageName || 'com.google.android.youtube',
+    app_name: STATE.currentApp?.name || 'YouTube',
     patch_source: STATE.currentSource,
     patch_tag: STATE.patchTag,
-    target_youtube_version: STATE.currentVersion,
+    target_version: STATE.currentVersion,
     active_patch_count: STATE.selectedPatches.size,
     included_patches: includedPatches,
     excluded_patches: excludedPatches,
@@ -337,7 +471,7 @@ function exportPreset() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `rvx-preset-${STATE.currentSource}-${STATE.currentVersion}.json`;
+  a.download = `rvx-preset-${appAlias}-${STATE.currentSource}-${STATE.currentVersion}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -396,7 +530,7 @@ async function checkDaemonStatus() {
         const data = await res.json();
         STATE.daemonOnline = true;
         STATE.daemonUrl = url;
-        STATE.daemonVersion = data.daemon_version || '2.1.9';
+        STATE.daemonVersion = data.daemon_version || '2.1.10';
         setEngineMode('local');
         return;
       }
@@ -414,14 +548,19 @@ async function fetchInstalledAppInfo() {
     return;
   }
   try {
-    const res = await fetch(`${STATE.daemonUrl}/api/v1/system/youtube-info`);
+    const pkg = STATE.currentApp?.packageName || 'com.google.android.youtube';
+    let res = await fetch(`${STATE.daemonUrl}/api/v1/system/app-info?pkg=${encodeURIComponent(pkg)}`);
+    if (!res.ok) {
+      res = await fetch(`${STATE.daemonUrl}/api/v1/system/youtube-info`);
+    }
     if (res.ok) {
       const data = await res.json();
       if (data.installed_version && data.installed_version !== 'Unknown') {
         STATE.installedVersion = data.installed_version;
         if (text) text.textContent = `v${data.installed_version}`;
       } else {
-        if (text) text.textContent = 'Not installed / Host PC';
+        STATE.installedVersion = null;
+        if (text) text.textContent = 'Not installed on device';
       }
       syncAllSummaries();
     }

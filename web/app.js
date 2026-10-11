@@ -1,6 +1,6 @@
 /**
  * YouTube RVX — Application Bootstrap & Event Orchestrator
- * Version: 2.1.9
+ * Version: 2.1.10
  */
 
 document.addEventListener('DOMContentLoaded', async () => {

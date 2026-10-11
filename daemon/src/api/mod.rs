@@ -24,13 +24,19 @@ use crate::utils::run_shell_command;
 pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/system/status", get(get_status))
+        .route("/system/app-info", get(get_app_info))
         .route("/system/youtube-info", get(get_youtube_info))
         .route("/setup/install-jre", post(install_jre))
         .route("/patch/start", post(start_patch))
         .route("/patch/stream", get(stream_logs))
-        .route("/patch/mount", post(mount_youtube))
+        .route("/patch/mount", post(mount_apps))
         .route("/patch/export-zip", post(export_zip))
         .with_state(state)
+}
+
+#[derive(serde::Deserialize)]
+struct AppQuery {
+    pkg: Option<String>,
 }
 
 async fn get_status(State(state): State<AppState>) -> impl IntoResponse {
@@ -39,7 +45,7 @@ async fn get_status(State(state): State<AppState>) -> impl IntoResponse {
 
     Json(json!({
         "status": "online",
-        "daemon_version": "2.1.9",
+        "daemon_version": "2.1.10",
         "is_patching": is_patching,
         "jre_ready": jre_ready,
         "is_android": cfg!(target_os = "android") || cfg!(target_family = "unix"),
@@ -47,7 +53,8 @@ async fn get_status(State(state): State<AppState>) -> impl IntoResponse {
     }))
 }
 
-async fn get_youtube_info() -> impl IntoResponse {
+async fn get_app_info(axum::extract::Query(query): axum::extract::Query<AppQuery>) -> impl IntoResponse {
+    let pkg = query.pkg.unwrap_or_else(|| "com.google.android.youtube".to_string());
     #[allow(unused_mut)]
     let mut installed_version = "Unknown".to_string();
     #[allow(unused_mut)]
@@ -55,13 +62,15 @@ async fn get_youtube_info() -> impl IntoResponse {
 
     #[cfg(unix)]
     {
-        if let Ok(ver) = run_shell_command("dumpsys package com.google.android.youtube 2>/dev/null | grep versionName | cut -d= -f2 | head -n 1").await {
+        let ver_cmd = format!("dumpsys package {} 2>/dev/null | grep versionName | cut -d= -f2 | head -n 1", pkg);
+        if let Ok(ver) = run_shell_command(&ver_cmd).await {
             let v = ver.trim();
             if !v.is_empty() {
                 installed_version = v.to_string();
             }
         }
-        if let Ok(path) = run_shell_command("pm path com.google.android.youtube 2>/dev/null | grep base | cut -d: -f2 | head -n 1").await {
+        let path_cmd = format!("pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n 1", pkg);
+        if let Ok(path) = run_shell_command(&path_cmd).await {
             let p = path.trim();
             if !p.is_empty() {
                 stock_apk = p.to_string();
@@ -70,9 +79,14 @@ async fn get_youtube_info() -> impl IntoResponse {
     }
 
     Json(json!({
+        "package_name": pkg,
         "installed_version": installed_version,
         "stock_apk_path": stock_apk
     }))
+}
+
+async fn get_youtube_info() -> impl IntoResponse {
+    get_app_info(axum::extract::Query(AppQuery { pkg: Some("com.google.android.youtube".to_string()) })).await
 }
 
 async fn install_jre(State(state): State<AppState>) -> impl IntoResponse {
@@ -118,49 +132,59 @@ async fn stream_logs(
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
 
-async fn mount_youtube(State(state): State<AppState>) -> impl IntoResponse {
-    let patched_apk = state.modpath.join("app").join("YouTubeRevanced.apk");
-
-    if !patched_apk.exists() {
+async fn mount_apps(State(state): State<AppState>) -> impl IntoResponse {
+    let app_dir = state.modpath.join("app");
+    if !app_dir.exists() {
         return (
             StatusCode::NOT_FOUND,
-            Json(json!({ "error": "Patched APK not found in module directory. Please patch first." })),
+            Json(json!({ "error": "No app directory found. Please patch an application first." })),
         );
     }
 
     #[cfg(unix)]
     {
-        let cmd = format!(
-            "STOCKAPK=$(pm path com.google.android.youtube 2>/dev/null | grep base | cut -d: -f2 | head -n 1); \
-             if [ -n \"$STOCKAPK\" ]; then \
-                 chcon u:object_r:apk_data_file:s0 \"{}\"; \
-                 mount -o bind \"{}\" \"$STOCKAPK\"; \
-                 am force-stop com.google.android.youtube; \
-                 am start -n com.google.android.youtube/com.google.android.apps.youtube.app.WatchWhileActivity; \
-                 echo 'MOUNT_SUCCESS'; \
-             else \
-                 echo 'STOCK_NOT_FOUND'; \
-             fi",
-            patched_apk.display(),
-            patched_apk.display()
-        );
-
-        match run_shell_command(&cmd).await {
-            Ok(out) if out.contains("MOUNT_SUCCESS") => {
-                state.log("🎉 Successfully hot-mounted YouTube RVX without rebooting!");
-                (
-                    StatusCode::OK,
-                    Json(json!({ "success": true, "message": "YouTube RVX hot-mounted and restarted successfully!" })),
-                )
+        let mut mounted_count = 0;
+        if let Ok(mut entries) = tokio::fs::read_dir(&app_dir).await {
+            while let Ok(Some(entry)) = entries.next_entry().await {
+                let p = entry.path();
+                if p.extension().map_or(false, |ext| ext == "apk") {
+                    let file_name = p.file_name().unwrap_or_default().to_string_lossy().to_string();
+                    let pkg = resolve_pkg_from_filename(&file_name);
+                    let cmd = format!(
+                        "STOCKAPK=$(pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n 1); \
+                         if [ -n \"$STOCKAPK\" ]; then \
+                             chcon u:object_r:apk_data_file:s0 \"{}\"; \
+                             mount -o bind \"{}\" \"$STOCKAPK\"; \
+                             am force-stop {}; \
+                             echo 'MOUNT_SUCCESS'; \
+                         else \
+                             echo 'STOCK_NOT_FOUND'; \
+                         fi",
+                        pkg,
+                        p.display(),
+                        p.display(),
+                        pkg
+                    );
+                    if let Ok(out) = run_shell_command(&cmd).await {
+                        if out.contains("MOUNT_SUCCESS") {
+                            state.log(format!("🎉 Hot-mounted {} ({}) successfully!", pkg, file_name));
+                            mounted_count += 1;
+                        }
+                    }
+                }
             }
-            Ok(out) => (
+        }
+
+        if mounted_count > 0 {
+            (
+                StatusCode::OK,
+                Json(json!({ "success": true, "message": format!("Successfully mounted {} app(s)!", mounted_count) })),
+            )
+        } else {
+            (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "error": format!("Mount script output: {}", out) })),
-            ),
-            Err(e) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({ "error": format!("Failed to run mount command: {}", e) })),
-            ),
+                Json(json!({ "error": "No patched apps could be mounted. Ensure target app is installed on device." })),
+            )
         }
     }
 
@@ -174,20 +198,52 @@ async fn mount_youtube(State(state): State<AppState>) -> impl IntoResponse {
     }
 }
 
+#[allow(dead_code)]
+fn resolve_pkg_from_filename(name: &str) -> String {
+    let lower = name.to_lowercase();
+    if lower.contains("music") || lower.contains("ytmusic") {
+        "com.google.android.apps.youtube.music".to_string()
+    } else if lower.contains("youtube") {
+        "com.google.android.youtube".to_string()
+    } else if lower.contains("reddit") {
+        "com.reddit.frontpage".to_string()
+    } else if lower.contains("twitter") {
+        "com.twitter.android".to_string()
+    } else if lower.contains("tiktok") {
+        "com.zhiliaoapp.musically".to_string()
+    } else if name.starts_with("com.") {
+        name.trim_end_matches(".apk").to_string()
+    } else {
+        "com.google.android.youtube".to_string()
+    }
+}
+
 async fn export_zip(State(state): State<AppState>) -> impl IntoResponse {
-    let patched_apk = state.modpath.join("app").join("YouTubeRevanced.apk");
-    if !patched_apk.exists() {
+    let app_dir = state.modpath.join("app");
+    let mut has_apk = false;
+    if app_dir.exists() {
+        if let Ok(mut entries) = tokio::fs::read_dir(&app_dir).await {
+            while let Ok(Some(entry)) = entries.next_entry().await {
+                if entry.path().extension().map_or(false, |ext| ext == "apk") {
+                    has_apk = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if !has_apk {
         return (
             StatusCode::NOT_FOUND,
-            Json(json!({ "error": "Patched APK not found. Please patch first." })),
+            Json(json!({ "error": "No patched APK found in app directory. Please patch first." })),
         );
     }
 
     let download_dir = Path::new("/sdcard/Download");
     let export_path = if download_dir.exists() {
-        download_dir.join("YouTube-RVX-Flashable.zip")
+        download_dir.join("RVX-MultiApp-Flashable.zip")
     } else {
-        state.modpath.join("YouTube-RVX-Flashable.zip")
+        state.modpath.join("RVX-MultiApp-Flashable.zip")
     };
 
     match crate::cli::run_pack(state.modpath.clone(), Some(export_path.clone())).await {

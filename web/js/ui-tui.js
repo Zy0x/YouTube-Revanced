@@ -16,13 +16,14 @@ function renderTuiView() {
   if (STATE.tuiScreen === 'main') {
     if (titleEl) titleEl.textContent = '| Main Menu |';
     const menuItems = [
-      { num: '1', label: 'Patch App', sub: `v${STATE.currentVersion}`, action: () => triggerBuildPipeline() },
-      { num: '2', label: 'Change Source', sub: srcName, action: () => { STATE.tuiScreen = 'source'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '3', label: 'Select Version', sub: `v${STATE.currentVersion}`, action: () => { STATE.tuiScreen = 'version'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '4', label: 'Edit Patches', sub: `${active}/${total}`, action: () => { STATE.tuiScreen = 'patches'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '5', label: 'Edit Patch Options', sub: 'Options', action: () => { STATE.tuiScreen = 'options'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '6', label: 'Preset Manager', sub: 'JSON', action: () => { STATE.tuiScreen = 'presets'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
-      { num: '7', label: 'Settings', sub: STATE.engineMode === 'local' ? 'Local' : 'Cloud', action: () => { document.getElementById('settingsModal')?.classList.remove('hidden'); } }
+      { num: '1', label: 'Select App', sub: STATE.currentApp?.name || 'YouTube', action: () => { STATE.tuiScreen = 'app'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '2', label: 'Patch App', sub: `v${STATE.currentVersion}`, action: () => triggerBuildPipeline() },
+      { num: '3', label: 'Change Source', sub: srcName, action: () => { STATE.tuiScreen = 'source'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '4', label: 'Select Version', sub: `v${STATE.currentVersion}`, action: () => { STATE.tuiScreen = 'version'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '5', label: 'Edit Patches', sub: `${active}/${total}`, action: () => { STATE.tuiScreen = 'patches'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '6', label: 'Edit Patch Options', sub: 'Options', action: () => { STATE.tuiScreen = 'options'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '7', label: 'Preset Manager', sub: 'JSON', action: () => { STATE.tuiScreen = 'presets'; STATE.tuiSelectedIndex = 0; renderTuiView(); } },
+      { num: '8', label: 'Settings', sub: STATE.engineMode === 'local' ? 'Local' : 'Cloud', action: () => { document.getElementById('settingsModal')?.classList.remove('hidden'); } }
     ];
 
     menuItems.forEach((item, idx) => {
@@ -39,6 +40,31 @@ function renderTuiView() {
       row.addEventListener('click', () => {
         STATE.tuiSelectedIndex = idx;
         item.action();
+      });
+      bodyEl.appendChild(row);
+    });
+    return;
+  }
+
+  if (STATE.tuiScreen === 'app') {
+    if (titleEl) titleEl.textContent = '| Select Application |';
+    (STATE.availableApps || []).forEach((app, idx) => {
+      const isCur = STATE.currentApp && STATE.currentApp.packageName === app.packageName;
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = `tui-menu-row ${isCur ? 'tui-row-active' : ''}`;
+      row.innerHTML = `
+        <div class="tui-row-left">
+          <span class="tui-row-num">${isCur ? '(*)' : '( )'}</span>
+          <span>${escapeHtml(app.name)}</span>
+        </div>
+        <span class="tui-row-sub">${app.patchCount} patches</span>
+      `;
+      row.addEventListener('click', () => {
+        STATE.tuiSelectedIndex = idx;
+        selectApp(app.packageName);
+        STATE.tuiScreen = 'main';
+        renderTuiView();
       });
       bodyEl.appendChild(row);
     });

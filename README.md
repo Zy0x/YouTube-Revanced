@@ -111,6 +111,12 @@ To ensure maximum maintainability and prevent code bloat:
 - **Modular Stylesheets**: Split cleanly into `web/css/base.css`, `web/css/morphe.css`, `web/css/tui.css`, `web/css/responsive.css`, and `web/style.css`.
 - **Modular Rust CLI**: Split into `daemon/src/cli/` submodules (`service.rs`, `action.rs`, `install.rs`, `uninstall.rs`, `pack.rs`).
 
+### 3. Universal Multi-Application Support Across All `.mpp` Bundles
+The patch engine dynamically discovers and supports **every application** packaged within any `.mpp` patch bundle (including YouTube, YouTube Music, Reddit, Twitter/X, TikTok, and arbitrary custom apps):
+- **Universal Manifest Normalization**: Parses and normalizes diverse manifest schemas (Morphe `targets` array, Anddea/Inotia00 package mappings, and ReVanced lists) with automatic package detection.
+- **Dynamic Theming & App Cards**: Generates styled Morphe gradient cards and Termux TUI menu items per application with accurate patch counts, target version options, and custom icons.
+- **Concurrent Multi-App Magisk Bind Mounts**: Mounts all patched applications present in `$MODPATH/app/` (`YouTubeRevanced.apk`, `YouTubeMusicRevanced.apk`, `RedditRevanced.apk`, etc.) into their respective device base APK locations simultaneously.
+
 ## 📜 Sources & References  
 - 🔧 [Revancify Tools](https://github.com/decipher3114/Revancify)
 - 🔧 [Revancify Xisr Tools](https://github.com/Xisrr1/Revancify-Xisr)

@@ -20,7 +20,7 @@ use state::AppState;
 #[derive(Parser, Debug)]
 #[command(
     name = "rvx-daemon",
-    version = "2.1.9",
+    version = env!("CARGO_PKG_VERSION"),
     about = "YouTube RVX High-Performance Native Core & On-Device Daemon"
 )]
 struct CliArgs {

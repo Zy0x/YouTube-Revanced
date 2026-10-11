@@ -1,7 +1,55 @@
 /**
  * YouTube RVX — Morphe UI Renderers & Pipeline
- * Version: 2.1.9
+ * Version: 2.1.10
  */
+
+function renderAppCards() {
+  const container = document.getElementById('homeAppsGrid');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const apps = STATE.availableApps || [];
+  if (apps.length === 0) {
+    container.innerHTML = '<div class="morphe-ver-row"><span class="morphe-muted-hint">Loading supported applications...</span></div>';
+    return;
+  }
+
+  apps.forEach(app => {
+    const isSelected = STATE.currentApp && STATE.currentApp.packageName === app.packageName;
+    const card = document.createElement('div');
+    card.className = `morphe-app-card ${isSelected ? 'active-app' : ''}`;
+    card.setAttribute('role', 'radio');
+    card.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+    card.setAttribute('tabindex', '0');
+    card.style.setProperty('--app-bg-gradient', app.gradient);
+
+    card.innerHTML = `
+      <div class="yt-card-icon" style="background:${app.accentColor || '#B42323'};" aria-hidden="true">
+        ${app.iconSvg}
+      </div>
+      <div class="yt-card-text">
+        <h2 class="yt-card-title">${escapeHtml(app.name)}</h2>
+        <p class="yt-card-sub">v${escapeHtml(app.recommendedVersion)} • ${app.patchCount} patches available</p>
+      </div>
+      <div class="app-card-arrow" aria-hidden="true">›</div>
+    `;
+
+    const handleClick = () => {
+      selectApp(app.packageName);
+      switchScreen('version');
+    };
+
+    card.addEventListener('click', handleClick);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleClick();
+      }
+    });
+
+    container.appendChild(card);
+  });
+}
 
 function renderSourceCards() {
   const container = document.getElementById('sourceCardsGrid');
@@ -238,17 +286,32 @@ function resetPatchOptionsModal() {
 }
 
 function syncAllSummaries() {
-  const total = STATE.patches.length || 83;
+  const total = STATE.patches.length || 0;
   const active = STATE.selectedPatches.size;
-  const ver = STATE.currentVersion || '21.13.164';
+  const ver = STATE.currentVersion || 'latest';
   const srcName = getSourceDisplayName(STATE.currentSource);
-  const statusSuffix = STATE.installedVersion ? 'Installed' : 'Not patched yet';
+  const appName = STATE.currentApp?.name || 'YouTube';
+  const statusSuffix = STATE.installedVersion ? 'Installed' : 'Ready to patch';
 
   setText('homeCardMeta', `v${ver} • ${statusSuffix}`);
+  setText('expertAppName', appName);
+  setText('versionAppHeading', appName);
   setText('expertHeaderSource', `${srcName} Patches`);
   setText('expertCounterText', `${active}/${total}`);
   setText('progressPatchRatio', `${active} / ${total}`);
   setText('sourceSheetPatchCount', `${total} ›`);
+
+  const headerEl = document.getElementById('morpheExpertHeader');
+  if (headerEl && STATE.currentApp?.gradient) {
+    headerEl.style.background = STATE.currentApp.gradient;
+  }
+  const headerIconEl = document.getElementById('expertHeaderAppIcon');
+  if (headerIconEl && STATE.currentApp?.iconSvg) {
+    headerIconEl.innerHTML = STATE.currentApp.iconSvg;
+    if (STATE.currentApp.accentColor) {
+      headerIconEl.style.background = STATE.currentApp.accentColor;
+    }
+  }
 
   setText('infoTargetVersion', `v${ver}`);
   setText('infoActiveSource', `${srcName} (${STATE.patchTag})`);
@@ -260,7 +323,7 @@ function syncAllSummaries() {
       : 'GitHub Actions Cloud'
   );
 
-  setText('tuiDialogSubtitle', `YouTube v${ver} • ${srcName} (${active}/${total})`);
+  setText('tuiDialogSubtitle', `${appName} v${ver} • ${srcName} (${active}/${total})`);
 }
 
 function triggerBuildPipeline() {
@@ -292,13 +355,15 @@ async function triggerLocalPatch() {
   setText('telemetryCpuVal', '41%');
   setText('telemetryIoVal', '240 KB/s');
 
-  appendTerminalLog(`Starting patcher for YouTube v${STATE.currentVersion}`, 'I');
+  const appName = STATE.currentApp?.name || 'YouTube';
+  appendTerminalLog(`Starting patcher for ${appName} v${STATE.currentVersion}`, 'I');
 
   const allPatchNames = STATE.patches.map(p => p.name);
   const excludedPatches = allPatchNames.filter(name => !STATE.selectedPatches.has(name));
   const includedPatches = Array.from(STATE.selectedPatches);
 
   const payload = {
+    package_name: STATE.currentApp?.packageName || 'com.google.android.youtube',
     target_version: STATE.currentVersion,
     patch_source: STATE.currentSource,
     patch_tag: STATE.patchTag,
@@ -381,6 +446,9 @@ async function triggerCloudBuild() {
     const payload = {
       event_type: 'build-rvx',
       client_payload: {
+        package_name: STATE.currentApp?.packageName || 'com.google.android.youtube',
+        app_name: STATE.currentApp?.name || 'YouTube',
+        target_version: STATE.currentVersion,
         youtube_version: STATE.currentVersion,
         patch_source: STATE.currentSource,
         patch_tag: STATE.patchTag || 'dev',
