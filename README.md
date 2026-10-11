@@ -117,6 +117,13 @@ The patch engine dynamically discovers and supports **every application** packag
 - **Dynamic Theming & App Cards**: Generates styled Morphe gradient cards and Termux TUI menu items per application with accurate patch counts, target version options, and custom icons.
 - **Concurrent Multi-App Magisk Bind Mounts**: Mounts all patched applications present in `$MODPATH/app/` (`YouTubeRevanced.apk`, `YouTubeMusicRevanced.apk`, `RedditRevanced.apk`, etc.) into their respective device base APK locations simultaneously.
 
+### 4. Flexible & Unlimited Patch Sources Ecosystem
+The engine supports unlimited patch sources without hardcoded constraints:
+- **1:1 Authentic Morphe Sources Sheet**: Mirrors `MorpheApp/morphe-manager` (`01-sources-sheet.jpg`) with source avatars, `Pre-installed`/`Custom` badges, detailed metrics (`Patches ›`, `Version ›`, `Apps ›`), browser launch, refresh, and Material 3 toggles for `Pre-release patches` and `Experimental app versions`.
+- **Custom Source Addition & Management**: Add any public or private GitHub repository (`owner/repo`) or raw JSON manifest link with persistent `localStorage` storage and live switching.
+- **Pre-Configured RVX Catalog**: Anddea Patches (`anddea/revanced-patches`), Morphe Official (`MorpheApp/morphe-patches`), Inotia00 RVX (`inotia00/revanced-patches`), and ReVanced Official (`ReVanced/revanced-patches`).
+- **Termux TUI Native Management**: Add, delete, and switch custom sources seamlessly inside the Revancify-Xisr terminal interface.
+
 ## 📜 Sources & References  
 - 🔧 [Revancify Tools](https://github.com/decipher3114/Revancify)
 - 🔧 [Revancify Xisr Tools](https://github.com/Xisrr1/Revancify-Xisr)

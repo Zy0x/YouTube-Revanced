@@ -64,11 +64,29 @@ body {
 }
 
 button,
-input,
-select {
+input {
   font-family: inherit;
   font-size: inherit;
   color: inherit;
+}
+
+select,
+.morphe-select {
+  font-family: inherit;
+  font-size: 14px;
+  color: #FFFFFF;
+  background-color: #1A1E27;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  padding: 8px 12px;
+  min-height: 44px;
+  outline: none;
+  cursor: pointer;
+}
+
+select option {
+  background-color: #1A1E27;
+  color: #FFFFFF;
 }
 
 /* Authentic Morphe Floating Bokeh Canvas */

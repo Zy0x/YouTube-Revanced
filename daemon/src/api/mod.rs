@@ -45,7 +45,7 @@ async fn get_status(State(state): State<AppState>) -> impl IntoResponse {
 
     Json(json!({
         "status": "online",
-        "daemon_version": "2.1.10",
+        "daemon_version": env!("CARGO_PKG_VERSION"),
         "is_patching": is_patching,
         "jre_ready": jre_ready,
         "is_android": cfg!(target_os = "android") || cfg!(target_family = "unix"),

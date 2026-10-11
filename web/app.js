@@ -1,6 +1,6 @@
 /**
  * YouTube RVX — Application Bootstrap & Event Orchestrator
- * Version: 2.1.10
+ * Version: 2.1.11
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -128,6 +128,7 @@ function initEventListeners() {
 
   // Home Bottom Dock ([ Sources ] & [ Settings ])
   document.getElementById('btnOpenSourcesModal')?.addEventListener('click', () => {
+    renderSourceCards();
     document.getElementById('sourcesModal')?.classList.remove('hidden');
   });
   document.getElementById('btnCloseSourcesModal')?.addEventListener('click', () => {
@@ -135,6 +136,56 @@ function initEventListeners() {
   });
   document.getElementById('btnDoneSourcesModal')?.addEventListener('click', () => {
     document.getElementById('sourcesModal')?.classList.add('hidden');
+  });
+
+  // Sources Sheet: Add Custom Source & Reset
+  document.getElementById('btnOpenAddSourceForm')?.addEventListener('click', () => {
+    const form = document.getElementById('addSourceFormContainer');
+    form?.classList.toggle('hidden');
+    if (form && !form.classList.contains('hidden')) {
+      document.getElementById('inputCustomSourceName')?.focus();
+    }
+  });
+  document.getElementById('btnCancelAddSource')?.addEventListener('click', () => {
+    document.getElementById('addSourceFormContainer')?.classList.add('hidden');
+  });
+
+  document.getElementById('btnSaveCustomSource')?.addEventListener('click', async () => {
+    const nameInput = document.getElementById('inputCustomSourceName');
+    const repoInput = document.getElementById('inputCustomSourceRepo');
+    const channelSelect = document.getElementById('selectCustomSourceChannel');
+
+    const name = nameInput?.value.trim();
+    const repoOrUrl = repoInput?.value.trim();
+    const channel = channelSelect?.value || 'latest';
+
+    if (!repoOrUrl) {
+      alert('Please enter a GitHub repository (e.g. user/repo) or a valid manifest URL.');
+      repoInput?.focus();
+      return;
+    }
+
+    const newSource = addCustomSource({
+      name: name || repoOrUrl,
+      repository: repoOrUrl,
+      defaultReleaseType: channel
+    });
+
+    if (newSource) {
+      document.getElementById('addSourceFormContainer')?.classList.add('hidden');
+      if (nameInput) nameInput.value = '';
+      if (repoInput) repoInput.value = '';
+      renderSourceCards();
+      await selectPatchSource(newSource.id);
+    }
+  });
+
+  document.getElementById('btnResetSourcesDefault')?.addEventListener('click', async () => {
+    if (confirm('Reset all patch sources back to default factory settings?')) {
+      resetSourcesToDefault();
+      renderSourceCards();
+      await selectPatchSource('anddea');
+    }
   });
 
   document.getElementById('btnOpenSettingsModal')?.addEventListener('click', () => {

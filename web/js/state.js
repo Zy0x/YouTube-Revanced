@@ -1,6 +1,6 @@
 /**
  * YouTube RVX — State Management & Constants
- * Version: 2.1.9
+ * Version: 2.1.11
  */
 
 const STATE = {
@@ -21,11 +21,13 @@ const STATE = {
   },
 
   sources: [],
-  currentSource: 'anddea',
+  currentSource: localStorage.getItem('rvx_active_source') || 'anddea',
   patchTag: 'dev',
   patchReleases: [],
   currentVersion: '21.13.164',
-  showAllVersions: false,
+  showAllVersions: localStorage.getItem('rvx_experimental_app_versions') === 'true',
+  preReleasePatches: localStorage.getItem('rvx_pre_release_patches') !== 'false',
+  experimentalAppVersions: localStorage.getItem('rvx_experimental_app_versions') === 'true',
   recommendedVersion: '21.13.164',
   installedVersion: null,
   catalogVersions: [],
@@ -46,7 +48,7 @@ const STATE = {
   engineMode: 'local',
   daemonOnline: false,
   daemonUrl: '',
-  daemonVersion: '2.1.10',
+  daemonVersion: '2.1.11',
   eventSource: null,
   logHistory: [
     { type: 'I', text: 'Remove background playback restrictions succeeded' },
@@ -63,19 +65,27 @@ const SVG_THUMB = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" s
 const DEFAULT_SOURCES = [
   {
     id: 'anddea',
-    name: 'Anddea',
+    name: 'Anddea Patches',
     repository: 'anddea/revanced-patches',
     manifestUrl: 'https://raw.githubusercontent.com/anddea/revanced-patches/refs/heads/main/patches-list.json',
     defaultReleaseType: 'dev',
-    isDefault: true
+    isDefault: true,
+    isPreinstalled: true,
+    avatarText: 'A',
+    avatarColor: '#E53E3E',
+    description: 'Feature-rich ReVanced Extended patches with deep customization'
   },
   {
     id: 'morphe',
-    name: 'Morphe Official',
+    name: 'Morphe Patches',
     repository: 'MorpheApp/morphe-patches',
     manifestUrl: 'https://raw.githubusercontent.com/MorpheApp/morphe-patches/refs/heads/main/patches-list.json',
     defaultReleaseType: 'latest',
-    isDefault: false
+    isDefault: false,
+    isPreinstalled: true,
+    avatarText: 'M',
+    avatarColor: '#3182CE',
+    description: 'Official patches curated by the Morphe ecosystem team'
   },
   {
     id: 'inotia00',
@@ -83,15 +93,23 @@ const DEFAULT_SOURCES = [
     repository: 'inotia00/revanced-patches',
     manifestUrl: 'https://raw.githubusercontent.com/inotia00/revanced-patches/refs/heads/revanced-extended/patches.json',
     defaultReleaseType: 'latest',
-    isDefault: false
+    isDefault: false,
+    isPreinstalled: true,
+    avatarText: 'I',
+    avatarColor: '#805AD5',
+    description: 'Classic ReVanced Extended patches by developer inotia00'
   },
   {
     id: 'revanced',
-    name: 'ReVanced',
+    name: 'ReVanced Official',
     repository: 'ReVanced/revanced-patches',
     manifestUrl: 'https://raw.githubusercontent.com/ReVanced/revanced-patches/refs/heads/main/patches.json',
     defaultReleaseType: 'latest',
-    isDefault: false
+    isDefault: false,
+    isPreinstalled: true,
+    avatarText: 'R',
+    avatarColor: '#38A169',
+    description: 'Official upstream patches from the ReVanced Project team'
   }
 ];
 
@@ -189,4 +207,83 @@ function setText(id, text) {
   const el = document.getElementById(id);
   if (el) el.textContent = text;
 }
+
+function loadPersistedSources() {
+  try {
+    const raw = localStorage.getItem('rvx_sources_v2');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (_) {}
+  return JSON.parse(JSON.stringify(DEFAULT_SOURCES));
+}
+
+function savePersistedSources(sources) {
+  try {
+    localStorage.setItem('rvx_sources_v2', JSON.stringify(sources));
+  } catch (_) {}
+}
+
+function addCustomSource(source) {
+  if (!source || (!source.repository && !source.manifestUrl)) return null;
+  const rawInput = (source.repository || source.manifestUrl || '').trim();
+  const cleanRepo = rawInput.replace(/^https?:\/\/github\.com\//i, '').replace(/\/$/, '');
+  
+  const isUrl = cleanRepo.startsWith('http://') || cleanRepo.startsWith('https://');
+  const id = (source.id || (isUrl ? 'custom_' + Date.now().toString(36) : cleanRepo.replace(/[\/\.-]/g, '_').toLowerCase())).slice(0, 32);
+  const name = (source.name || (isUrl ? 'Custom Feed' : cleanRepo.split('/')[1] || cleanRepo)).trim();
+  
+  const manifestUrl = isUrl 
+    ? cleanRepo 
+    : `https://raw.githubusercontent.com/${cleanRepo}/refs/heads/main/patches-list.json`;
+
+  const newSource = {
+    id,
+    name,
+    repository: isUrl ? '' : cleanRepo,
+    manifestUrl,
+    defaultReleaseType: source.defaultReleaseType || 'latest',
+    isDefault: false,
+    isPreinstalled: false,
+    avatarText: name.charAt(0).toUpperCase() || 'C',
+    avatarColor: '#4FD1C5',
+    description: source.description || (isUrl ? `Custom URL: ${cleanRepo}` : `GitHub: ${cleanRepo}`)
+  };
+
+  const existingIdx = STATE.sources.findIndex(s => s.id === id);
+  if (existingIdx !== -1) {
+    STATE.sources[existingIdx] = newSource;
+  } else {
+    STATE.sources.push(newSource);
+  }
+
+  savePersistedSources(STATE.sources);
+  return newSource;
+}
+
+function deleteCustomSource(sourceId) {
+  const idx = STATE.sources.findIndex(s => s.id === sourceId);
+  if (idx === -1) return false;
+
+  STATE.sources.splice(idx, 1);
+  if (STATE.sources.length === 0) {
+    STATE.sources = JSON.parse(JSON.stringify(DEFAULT_SOURCES));
+  }
+  savePersistedSources(STATE.sources);
+
+  if (STATE.currentSource === sourceId) {
+    STATE.currentSource = STATE.sources[0].id;
+    localStorage.setItem('rvx_active_source', STATE.currentSource);
+  }
+  return true;
+}
+
+function resetSourcesToDefault() {
+  STATE.sources = JSON.parse(JSON.stringify(DEFAULT_SOURCES));
+  savePersistedSources(STATE.sources);
+  STATE.currentSource = 'anddea';
+  localStorage.setItem('rvx_active_source', 'anddea');
+}
+
 

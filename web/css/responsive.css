@@ -100,76 +100,377 @@
   }
 }
 
-.source-card {
-  background: #1D202A;
-  border: 1px solid var(--morphe-border);
-  border-radius: 16px;
-  padding: 12px;
+/* 1:1 Morphe Multi-Source Management & Layout */
+.modal-header-split {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-circle-blue {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #203A63;
+  border: 1px solid rgba(164, 201, 255, 0.45);
+  color: #D6E6FF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  min-height: 54px;
+  transition: all 0.18s ease;
+}
+
+.icon-circle-blue:hover {
+  background: #2B4E85;
+  color: #FFFFFF;
+  transform: scale(1.05);
+}
+
+.morphe-add-source-form {
+  background: #151821;
+  border: 1px solid rgba(164, 201, 255, 0.2);
+  border-radius: 18px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: fadeIn 0.2s ease;
+}
+
+.form-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #E2E8F0;
+}
+
+.form-cancel-btn {
+  background: none;
+  border: none;
+  color: #94A3B8;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--morphe-text-sub);
+}
+
+/* Sources Selection Bar */
+.morphe-sources-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.source-card {
+  background: #181B24;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 8px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 48px;
+  transition: all 0.18s ease;
+}
+
+.source-card:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: #1E222D;
 }
 
 .source-card.active {
-  background: #1B3252;
-  border-color: var(--morphe-sky);
+  background: #172B47;
+  border-color: #8AB4F8;
+  box-shadow: 0 0 0 1px #8AB4F8;
 }
 
-.source-card-header {
+.source-card-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 12px;
+  color: #FFFFFF;
+  flex-shrink: 0;
+}
+
+.source-card-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.source-card-title {
+  font-size: 12.5px;
   font-weight: 700;
-  font-size: 14px;
+  color: var(--morphe-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.source-card-tag {
+  font-size: 10px;
+  color: var(--morphe-text-sub);
 }
 
 .source-card-check {
-  color: var(--morphe-sky);
+  color: #8AB4F8;
+  font-weight: 800;
+  font-size: 13px;
+  flex-shrink: 0;
 }
 
-.source-card-repo {
+/* 1:1 Morphe Active Source Box (01-sources-sheet.jpg) */
+.morphe-source-card-active {
+  background: #1B2129;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.source-active-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.source-active-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+  color: #FFFFFF;
+  flex-shrink: 0;
+}
+
+.source-active-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.source-active-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1.2;
+}
+
+.source-active-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.source-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #2A323D;
+  color: #C2CBD6;
+}
+
+.source-badge-custom {
+  background: #1E3A2F;
+  color: #86EFAC;
+}
+
+.source-active-repo {
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--morphe-text-sub);
-  margin-top: 3px;
 }
 
-.morphe-source-details-box {
-  background: #111319;
-  border: 1px solid var(--morphe-border);
-  border-radius: 18px;
-  padding: 12px 14px;
+/* Active Source Info Rows */
+.source-info-rows {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
-.source-detail-row {
+.source-info-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  background: #252D38;
+  border-radius: 14px;
+  padding: 12px 14px;
   font-size: 13.5px;
+  color: var(--morphe-text);
+  min-height: 48px;
 }
 
-.mono-code {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--morphe-sky);
+.source-info-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--morphe-text-sub);
 }
 
-.morphe-select {
-  min-height: 44px;
-  padding: 6px 12px;
-  border-radius: 12px;
-  background: #1C1F29;
-  border: 1px solid var(--morphe-border-strong);
+.source-info-val {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
   color: var(--morphe-text);
 }
 
-.source-detail-actions {
+.source-chevron {
+  color: var(--morphe-text-sub);
+  font-weight: 400;
+}
+
+/* Active Source Action Row */
+.source-active-actions {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
+  margin-top: 4px;
+}
+
+.source-btn-delete {
+  background: #3F191C;
+  border: 1px solid #7D363B;
+  color: #FFDAD6;
+  min-height: 44px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.source-btn-delete:hover {
+  background: #5A2227;
+}
+
+/* Material 3 Toggle Switches (01-sources-sheet.jpg) */
+.morphe-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.morphe-switch-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.morphe-switch-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--morphe-text);
+}
+
+.morphe-switch-desc {
+  font-size: 12px;
+  color: var(--morphe-text-sub);
+  line-height: 1.35;
+}
+
+.morphe-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.morphe-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.morphe-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #2D323A;
+  border: 2px solid #575D68;
+  border-radius: 999px;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.morphe-switch-slider::before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 5px;
+  background-color: #9AA0A6;
+  border-radius: 50%;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.morphe-switch input:checked + .morphe-switch-slider {
+  background-color: #A8C7FA;
+  border-color: #A8C7FA;
+}
+
+.morphe-switch input:checked + .morphe-switch-slider::before {
+  transform: translateX(20px);
+  background-color: #062E6F;
+}
+
+.sources-sheet-footer-links {
+  text-align: center;
+  margin-top: 10px;
 }
 
 .morphe-opt-card {

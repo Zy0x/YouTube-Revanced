@@ -409,40 +409,78 @@
     </div>
   </div>
 
-  <!-- 1. Authentic Morphe Sources Bottom Sheet (01-sources-sheet.jpg) -->
+  <!-- 1. Authentic Morphe Sources Bottom Sheet (1:1 with Morphe Manager) -->
   <div id="sourcesModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalSourcesTitle">
     <div class="modal-card morphe-sheet-card">
       <div class="sheet-grab-handle" aria-hidden="true"></div>
-      <div class="modal-header">
-        <h3 id="modalSourcesTitle" class="modal-title">Sources</h3>
-        <button type="button" id="btnCloseSourcesModal" class="btn-close" aria-label="Close Sources">&times;</button>
+      <div class="modal-header modal-header-split">
+        <div>
+          <h3 id="modalSourcesTitle" class="modal-title">Patch sources</h3>
+          <p id="modalSourcesCountSub" class="modal-subtitle">4 sources available</p>
+        </div>
+        <div class="modal-header-actions">
+          <button type="button" id="btnOpenAddSourceForm" class="icon-circle-btn icon-circle-blue" title="Add custom patch source" aria-label="Add custom patch source">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <button type="button" id="btnCloseSourcesModal" class="btn-close" aria-label="Close Sources">&times;</button>
+        </div>
       </div>
       <div class="modal-body">
-        <div id="sourceCardsGrid" class="morphe-sources-list" role="radiogroup" aria-label="Select Patch Source">
-          <!-- Populated by app.js -->
-        </div>
-
-        <div class="morphe-source-details-box">
-          <div class="source-detail-row">
-            <span>Patches</span>
-            <strong id="sourceSheetPatchCount">83 ›</strong>
+        <!-- Collapsible Add Custom Source Form -->
+        <div id="addSourceFormContainer" class="morphe-add-source-form hidden" aria-label="Add custom source form">
+          <div class="form-title-row">
+            <span class="form-title">Add custom patch source</span>
+            <button type="button" id="btnCancelAddSource" class="form-cancel-btn" aria-label="Close add form">&times;</button>
           </div>
-          <div class="source-detail-row">
-            <label for="selectPatchRelease">Channel</label>
-            <select id="selectPatchRelease" class="morphe-select" aria-label="Release Channel">
-              <option value="dev" selected>Pre-release / Dev</option>
-              <option value="latest">Stable / Official</option>
+          <div class="form-group">
+            <label for="inputCustomSourceName">Source Name</label>
+            <input type="text" id="inputCustomSourceName" class="morphe-input" placeholder="e.g. My Custom Patches" maxlength="40">
+          </div>
+          <div class="form-group">
+            <label for="inputCustomSourceRepo">GitHub Repository or Manifest URL</label>
+            <input type="text" id="inputCustomSourceRepo" class="morphe-input" placeholder="e.g. owner/repo or https://.../patches-list.json">
+            <small class="morphe-muted-hint">Accepts GitHub owner/repo (e.g. user/patches) or raw manifest link</small>
+          </div>
+          <div class="form-group">
+            <label for="selectCustomSourceChannel">Default Channel</label>
+            <select id="selectCustomSourceChannel" class="morphe-select">
+              <option value="latest" selected>Stable / Official</option>
+              <option value="dev">Pre-release / Dev</option>
             </select>
           </div>
-          <p id="patchReleaseHint" class="morphe-muted-hint">Loading release channels...</p>
-          <div class="source-detail-actions">
-            <button type="button" id="btnViewPatchNotes" class="morphe-pill-btn morphe-pill-outline btn-sm">
-              Release notes
-            </button>
-            <a id="linkSourceRepo" href="https://github.com/anddea/revanced-patches" target="_blank" rel="noopener noreferrer" class="morphe-pill-btn morphe-pill-outline btn-sm">
-              Open in browser
-            </a>
+          <div class="form-actions">
+            <button type="button" id="btnSaveCustomSource" class="morphe-pill-btn morphe-pill-sky btn-block">Add &amp; Activate Source</button>
           </div>
+        </div>
+
+        <!-- Sources Horizontal / Selection Grid -->
+        <div id="sourceCardsGrid" class="morphe-sources-list" role="radiogroup" aria-label="Select Patch Source">
+          <!-- Populated by ui-morphe.js -->
+        </div>
+
+        <!-- 1:1 Morphe Active Source Detailed Box (01-sources-sheet.jpg) -->
+        <div id="activeSourceDetailsBox" class="morphe-source-card-active">
+          <!-- Populated dynamically by ui-morphe.js -->
+        </div>
+
+        <!-- Hidden Legacy Elements For Script Parity -->
+        <div class="hidden" aria-hidden="true">
+          <select id="selectPatchRelease">
+            <option value="dev">Pre-release / Dev</option>
+            <option value="latest">Stable / Official</option>
+          </select>
+          <span id="patchReleaseHint"></span>
+          <span id="sourceSheetPatchCount"></span>
+          <span id="sourceSheetVersion"></span>
+          <button type="button" id="btnViewPatchNotes"></button>
+          <a id="linkSourceRepo" href="#"></a>
+        </div>
+
+        <!-- Reset Sources Subtle Action -->
+        <div class="sources-sheet-footer-links">
+          <button type="button" id="btnResetSourcesDefault" class="morphe-subtle-link">
+            Reset sources to defaults
+          </button>
         </div>
       </div>
       <div class="modal-footer">
@@ -600,10 +638,10 @@
     </div>
   </div>
 
-  <script src="js/state.js?v=2.1.10"></script>
-  <script src="js/api.js?v=2.1.10"></script>
-  <script src="js/ui-morphe.js?v=2.1.10"></script>
-  <script src="js/ui-tui.js?v=2.1.10"></script>
-  <script src="app.js?v=2.1.10"></script>
+  <script src="js/state.js?v=2.1.11"></script>
+  <script src="js/api.js?v=2.1.11"></script>
+  <script src="js/ui-morphe.js?v=2.1.11"></script>
+  <script src="js/ui-tui.js?v=2.1.11"></script>
+  <script src="app.js?v=2.1.11"></script>
 </body>
 </html>

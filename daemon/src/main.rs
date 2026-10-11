@@ -141,7 +141,7 @@ async fn run_server(bind_addr_str: &str, port: u16, modpath: PathBuf) -> anyhow:
         }
     };
 
-    tracing::info!("Starting YouTube RVX Native Core & WebUI Daemon v2.1.9");
+    tracing::info!("Starting YouTube RVX Native Core & WebUI Daemon v{}", env!("CARGO_PKG_VERSION"));
     tracing::info!("Module Path: {}", modpath.display());
 
     let token_file = modpath.join(".daemon_token");

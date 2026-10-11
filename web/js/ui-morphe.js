@@ -56,21 +56,27 @@ function renderSourceCards() {
   if (!container) return;
   container.innerHTML = '';
 
+  setText('modalSourcesCountSub', `${STATE.sources.length} sources installed`);
+
   STATE.sources.forEach(s => {
     const isActive = s.id === STATE.currentSource;
     const shortTitle = getSourceDisplayName(s.id);
-    const repo = s.repository || `${s.id}/patches`;
+    const repo = s.repository || (s.manifestUrl ? 'Custom Feed' : `${s.id}/patches`);
+    const avatar = s.avatarText || shortTitle.charAt(0).toUpperCase() || 'P';
+    const avatarBg = s.avatarColor || '#3182CE';
 
     const card = document.createElement('div');
     card.className = `source-card ${isActive ? 'active' : ''}`;
     card.setAttribute('role', 'radio');
     card.setAttribute('aria-checked', isActive ? 'true' : 'false');
+    card.title = s.description || shortTitle;
     card.innerHTML = `
-      <div class="source-card-header">
-        <span>${escapeHtml(shortTitle)}</span>
-        <span class="source-card-check">${isActive ? '✓' : ''}</span>
+      <div class="source-card-avatar" style="background: ${avatarBg}">${avatar}</div>
+      <div class="source-card-meta">
+        <span class="source-card-title">${escapeHtml(shortTitle)}</span>
+        <span class="source-card-tag">${s.isPreinstalled !== false ? 'Pre-installed' : 'Custom'}</span>
       </div>
-      <div class="source-card-repo">${escapeHtml(repo)}</div>
+      <span class="source-card-check">${isActive ? '✓' : ''}</span>
     `;
 
     card.addEventListener('click', async () => {
@@ -80,11 +86,155 @@ function renderSourceCards() {
     container.appendChild(card);
   });
 
+  renderActiveSourceDetails();
+}
+
+function renderActiveSourceDetails() {
+  const container = document.getElementById('activeSourceDetailsBox');
+  if (!container) return;
+
   const activeSrc = STATE.sources.find(s => s.id === STATE.currentSource) || STATE.sources[0];
-  const repoLink = document.getElementById('linkSourceRepo');
-  if (repoLink && activeSrc && activeSrc.repository) {
-    repoLink.href = `https://github.com/${activeSrc.repository}`;
-  }
+  if (!activeSrc) return;
+
+  const shortTitle = getSourceDisplayName(activeSrc.id);
+  const repo = activeSrc.repository || activeSrc.manifestUrl || '';
+  const avatar = activeSrc.avatarText || shortTitle.charAt(0).toUpperCase() || 'P';
+  const avatarBg = activeSrc.avatarColor || '#3182CE';
+  const isPre = activeSrc.isPreinstalled !== false;
+  const patchesCount = STATE.patches.length || STATE.allManifestPatches.length || 0;
+  const appsCount = STATE.availableApps.length || 1;
+  const activeTag = STATE.patchTag || (STATE.preReleasePatches ? 'dev' : 'latest');
+  const browserUrl = activeSrc.repository 
+    ? `https://github.com/${activeSrc.repository}`
+    : (activeSrc.manifestUrl || '#');
+
+  container.innerHTML = `
+    <!-- Top Header matching 01-sources-sheet.jpg -->
+    <div class="source-active-header">
+      <div class="source-active-avatar" style="background: ${avatarBg}">
+        ${avatar}
+      </div>
+      <div class="source-active-meta">
+        <div class="source-active-title">${escapeHtml(activeSrc.name || shortTitle)}</div>
+        <div class="source-active-tags">
+          <span class="source-badge ${isPre ? '' : 'source-badge-custom'}">${isPre ? 'Pre-installed' : 'Custom'}</span>
+          <span class="source-active-repo">${escapeHtml(repo)}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 Info Rows matching 01-sources-sheet.jpg -->
+    <div class="source-info-rows">
+      <div class="source-info-row" id="rowSrcPatches" title="View patches for current app">
+        <div class="source-info-label">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Patches</span>
+        </div>
+        <div class="source-info-val">
+          <span>${patchesCount}</span>
+          <span class="source-chevron">›</span>
+        </div>
+      </div>
+
+      <div class="source-info-row" id="rowSrcVersion" title="Active release channel">
+        <div class="source-info-label">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span>Version</span>
+        </div>
+        <div class="source-info-val">
+          <span>${escapeHtml(activeTag)}</span>
+          <span class="source-chevron">›</span>
+        </div>
+      </div>
+
+      <div class="source-info-row" id="rowSrcApps" title="Supported applications in this patch source">
+        <div class="source-info-label">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Apps</span>
+        </div>
+        <div class="source-info-val">
+          <span>${appsCount}</span>
+          <span class="source-chevron">›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions Row -->
+    <div class="source-active-actions">
+      <a href="${browserUrl}" target="_blank" rel="noopener noreferrer" class="morphe-pill-btn morphe-pill-outline btn-block" style="flex: 1;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        <span>Open in browser</span>
+      </a>
+      <button type="button" id="btnRefreshActiveSource" class="icon-circle-btn" title="Refresh source manifest" aria-label="Refresh manifest">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+      </button>
+      ${!isPre ? `
+        <button type="button" id="btnDeleteActiveSource" class="source-btn-delete" title="Delete custom source" aria-label="Delete source">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <span>Delete</span>
+        </button>
+      ` : ''}
+    </div>
+
+    <!-- Material 3 Switches (1:1 with 01-sources-sheet.jpg) -->
+    <div class="morphe-switch-row">
+      <div class="morphe-switch-label">
+        <span class="morphe-switch-title">Pre-release patches</span>
+        <span class="morphe-switch-desc">Receives early access to new experimental patch versions</span>
+      </div>
+      <label class="morphe-switch" aria-label="Toggle pre-release patches">
+        <input type="checkbox" id="togglePreReleasePatches" ${STATE.preReleasePatches ? 'checked' : ''}>
+        <span class="morphe-switch-slider"></span>
+      </label>
+    </div>
+
+    <div class="morphe-switch-row">
+      <div class="morphe-switch-label">
+        <span class="morphe-switch-title">Experimental app versions</span>
+        <span class="morphe-switch-desc">Shows and patches experimental app targets</span>
+      </div>
+      <label class="morphe-switch" aria-label="Toggle experimental app versions">
+        <input type="checkbox" id="toggleExperimentalAppVersions" ${STATE.experimentalAppVersions ? 'checked' : ''}>
+        <span class="morphe-switch-slider"></span>
+      </label>
+    </div>
+  `;
+
+  // Attach event handlers
+  container.querySelector('#btnRefreshActiveSource')?.addEventListener('click', async () => {
+    await selectPatchSource(activeSrc.id);
+  });
+
+  container.querySelector('#btnDeleteActiveSource')?.addEventListener('click', async () => {
+    if (confirm(`Remove custom patch source "${activeSrc.name || shortTitle}"?`)) {
+      deleteCustomSource(activeSrc.id);
+      await selectPatchSource(STATE.currentSource);
+    }
+  });
+
+  container.querySelector('#togglePreReleasePatches')?.addEventListener('change', async (e) => {
+    STATE.preReleasePatches = e.target.checked;
+    localStorage.setItem('rvx_pre_release_patches', String(STATE.preReleasePatches));
+    await loadPatchReleases(activeSrc);
+    renderActiveSourceDetails();
+  });
+
+  container.querySelector('#toggleExperimentalAppVersions')?.addEventListener('change', (e) => {
+    STATE.experimentalAppVersions = e.target.checked;
+    STATE.showAllVersions = e.target.checked;
+    localStorage.setItem('rvx_experimental_app_versions', String(STATE.experimentalAppVersions));
+    renderVersionSelector();
+  });
+
+  container.querySelector('#rowSrcPatches')?.addEventListener('click', () => {
+    document.getElementById('sourcesModal')?.classList.add('hidden');
+    switchScreen('patches');
+  });
+
+  container.querySelector('#rowSrcApps')?.addEventListener('click', () => {
+    document.getElementById('sourcesModal')?.classList.add('hidden');
+    switchScreen('home');
+  });
 }
 
 function renderVersionSelector() {
@@ -362,11 +512,14 @@ async function triggerLocalPatch() {
   const excludedPatches = allPatchNames.filter(name => !STATE.selectedPatches.has(name));
   const includedPatches = Array.from(STATE.selectedPatches);
 
+  const activeSourceObj = STATE.sources.find(s => s.id === STATE.currentSource);
   const payload = {
     package_name: STATE.currentApp?.packageName || 'com.google.android.youtube',
     target_version: STATE.currentVersion,
-    patch_source: STATE.currentSource,
+    patch_source: activeSourceObj?.repository || STATE.currentSource,
     patch_tag: STATE.patchTag,
+    patch_bundle_url: activeSourceObj?.bundleUrl || null,
+    manifest_url: activeSourceObj?.manifestUrl || null,
     is_root: true,
     included_patches: includedPatches,
     excluded_patches: excludedPatches,

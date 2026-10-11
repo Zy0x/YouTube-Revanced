@@ -18,6 +18,10 @@ pub struct PatchRequest {
     #[serde(default = "default_tag")]
     pub patch_tag: String,
     #[serde(default)]
+    pub patch_bundle_url: Option<String>,
+    #[serde(default)]
+    pub manifest_url: Option<String>,
+    #[serde(default)]
     pub is_root: bool,
     #[serde(default)]
     pub excluded_patches: Vec<String>,
@@ -88,7 +92,11 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
     let manifest_json = build_dir.join("patches-list.json");
 
     state.log(format!("📦 Resolving patch bundle for source '{}'...", req.patch_source));
-    let (mpp_url, manifest_url) = resolve_source_urls(&req.patch_source, &req.patch_tag);
+    let (mpp_url, manifest_url) = if let (Some(b), Some(m)) = (&req.patch_bundle_url, &req.manifest_url) {
+        (b.clone(), m.clone())
+    } else {
+        resolve_source_urls(&req.patch_source, &req.patch_tag)
+    };
 
     state.log(format!("  Fetching manifest from CDN: {}", manifest_url));
     download_file(&state.client, &manifest_url, &manifest_json).await?;
@@ -199,6 +207,18 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
 }
 
 fn resolve_source_urls(source: &str, tag: &str) -> (String, String) {
+    if source.contains('/') {
+        let clean = source.trim_start_matches("https://github.com/").trim_end_matches('/');
+        let manifest = format!("https://cdn.jsdelivr.net/gh/{clean}@main/patches-list.json");
+        let mpp = if tag == "dev" || tag == "prerelease" {
+            format!("https://github.com/{clean}/releases/download/{tag}/patches.mpp")
+        } else if tag.starts_with('v') {
+            format!("https://github.com/{clean}/releases/download/{tag}/patches.mpp")
+        } else {
+            format!("https://github.com/{clean}/releases/latest/download/patches.mpp")
+        };
+        return (mpp, manifest);
+    }
     match source {
         "morphe" => (
             "https://github.com/MorpheApp/morphe-patches/releases/download/v1.18.0/morphe-patches-1.18.0.mpp".to_string(),

@@ -33,23 +33,46 @@ async function verifyGithubToken(token) {
 }
 
 async function fetchManifestWithFallback(url) {
-  const urlsToTry = [];
+  if (!url) throw new Error('Manifest URL is missing');
+  const urlsToTry = [url];
+
   if (url.includes('raw.githubusercontent.com')) {
-    urlsToTry.push(
+    urlsToTry.unshift(
       url
         .replace('https://raw.githubusercontent.com/', 'https://cdn.jsdelivr.net/gh/')
         .replace('/refs/heads/', '@')
     );
   }
-  urlsToTry.push(url);
+
+  // Fallback between patches-list.json and patches.json
+  if (url.includes('patches-list.json')) {
+    urlsToTry.push(url.replace('patches-list.json', 'patches.json'));
+    urlsToTry.push(
+      url.replace('patches-list.json', 'patches.json')
+        .replace('https://raw.githubusercontent.com/', 'https://cdn.jsdelivr.net/gh/')
+        .replace('/refs/heads/', '@')
+    );
+  } else if (url.includes('patches.json')) {
+    urlsToTry.push(url.replace('patches.json', 'patches-list.json'));
+    urlsToTry.push(
+      url.replace('patches.json', 'patches-list.json')
+        .replace('https://raw.githubusercontent.com/', 'https://cdn.jsdelivr.net/gh/')
+        .replace('/refs/heads/', '@')
+    );
+  }
 
   for (const targetUrl of urlsToTry) {
     try {
       const res = await fetch(targetUrl);
-      if (res.ok) return await res.json();
+      if (res.ok) {
+        const json = await res.json();
+        if (json && (Array.isArray(json) || json.patches)) {
+          return json;
+        }
+      }
     } catch (_) {}
   }
-  throw new Error('Failed to reach patch source');
+  throw new Error(`Failed to reach patch source (${url})`);
 }
 
 async function fetchJsonSafe(url) {
@@ -67,7 +90,21 @@ async function loadSourcesAndPresets() {
     fetchJsonSafe('config/youtube-versions.json')
   ]);
 
-  STATE.sources = Array.isArray(sourcesData) && sourcesData.length > 0 ? sourcesData : DEFAULT_SOURCES;
+  const persisted = loadPersistedSources();
+  if (Array.isArray(sourcesData) && sourcesData.length > 0) {
+    sourcesData.forEach(def => {
+      const idx = persisted.findIndex(s => s.id === def.id);
+      if (idx === -1) {
+        persisted.push(def);
+      } else {
+        persisted[idx] = { ...def, ...persisted[idx] };
+      }
+    });
+  }
+
+  STATE.sources = persisted;
+  savePersistedSources(STATE.sources);
+
   if (presetData) STATE.goldenPreset = presetData;
   if (Array.isArray(versionsData) && versionsData.length > 0) {
     STATE.catalogVersions = versionsData;
@@ -91,6 +128,7 @@ function getSourceDisplayName(srcId) {
 
 async function selectPatchSource(sourceId) {
   STATE.currentSource = sourceId;
+  localStorage.setItem('rvx_active_source', sourceId);
   renderSourceCards();
   const srcObj = STATE.sources.find(s => s.id === sourceId) || STATE.sources[0];
   await loadPatchReleases(srcObj);
@@ -101,47 +139,56 @@ async function selectPatchSource(sourceId) {
 
 async function loadPatchReleases(sourceConfig) {
   if (!sourceConfig) return;
-  const repo = sourceConfig.repository || 'anddea/revanced-patches';
+  const repo = sourceConfig.repository || '';
   const select = document.getElementById('selectPatchRelease');
   const hint = document.getElementById('patchReleaseHint');
+  const versionEl = document.getElementById('sourceSheetVersion');
   if (!select) return;
 
-  try {
-    const headers = { 'Accept': 'application/vnd.github.v3+json' };
-    if (STATE.authToken) headers['Authorization'] = `Bearer ${STATE.authToken}`;
-    const res = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=10`, { headers });
-    if (res.ok) {
-      const releases = await res.json();
-      STATE.patchReleases = releases;
-      const latestPre = releases.find(r => r.prerelease);
-      const latestStable = releases.find(r => !r.prerelease);
+  if (repo && repo.includes('/')) {
+    try {
+      const headers = { 'Accept': 'application/vnd.github.v3+json' };
+      if (STATE.authToken) headers['Authorization'] = `Bearer ${STATE.authToken}`;
+      const res = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=10`, { headers });
+      if (res.ok) {
+        const releases = await res.json();
+        STATE.patchReleases = releases;
+        const latestPre = releases.find(r => r.prerelease);
+        const latestStable = releases.find(r => !r.prerelease);
 
-      select.innerHTML = '';
-      const optDev = document.createElement('option');
-      optDev.value = 'dev';
-      optDev.textContent = `Pre-release / Dev ${latestPre ? `(${latestPre.tag_name})` : ''}`;
-      if (sourceConfig.defaultReleaseType === 'dev' || !latestStable) optDev.selected = true;
-      select.appendChild(optDev);
+        select.innerHTML = '';
+        const optDev = document.createElement('option');
+        optDev.value = 'dev';
+        optDev.textContent = `Pre-release / Dev ${latestPre ? `(${latestPre.tag_name})` : ''}`;
+        if (STATE.preReleasePatches || sourceConfig.defaultReleaseType === 'dev' || !latestStable) {
+          optDev.selected = true;
+        }
+        select.appendChild(optDev);
 
-      const optStable = document.createElement('option');
-      optStable.value = 'latest';
-      optStable.textContent = `Stable / Official ${latestStable ? `(${latestStable.tag_name})` : ''}`;
-      if (sourceConfig.defaultReleaseType === 'latest' && latestStable) optStable.selected = true;
-      select.appendChild(optStable);
+        const optStable = document.createElement('option');
+        optStable.value = 'latest';
+        optStable.textContent = `Stable / Official ${latestStable ? `(${latestStable.tag_name})` : ''}`;
+        if (!STATE.preReleasePatches && latestStable) {
+          optStable.selected = true;
+        }
+        select.appendChild(optStable);
 
-      if (hint) {
-        hint.textContent = `${repo} • ${latestPre?.tag_name || 'dev'}`;
+        const activeTag = select.value === 'dev' ? (latestPre?.tag_name || 'dev') : (latestStable?.tag_name || 'latest');
+        if (hint) hint.textContent = `${repo} • ${activeTag}`;
+        if (versionEl) versionEl.textContent = activeTag;
+        STATE.patchTag = select.value;
+        return;
       }
-      STATE.patchTag = select.value;
-      return;
-    }
-  } catch (_) {}
+    } catch (_) {}
+  }
 
   select.innerHTML = `
-    <option value="dev" ${sourceConfig.defaultReleaseType === 'dev' ? 'selected' : ''}>Pre-release / Dev</option>
-    <option value="latest" ${sourceConfig.defaultReleaseType === 'latest' ? 'selected' : ''}>Stable / Official</option>
+    <option value="dev" ${STATE.preReleasePatches ? 'selected' : ''}>Pre-release / Dev</option>
+    <option value="latest" ${!STATE.preReleasePatches ? 'selected' : ''}>Stable / Official</option>
   `;
-  if (hint) hint.textContent = `${repo}`;
+  const defaultTag = STATE.preReleasePatches ? 'dev' : 'latest';
+  if (hint) hint.textContent = repo || 'Custom URL';
+  if (versionEl) versionEl.textContent = defaultTag;
   STATE.patchTag = select.value;
 }
 

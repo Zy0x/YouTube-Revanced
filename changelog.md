@@ -1,3 +1,13 @@
+## v2.1.11 (2026-10-12)
+
+### Flexible Multi-Source Ecosystem & 1:1 Morphe Patch Sources Replica
+- **1:1 Authentic Morphe Sources Sheet**: Rebuilt the Patch Sources bottom sheet to mirror `MorpheApp/morphe-manager`, complete with source avatar badges, metadata pills (`Pre-installed` vs `Custom`), detailed rows (`Patches ›`, `Version ›`, `Apps ›`), `Open in browser`, `Refresh`, and Material 3 toggle switches for `Pre-release patches` and `Experimental app versions`.
+- **Unlimited Custom Source Creation**: Added dynamic custom patch source management. Users can now tap the `+` button in the Sources header to add ANY third-party or private GitHub repository (`owner/repo`) or raw manifest URL with automatic persistence in `localStorage`.
+- **Pre-Configured Sources Catalog**: Expanded pre-installed sources beyond 2 to include the entire mainstream RVX ecosystem: Anddea Patches (`anddea/revanced-patches`), Morphe Official (`MorpheApp/morphe-patches`), Inotia00 RVX (`inotia00/revanced-patches`), and ReVanced Official (`ReVanced/revanced-patches`), alongside unlimited custom sources.
+- **Dual Manifest Compatibility**: Engineered manifest loader to automatically discover and resolve between Morphe `patches-list.json` and ReVanced `patches.json` formats across jsdelivr and GitHub raw CDNs with zero manual configuration.
+- **Termux CLI TUI Custom Sources Support**: Integrated `[+] Add Custom Source`, `[-] Delete Custom Source`, and `[R] Reset to Factory Defaults` directly into the Revancify-Xisr terminal interface for terminal-native source management.
+- **Rust Core Custom Bundle Pipeline**: Updated `rvx-daemon` patcher engine and CLI to dynamically resolve and download custom `.mpp` patch bundles and manifests directly from custom repository releases.
+
 ## v2.1.10 (2026-10-12)
 
 ### Universal Multi-Application Support Across All `.mpp` Bundles

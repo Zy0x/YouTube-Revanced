@@ -72,9 +72,10 @@ function renderTuiView() {
   }
 
   if (STATE.tuiScreen === 'source') {
-    if (titleEl) titleEl.textContent = '| Change Source |';
+    if (titleEl) titleEl.textContent = `| Change Source (${STATE.sources.length}) |`;
     STATE.sources.forEach((s, idx) => {
       const isCur = s.id === STATE.currentSource;
+      const isPre = s.isPreinstalled !== false;
       const row = document.createElement('button');
       row.type = 'button';
       row.className = `tui-menu-row ${isCur ? 'tui-row-active' : ''}`;
@@ -83,7 +84,7 @@ function renderTuiView() {
           <span class="tui-row-num">${isCur ? '(*)' : '( )'}</span>
           <span>${escapeHtml(getSourceDisplayName(s.id))}</span>
         </div>
-        <span class="tui-row-sub">${escapeHtml(s.repository || '')}</span>
+        <span class="tui-row-sub">${isPre ? '[Official]' : '[Custom]'} ${escapeHtml(s.repository || '')}</span>
       `;
       row.addEventListener('click', async () => {
         STATE.tuiSelectedIndex = idx;
@@ -93,6 +94,72 @@ function renderTuiView() {
       });
       bodyEl.appendChild(row);
     });
+
+    // TUI Action: [+] Add Custom Source
+    const addRow = document.createElement('button');
+    addRow.type = 'button';
+    addRow.className = 'tui-menu-row';
+    addRow.innerHTML = `
+      <div class="tui-row-left">
+        <span class="tui-row-num" style="color: #68D391;">[+]</span>
+        <span style="color: #68D391; font-weight: bold;">Add Custom Source</span>
+      </div>
+      <span class="tui-row-sub">GitHub repo or URL</span>
+    `;
+    addRow.addEventListener('click', async () => {
+      const repo = prompt('Enter GitHub repository (e.g. owner/repo) or raw manifest URL:');
+      if (!repo || !repo.trim()) return;
+      const name = prompt('Enter display name for this source (optional):') || repo.trim();
+      const newSource = addCustomSource({ name, repository: repo.trim(), defaultReleaseType: 'latest' });
+      if (newSource) {
+        await selectPatchSource(newSource.id);
+        renderTuiView();
+      }
+    });
+    bodyEl.appendChild(addRow);
+
+    // TUI Action: [-] Remove Current Custom Source (if applicable)
+    const curObj = STATE.sources.find(s => s.id === STATE.currentSource);
+    if (curObj && curObj.isPreinstalled === false) {
+      const delRow = document.createElement('button');
+      delRow.type = 'button';
+      delRow.className = 'tui-menu-row';
+      delRow.innerHTML = `
+        <div class="tui-row-left">
+          <span class="tui-row-num" style="color: #FC8181;">[-]</span>
+          <span style="color: #FC8181;">Delete Active Custom Source</span>
+        </div>
+        <span class="tui-row-sub">${escapeHtml(curObj.name)}</span>
+      `;
+      delRow.addEventListener('click', async () => {
+        if (confirm(`Remove custom source "${curObj.name}"?`)) {
+          deleteCustomSource(curObj.id);
+          await selectPatchSource(STATE.currentSource);
+          renderTuiView();
+        }
+      });
+      bodyEl.appendChild(delRow);
+    }
+
+    // TUI Action: [R] Reset Defaults
+    const resetRow = document.createElement('button');
+    resetRow.type = 'button';
+    resetRow.className = 'tui-menu-row';
+    resetRow.innerHTML = `
+      <div class="tui-row-left">
+        <span class="tui-row-num">[R]</span>
+        <span style="color: #A0AEC0;">Reset to Factory Defaults</span>
+      </div>
+      <span class="tui-row-sub">Restore 4 official</span>
+    `;
+    resetRow.addEventListener('click', async () => {
+      if (confirm('Reset all patch sources to factory defaults?')) {
+        resetSourcesToDefault();
+        await selectPatchSource('anddea');
+        renderTuiView();
+      }
+    });
+    bodyEl.appendChild(resetRow);
     return;
   }
 

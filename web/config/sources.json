@@ -1,13 +1,16 @@
 [
   {
     "id": "anddea",
-    "name": "Anddea Patches (Default)",
+    "name": "Anddea Patches",
     "repository": "anddea/revanced-patches",
     "manifestUrl": "https://raw.githubusercontent.com/anddea/revanced-patches/refs/heads/main/patches-list.json",
     "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/anddea/revanced-patches@main/patches-list.json",
     "defaultReleaseType": "dev",
     "isDefault": true,
-    "description": "Primary patch source featuring full customization and rich features for YouTube RVX.",
+    "isPreinstalled": true,
+    "avatarText": "A",
+    "avatarColor": "#E53E3E",
+    "description": "Primary patch source featuring deep customization and rich features for YouTube RVX.",
     "fallbackTags": [
       { "tag_name": "v4.3.1-dev.1", "name": "v4.3.1-dev.1 (Prerelease)", "prerelease": true },
       { "tag_name": "v4.3.0", "name": "v4.3.0 (Stable)", "prerelease": false }
@@ -15,25 +18,31 @@
   },
   {
     "id": "morphe",
-    "name": "Morphe Official",
+    "name": "Morphe Patches",
     "repository": "MorpheApp/morphe-patches",
     "manifestUrl": "https://raw.githubusercontent.com/MorpheApp/morphe-patches/refs/heads/main/patches-list.json",
     "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/MorpheApp/morphe-patches@main/patches-list.json",
     "defaultReleaseType": "latest",
     "isDefault": false,
-    "description": "Official patch source from the MorpheApp team.",
+    "isPreinstalled": true,
+    "avatarText": "M",
+    "avatarColor": "#3182CE",
+    "description": "Official patch source from the Morphe ecosystem team.",
     "fallbackTags": [
       { "tag_name": "v1.18.0", "name": "v1.18.0 (Stable)", "prerelease": false }
     ]
   },
   {
     "id": "inotia00",
-    "name": "Inotia00 (ReVanced Extended)",
+    "name": "Inotia00 RVX",
     "repository": "inotia00/revanced-patches",
     "manifestUrl": "https://raw.githubusercontent.com/inotia00/revanced-patches/refs/heads/revanced-extended/patches.json",
     "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/inotia00/revanced-patches@revanced-extended/patches.json",
     "defaultReleaseType": "latest",
     "isDefault": false,
+    "isPreinstalled": true,
+    "avatarText": "I",
+    "avatarColor": "#805AD5",
     "description": "Classic ReVanced Extended patches by developer inotia00.",
     "fallbackTags": [
       { "tag_name": "v2.190.1", "name": "v2.190.1 (Stable)", "prerelease": false }
@@ -47,7 +56,10 @@
     "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/ReVanced/revanced-patches@main/patches.json",
     "defaultReleaseType": "latest",
     "isDefault": false,
-    "description": "Official patches from the ReVanced Team.",
+    "isPreinstalled": true,
+    "avatarText": "R",
+    "avatarColor": "#38A169",
+    "description": "Official upstream patches from the ReVanced Project team.",
     "fallbackTags": [
       { "tag_name": "v4.16.0", "name": "v4.16.0 (Stable)", "prerelease": false }
     ]
