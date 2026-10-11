@@ -1,5 +1,5 @@
 /**
- * YouTube RVX — 1:1 Morphe Manager & Revancify-Xisr Ultra-Clean Architecture (v2.1.7)
+ * YouTube RVX — 1:1 Morphe Manager & Revancify-Xisr Ultra-Clean Architecture (v2.1.8)
  */
 
 const STATE = {
@@ -34,7 +34,7 @@ const STATE = {
   engineMode: 'local',
   daemonOnline: false,
   daemonUrl: '',
-  daemonVersion: '2.1.7',
+  daemonVersion: '2.1.8',
   eventSource: null,
   logHistory: [
     { type: 'I', text: 'Remove background playback restrictions succeeded' },
@@ -749,7 +749,7 @@ function exportPreset() {
   const includedPatches = Array.from(STATE.selectedPatches);
 
   const payload = {
-    schema_version: '2.1.7',
+    schema_version: '2.1.8',
     exported_at: new Date().toISOString(),
     patch_source: STATE.currentSource,
     patch_tag: STATE.patchTag,
@@ -867,7 +867,7 @@ async function checkDaemonStatus() {
         const data = await res.json();
         STATE.daemonOnline = true;
         STATE.daemonUrl = url;
-        STATE.daemonVersion = data.daemon_version || '2.1.7';
+        STATE.daemonVersion = data.daemon_version || '2.1.8';
         setEngineMode('local');
         return;
       }

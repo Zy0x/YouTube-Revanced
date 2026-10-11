@@ -1,3 +1,10 @@
+## v2.1.8 (2026-10-12)
+
+### Local Launcher & Cross-Device Testing
+- **One-Click Local Launcher (`start.bat` & `run.bat`)**: Added zero-configuration Windows batch launcher scripts to run the web server and background daemon locally.
+- **Auto Binary & Build Management**: Automatically detects existing release/debug binaries or compiles via Cargo if needed.
+- **Dynamic LAN & Localhost Discovery**: Automatically resolves host active WiFi/LAN IPv4 address for testing on smartphones and displays desktop localhost links with automatic browser launch.
+
 ## v2.1.7 (2026-10-11)
 
 ### UI Simplification & Clean Info Architecture
