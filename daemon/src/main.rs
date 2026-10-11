@@ -17,7 +17,7 @@ use embedded::static_handler;
 use state::AppState;
 
 #[derive(Parser, Debug)]
-#[command(name = "rvx-daemon", version = "2.1.5", about = "On-Device YouTube RVX Patcher Daemon")]
+#[command(name = "rvx-daemon", version = "2.1.6", about = "On-Device YouTube RVX Patcher Daemon")]
 struct CliArgs {
     /// IP address to bind to. Default: 127.0.0.1 (loopback).
     /// Use 0.0.0.0 for LAN access during development/testing.

@@ -1,3 +1,11 @@
+## v2.1.6 (2026-10-11)
+
+### Features & Architecture
+- **1:1 Authentic Morphe Manager Replica**: Rebuilt the primary GUI to mirror `MorpheApp/morphe-manager` (`Color.kt` `#0B0C10` dark surface, floating bokeh canvas, horizontal red-purple-teal YouTube gradient card, Sources & Settings bottom sheets, and bordered version selector with `👍 Recommended` pills).
+- **Morphe Expert Mode Patch Selection**: Implemented the crimson-burgundy YouTube Expert Mode header with live `[▽ 81/86]` enabled-filter toggle, 5-button action pill toolbar (`[✓✓ All]`, `[👍 Golden]`, `[↺ Default]`, `[📋 Presets]`, `[✕ None]`), left circular `✓` checkboxes, and dedicated `[⚙️]` modal option dialogs per patch.
+- **Morphe Progress & Telemetry Screen**: Added the coral-red progress bar, 3 real-time telemetry mini-cards (`Memory usage`, `Storage I/O`, `CPU usage`), and structured `[I]` badge patcher logs.
+- **1:1 Termux CLI `Revancify-Xisr` TUI Mode**: Added a one-tap `[>_ Termux TUI]` switcher that transforms the interface into an authentic `Xisrr1/Revancify-Xisr` `dialog` TUI (`┌── | Revancify-Xisr | ──┐`, numbered menus, `(*) / [*]` checklists, and full touch + keyboard navigation).
+
 ## v2.1.5 (2026-10-11)
 
 ### Features & Fixes
