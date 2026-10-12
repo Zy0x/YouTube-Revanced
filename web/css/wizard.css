@@ -81,48 +81,48 @@
 }
 
 .step-node-bubble {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #1A1D27;
-  border: 2px solid var(--morphe-border-strong);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: var(--morphe-muted);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   font-family: var(--font-mono);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s ease;
 }
 
 .wizard-step-node.active .step-node-bubble {
-  background: var(--morphe-accent, #3B82F6);
-  border-color: #60A5FA;
+  background: #2563EB;
+  border-color: #3B82F6;
   color: #FFFFFF;
-  box-shadow: 0 0 16px rgba(59, 130, 246, 0.6);
-  transform: scale(1.1);
+  box-shadow: none;
+  transform: none;
 }
 
 .wizard-step-node.completed .step-node-bubble {
-  background: #10B981;
-  border-color: #34D399;
-  color: #FFFFFF;
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10B981;
+  color: #34D399;
 }
 
 .step-node-label {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--morphe-muted);
   text-align: center;
   white-space: nowrap;
   letter-spacing: -0.01em;
-  transition: color 0.2s ease;
+  transition: color 0.15s ease;
 }
 
 .wizard-step-node.active .step-node-label {
   color: #FFFFFF;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .wizard-step-node.completed .step-node-label {
@@ -131,19 +131,19 @@
 
 .wizard-stepper-track {
   position: absolute;
-  top: 18px;
-  left: 30px;
-  right: 30px;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.1);
+  top: 14px;
+  left: 24px;
+  right: 24px;
+  height: 1.5px;
+  background: rgba(255, 255, 255, 0.08);
   z-index: 1;
 }
 
 .wizard-stepper-progress {
   height: 100%;
-  background: linear-gradient(90deg, #10B981, #3B82F6);
+  background: #2563EB;
   width: 0%;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.25s ease;
 }
 
 /* Wizard Step Panes */
@@ -177,29 +177,28 @@
 /* Step 1: Sources Catalog & Release Studio (Modularized in css/wizard-sources.css) */
 
 
-/* Step 3: Recommended Version Hero Card */
+/* Step 3: Recommended Version Card */
 .version-rec-hero {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(30, 58, 138, 0.25) 100%);
-  border: 1.5px solid rgba(96, 165, 250, 0.45);
-  border-radius: 20px;
-  padding: 18px;
-  margin-bottom: 18px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .version-rec-hero:hover {
-  border-color: #60A5FA;
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(96, 165, 250, 0.6);
 }
 
 .version-rec-hero.selected {
   border-color: #38BDF8;
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35), 0 8px 24px rgba(59, 130, 246, 0.25);
+  background: rgba(59, 130, 246, 0.06);
 }
 
 .version-rec-left {
@@ -280,29 +279,28 @@
 }
 
 .mode-pill-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 2px solid var(--morphe-border-strong);
-  border-radius: 18px;
-  padding: 16px 14px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 6px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.15s ease;
   user-select: none;
-  min-height: 100px;
+  min-height: 84px;
 }
 
 .mode-pill-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .mode-pill-card.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.25) 100%);
-  border-color: #3B82F6;
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.08);
+  border-color: #38BDF8;
 }
 
 .mode-card-header {
@@ -313,18 +311,18 @@
 }
 
 .mode-icon-circle {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .mode-pill-card.active .mode-icon-circle {
-  background: #3B82F6;
+  background: #2563EB;
   color: #FFFFFF;
 }
 

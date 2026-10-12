@@ -153,11 +153,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-height: 50px;
-  padding: 10px 20px;
-  border-radius: 999px;
-  font-size: 15px;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 600;
   border: 1px solid transparent;
   cursor: pointer;
@@ -170,9 +170,9 @@
 }
 
 .morphe-pill-btn.btn-sm {
-  min-height: 44px;
-  padding: 6px 14px;
-  font-size: 13px;
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 12.5px;
 }
 
 .btn-block {
@@ -180,14 +180,14 @@
 }
 
 .morphe-pill-outline {
-  background: #14161D;
-  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
   color: var(--morphe-text);
 }
 
 .morphe-pill-outline:hover {
-  background: #1C1F29;
-  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .morphe-pill-slate-blue {
@@ -201,9 +201,14 @@
 }
 
 .morphe-pill-sky {
-  background: var(--morphe-sky);
-  color: #07203F;
-  font-weight: 700;
+  background: #2563EB;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.morphe-pill-sky:hover {
+  background: #1D4ED8;
 }
 
 .morphe-pill-cancel {
@@ -350,11 +355,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: #1B3B68;
-  color: #D6E6FF;
-  font-size: 12.5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  color: #38BDF8;
+  font-size: 11.5px;
   font-weight: 600;
 }
 

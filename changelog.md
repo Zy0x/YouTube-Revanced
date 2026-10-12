@@ -1,3 +1,23 @@
+## v2.1.17 (2026-10-12)
+
+### Clean, Compact & Anti-AI-Slop Redesign (Minimalist Engineering UI)
+- **Eliminasi AI Slop Visual Overload**: Menghapus seluruh elemen dekoratif berlebihan khas AI template (gradien pelangi squircle avatar, badge warna-warni yang bertumpuk, box-shadow neon pendar, tombol kapsul 999px yang oversized, emoji berlebihan, dan deskripsi berulang yang memakan ruang layar).
+- **Katalog Sumber Berdensitas Tinggi (High-Density Compact Grid)**:
+  - Merancang ulang pemilihan 8 repositori sumber patch menjadi baris compact berdensitas tinggi (tinggi ~50px) dengan target sentuh mobile tetap presisi (≥ 44-48px).
+  - Menampilkan indikator radio subtil, nama repositori bersih, tag monospace rapi, dan badge status netral (`Default` / `Custom`).
+  - Menghilangkan clamped description teks berulang sehingga seluruh 8 sumber langsung terlihat rapi tanpa scroll berlebihan di ponsel maupun desktop.
+- **Native-Style Segmented Control**:
+  - Menggantikan kartu raksasa "Release Studio" dengan segmented control horizontal yang ringkas: `[Dev / Pre-release]`, `[Stable]`, `[Pilih Tag]`.
+  - Indikator saluran aktif berbasis teks minimalis dan browser tag rilis tabel compact (monospace tag name, status pre/stable, tanggal, dan tombol teks Changelog).
+- **Refactoring Geometri Komponen Global (Border-Radius 8px)**:
+  - Mengubah seluruh tombol aksi (`.morphe-pill-btn`, `.btn-clean-primary`, navigation action buttons) dari kapsul pill `999px` menjadi tombol persegi rounded modern (`border-radius: 8px`) ala Linear, Vercel, dan Apple Developer Tools.
+  - Memperbarui stepper wizard dari bulatan neon besar menjadi step square badges (`border-radius: 6px`, 28×28px) dengan progress bar solid tanpa gradien pelangi.
+  - Merampingkan kartu versi rekomendasi dan mode selector (Root/Non-Root) menjadi card compact dengan border subtil (`border-radius: 10px`).
+- **Kepatuhan Ketat Modularitas (< 1.000 Baris)**:
+  - `web/index.html` makin ramping di 960 baris.
+  - `web/css/wizard-sources.css` dirampingkan dari 588 baris menjadi 462 baris.
+  - Seluruh file proyek 100% berada di bawah batas 1.000 baris kode per skrip.
+
 ## v2.1.16 (2026-10-12)
 
 ### Redesign Katalog Sumber Patch & Interactive Release Channel Studio

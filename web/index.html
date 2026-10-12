@@ -73,26 +73,26 @@
         <div class="wizard-pane-header">
           <div class="wizard-pane-header-row">
             <div>
-              <h2 class="wizard-pane-title">1. Pilih Sumber &amp; Rilis Patch</h2>
-              <p class="wizard-pane-desc">Pilih repositori penyedia patch dan saluran rilis yang ingin Anda gunakan.</p>
+              <h2 class="wizard-pane-title">1. Sumber &amp; Saluran Patch</h2>
+              <p class="wizard-pane-desc">Pilih repositori patch dan target rilis untuk proses build.</p>
             </div>
             <div class="wizard-sources-toolbar">
-              <span id="wizardSourcesCountBadge" class="wizard-counter-pill">8 Sumber Siap Pakai</span>
-              <button type="button" id="btnWizToggleAddSource" class="wizard-btn-action" title="Tambah Sumber Patch Kustom">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span id="wizardSourcesCountBadge" class="sources-count-text">8 sumber</span>
+              <button type="button" id="btnWizToggleAddSource" class="btn-clean-action" title="Tambah Sumber Patch Kustom">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 <span>Tambah</span>
               </button>
-              <button type="button" id="btnWizResetSources" class="wizard-btn-action-ghost" title="Reset ke Sumber Bawaan">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              <button type="button" id="btnWizResetSources" class="btn-clean-ghost" title="Reset ke Sumber Bawaan">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
               </button>
             </div>
           </div>
         </div>
 
         <!-- Inline Expandable Drawer for Adding Custom Patch Source -->
-        <div id="wizAddSourceDrawer" class="wizard-drawer-card hidden">
+        <div id="wizAddSourceDrawer" class="wizard-drawer-panel hidden">
           <div class="drawer-header">
-            <span class="drawer-title">✨ Tambah Sumber Patch Kustom</span>
+            <span class="drawer-title">Tambah Sumber Kustom</span>
             <button type="button" id="btnWizCloseAddSource" class="btn-drawer-close" aria-label="Tutup form">&times;</button>
           </div>
           <div class="drawer-grid">
@@ -113,80 +113,44 @@
             </div>
           </div>
           <div class="drawer-actions">
-            <button type="button" id="btnWizSaveCustomSource" class="morphe-pill-btn morphe-pill-sky btn-sm">Simpan &amp; Aktifkan</button>
-            <button type="button" id="btnWizCancelAddSource" class="morphe-pill-btn morphe-pill-outline btn-sm">Batal</button>
+            <button type="button" id="btnWizSaveCustomSource" class="btn-clean-primary btn-sm">Simpan</button>
+            <button type="button" id="btnWizCancelAddSource" class="btn-clean-ghost btn-sm">Batal</button>
           </div>
         </div>
 
-        <!-- Rich Interactive Sources Grid -->
-        <div id="wizardSourcesGrid" class="wizard-sources-grid" role="radiogroup" aria-label="Pilih Sumber Patch"></div>
+        <!-- Compact Sources List -->
+        <div id="wizardSourcesGrid" class="wizard-sources-compact-list" role="radiogroup" aria-label="Pilih Sumber Patch"></div>
 
-        <!-- Interactive Release Channel Studio -->
-        <div class="wizard-release-studio">
-          <div class="studio-header">
-            <div class="studio-title-box">
-              <span class="studio-badge">RELEASE STUDIO</span>
-              <h3 class="studio-title">Saluran &amp; Riwayat Tag Rilis</h3>
-            </div>
-            <div id="studioActivePill" class="studio-active-pill" title="Saluran dan tag yang saat ini aktif">
-              <span class="studio-dot"></span>
-              <span id="studioActiveLabel">Memuat tag...</span>
-            </div>
+        <!-- Clean Release Channel Section -->
+        <div class="wizard-channel-section">
+          <div class="channel-section-header">
+            <label class="channel-section-label">Saluran Rilis</label>
+            <span id="studioActiveLabel" class="channel-active-indicator">Memuat tag...</span>
           </div>
 
-          <!-- 3 Segment Cards for Release Selection -->
-          <div class="channel-segments-grid" role="radiogroup" aria-label="Tipe Saluran Rilis">
-            <div id="segmentDev" class="channel-segment-card active" role="radio" aria-checked="true" tabindex="0">
-              <div class="segment-icon">⚡</div>
-              <div class="segment-body">
-                <div class="segment-title-row">
-                  <strong>Dev / Pre-release</strong>
-                  <span class="segment-badge badge-dev">Bleeding Edge</span>
-                </div>
-                <p class="segment-desc">Update patch tercepat &amp; dukungan APK versi terkini.</p>
-              </div>
-              <span class="segment-check">✓</span>
-            </div>
-
-            <div id="segmentStable" class="channel-segment-card" role="radio" aria-checked="false" tabindex="0">
-              <div class="segment-icon">🛡️</div>
-              <div class="segment-body">
-                <div class="segment-title-row">
-                  <strong>Stable / Official</strong>
-                  <span class="segment-badge badge-stable">Rekomendasi</span>
-                </div>
-                <p class="segment-desc">Rilis resmi teruji dan stabil untuk pemakaian sehari-hari.</p>
-              </div>
-              <span class="segment-check"></span>
-            </div>
-
-            <div id="segmentTags" class="channel-segment-card" role="radio" aria-checked="false" tabindex="0">
-              <div class="segment-icon">🏷️</div>
-              <div class="segment-body">
-                <div class="segment-title-row">
-                  <strong>Pilih Tag Spesifik</strong>
-                  <span class="segment-badge badge-tags">Riwayat Tag</span>
-                </div>
-                <p class="segment-desc">Pilih versi rilis tertentu atau masukkan tag kustom.</p>
-              </div>
-              <span class="segment-check"></span>
-            </div>
+          <!-- Clean Segmented Control -->
+          <div class="channel-segmented-control" role="radiogroup" aria-label="Tipe Saluran Rilis">
+            <button type="button" id="segmentDev" class="channel-segment-btn active" role="radio" aria-checked="true">
+              <span>Dev / Pre-release</span>
+            </button>
+            <button type="button" id="segmentStable" class="channel-segment-btn" role="radio" aria-checked="false">
+              <span>Stable</span>
+            </button>
+            <button type="button" id="segmentTags" class="channel-segment-btn" role="radio" aria-checked="false">
+              <span>Pilih Tag</span>
+            </button>
           </div>
 
-          <!-- Expandable Tag Browser -->
+          <!-- Compact Expandable Tag Browser -->
           <div id="studioTagsBrowser" class="studio-tags-browser hidden">
             <div class="tags-browser-toolbar">
-              <span class="tags-browser-title">Daftar Tag Rilis dari Sumber</span>
-              <button type="button" id="btnStudioRefreshTags" class="btn-tags-refresh" title="Segarkan tag dari GitHub">
+              <input type="text" id="inputStudioCustomTag" class="morphe-input tag-input-compact" placeholder="Ketik tag / commit manual (e.g. v4.3.0)...">
+              <button type="button" id="btnStudioApplyCustomTag" class="btn-clean-primary btn-sm">Terapkan</button>
+              <button type="button" id="btnStudioRefreshTags" class="btn-clean-ghost btn-sm" title="Segarkan tag dari GitHub">
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-                <span>Refresh</span>
               </button>
             </div>
-            <div id="studioTagsList" class="studio-tags-list" role="radiogroup" aria-label="Daftar Tag Rilis"></div>
-            <div class="studio-custom-tag-box">
-              <input type="text" id="inputStudioCustomTag" class="morphe-input" placeholder="Atau ketik nama tag / commit SHA manual (e.g. v4.16.2)...">
-              <button type="button" id="btnStudioApplyCustomTag" class="morphe-pill-btn morphe-pill-sky btn-sm">Terapkan</button>
-            </div>
+            <div id="studioTagsList" class="studio-tags-compact-list" role="radiogroup" aria-label="Daftar Tag Rilis"></div>
           </div>
 
           <!-- Hidden legacy elements kept for script compatibility -->
@@ -195,7 +159,7 @@
         </div>
 
         <div class="wizard-nav-actions">
-          <button type="button" id="btnWizStep1Next" class="morphe-pill-btn morphe-pill-sky btn-next">
+          <button type="button" id="btnWizStep1Next" class="btn-clean-primary btn-next">
             Lanjut: Pilih Aplikasi ›
           </button>
         </div>

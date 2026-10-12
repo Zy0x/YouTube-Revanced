@@ -93,50 +93,42 @@ function renderWizardSourceStep() {
 
   const countBadge = document.getElementById('wizardSourcesCountBadge');
   if (countBadge) {
-    countBadge.textContent = `${STATE.sources.length} Sumber Siap Pakai`;
+    countBadge.textContent = `${STATE.sources.length} sumber`;
   }
 
   STATE.sources.forEach(src => {
     const isActive = src.id === STATE.currentSource;
     const displayName = getSourceDisplayName(src.id);
     const repoText = src.repository || (src.manifestUrl ? 'Manifest URL' : `${src.id}/patches`);
-    const badgeText = src.badge || (src.isPreinstalled !== false ? 'Official' : 'Custom');
-    const badgeClass = getSourceBadgeClass(badgeText);
-    const avatarBg = src.avatarGradient || src.avatarColor || '#3B82F6';
-    const avatarChar = src.avatarText || displayName.charAt(0).toUpperCase();
-
-    const card = document.createElement('div');
-    card.className = `wizard-source-card ${isActive ? 'active' : ''}`;
-    card.setAttribute('role', 'radio');
-    card.setAttribute('aria-checked', isActive ? 'true' : 'false');
-    card.tabIndex = 0;
-
     const isDeletable = !src.isPreinstalled && !src.isDefault;
+    const isRecommended = src.id === 'anddea' || src.badge === 'Recommended';
 
-    card.innerHTML = `
-      <div class="wizard-source-top">
-        <div class="wizard-source-avatar" style="background: ${avatarBg}">${escapeHtml(avatarChar)}</div>
-        <div class="wizard-source-info">
-          <div class="wizard-source-title-row">
-            <span class="wizard-source-name">${escapeHtml(src.name || displayName)}</span>
-            <span class="wizard-source-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
-          </div>
-          <span class="wizard-source-repo">${escapeHtml(repoText)}</span>
+    const item = document.createElement('div');
+    item.className = `wizard-source-item ${isActive ? 'active' : ''}`;
+    item.setAttribute('role', 'radio');
+    item.setAttribute('aria-checked', isActive ? 'true' : 'false');
+    item.tabIndex = 0;
+
+    item.innerHTML = `
+      <div class="source-item-radio">
+        ${isActive ? '<span class="source-radio-dot"></span>' : ''}
+      </div>
+      <div class="source-item-main">
+        <div class="source-item-title-row">
+          <span class="source-item-name">${escapeHtml(src.name || displayName)}</span>
+          ${isRecommended ? '<span class="source-item-tag tag-rec">Default</span>' : ''}
+          ${isDeletable ? '<span class="source-item-tag tag-custom">Custom</span>' : ''}
         </div>
+        <span class="source-item-repo">${escapeHtml(repoText)}</span>
       </div>
-      <p class="wizard-source-desc">${escapeHtml(src.description || 'Repositori modifikasi patch aplikasi.')}</p>
-      <div class="wizard-source-bottom">
-        ${isDeletable ? `
-          <button type="button" class="btn-delete-custom-src" title="Hapus sumber ini">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            <span>Hapus</span>
-          </button>
-        ` : '<span></span>'}
-        <span class="wizard-source-check">${isActive ? '✓' : ''}</span>
-      </div>
+      ${isDeletable ? `
+        <button type="button" class="btn-delete-custom-src" title="Hapus sumber ini">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      ` : ''}
     `;
 
-    card.addEventListener('click', async (e) => {
+    item.addEventListener('click', async (e) => {
       if (e.target.closest('.btn-delete-custom-src')) {
         e.stopPropagation();
         if (confirm(`Hapus sumber "${src.name || displayName}"?`)) {
@@ -150,7 +142,7 @@ function renderWizardSourceStep() {
       renderWizardSourceStep();
     });
 
-    container.appendChild(card);
+    container.appendChild(item);
   });
 
   bindWizardSourceToolbar();
@@ -232,19 +224,19 @@ function renderWizardReleaseStudio() {
   const isStable = currentTag === 'latest';
   const isSpecificTag = !isDev && !isStable;
 
-  // Active Label in Studio Header
+  // Active Label in Channel Header
   const activeLabel = document.getElementById('studioActiveLabel');
   if (activeLabel) {
     if (isDev) {
-      activeLabel.textContent = `⚡ Saluran Dev ${latestPre ? `(${latestPre.tag_name})` : ''}`;
+      activeLabel.textContent = `Dev ${latestPre ? `(${latestPre.tag_name})` : ''}`;
     } else if (isStable) {
-      activeLabel.textContent = `🛡️ Saluran Stable ${latestStable ? `(${latestStable.tag_name})` : ''}`;
+      activeLabel.textContent = `Stable ${latestStable ? `(${latestStable.tag_name})` : ''}`;
     } else {
-      activeLabel.textContent = `🏷️ Tag: ${currentTag}`;
+      activeLabel.textContent = `Tag: ${currentTag}`;
     }
   }
 
-  // Segment Cards
+  // Segment Buttons
   const segDev = document.getElementById('segmentDev');
   const segStable = document.getElementById('segmentStable');
   const segTags = document.getElementById('segmentTags');
@@ -253,11 +245,10 @@ function renderWizardReleaseStudio() {
   if (segDev) {
     segDev.classList.toggle('active', isDev);
     segDev.setAttribute('aria-checked', isDev ? 'true' : 'false');
-    const chk = segDev.querySelector('.segment-check');
-    if (chk) chk.textContent = isDev ? '✓' : '';
     segDev.onclick = () => {
       STATE.patchTag = 'dev';
       STATE.preReleasePatches = true;
+      if (tagsBrowser) tagsBrowser.classList.add('hidden');
       syncReleaseChannelSelection('dev');
       renderWizardReleaseStudio();
     };
@@ -266,11 +257,10 @@ function renderWizardReleaseStudio() {
   if (segStable) {
     segStable.classList.toggle('active', isStable);
     segStable.setAttribute('aria-checked', isStable ? 'true' : 'false');
-    const chk = segStable.querySelector('.segment-check');
-    if (chk) chk.textContent = isStable ? '✓' : '';
     segStable.onclick = () => {
       STATE.patchTag = 'latest';
       STATE.preReleasePatches = false;
+      if (tagsBrowser) tagsBrowser.classList.add('hidden');
       syncReleaseChannelSelection('latest');
       renderWizardReleaseStudio();
     };
@@ -279,17 +269,20 @@ function renderWizardReleaseStudio() {
   if (segTags) {
     segTags.classList.toggle('active', isSpecificTag);
     segTags.setAttribute('aria-checked', isSpecificTag ? 'true' : 'false');
-    const chk = segTags.querySelector('.segment-check');
-    if (chk) chk.textContent = isSpecificTag ? '✓' : '';
     segTags.onclick = () => {
-      if (tagsBrowser) tagsBrowser.classList.toggle('hidden');
+      if (tagsBrowser) {
+        tagsBrowser.classList.toggle('hidden');
+        if (!tagsBrowser.classList.contains('hidden')) {
+          segTags.classList.add('active');
+          segDev.classList.remove('active');
+          segStable.classList.remove('active');
+        }
+      }
     };
   }
 
-  if (tagsBrowser) {
-    if (isSpecificTag) {
-      tagsBrowser.classList.remove('hidden');
-    }
+  if (tagsBrowser && isSpecificTag) {
+    tagsBrowser.classList.remove('hidden');
   }
 
   // Populate Tags Browser List
@@ -298,34 +291,31 @@ function renderWizardReleaseStudio() {
     tagsListContainer.innerHTML = '';
 
     if (releases.length === 0) {
-      tagsListContainer.innerHTML = '<div class="studio-tag-item"><span class="morphe-muted-hint">Tidak ada riwayat tag rilis untuk sumber ini.</span></div>';
+      tagsListContainer.innerHTML = '<div class="studio-tag-row"><span class="morphe-muted-hint">Tidak ada riwayat tag rilis untuk sumber ini.</span></div>';
     } else {
       releases.slice(0, 10).forEach(rel => {
         const tagName = rel.tag_name || rel.name;
         const isSelected = STATE.patchTag === tagName;
         const isPre = !!rel.prerelease;
-        const badgeClass = isPre ? 'badge-source-daily' : 'badge-source-upstream';
         const dateStr = rel.published_at ? formatDate(rel.published_at) : 'Rilis Baru';
 
         const row = document.createElement('div');
-        row.className = `studio-tag-item ${isSelected ? 'active' : ''}`;
+        row.className = `studio-tag-row ${isSelected ? 'active' : ''}`;
         row.setAttribute('role', 'radio');
         row.setAttribute('aria-checked', isSelected ? 'true' : 'false');
 
         row.innerHTML = `
-          <div class="studio-tag-left">
-            <span class="studio-tag-name">${escapeHtml(tagName)}</span>
-            <span class="studio-tag-badge ${badgeClass}">${isPre ? 'Pre' : 'Stable'}</span>
-            <span class="studio-tag-date">${escapeHtml(dateStr)}</span>
+          <div class="tag-row-main">
+            <span class="tag-radio-dot">${isSelected ? '•' : ''}</span>
+            <span class="tag-name-mono">${escapeHtml(tagName)}</span>
+            <span class="tag-kind-text">${isPre ? 'pre' : 'stable'}</span>
+            <span class="tag-date-muted">${escapeHtml(dateStr)}</span>
           </div>
-          <div class="studio-tag-right">
-            <button type="button" class="btn-tag-info" title="Lihat catatan rilis untuk tag ${escapeHtml(tagName)}">ℹ</button>
-            <span class="segment-check">${isSelected ? '✓' : ''}</span>
-          </div>
+          <button type="button" class="btn-tag-changelog" title="Lihat catatan rilis untuk tag ${escapeHtml(tagName)}">Changelog</button>
         `;
 
         row.addEventListener('click', (e) => {
-          if (e.target.closest('.btn-tag-info')) {
+          if (e.target.closest('.btn-tag-changelog')) {
             e.stopPropagation();
             showPatchNotesModal(tagName);
             return;
