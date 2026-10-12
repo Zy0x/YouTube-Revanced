@@ -1,3 +1,17 @@
+## v2.1.15 (2026-10-12)
+
+### Complete Setup Wizard Overhaul, Returning User Dashboard & Smart Mode Engine
+- **Navigasi Fresh & 5-Step Guided Setup Wizard**: Rombak total onboarding pengguna baru menjadi Wizard terpandu 5 tahap:
+  1. *Langkah 1 (Sumber & Rilis Patch)*: Pemilihan repositori patch dan saluran rilis tag dengan tombol info `(i)` untuk melihat catatan rilis/changelog resmi langsung di antarmuka.
+  2. *Langkah 2 (Aplikasi Target)*: Grid pemilihan aplikasi multi-mpp yang adaptif dan dinamis.
+  3. *Langkah 3 (Versi Aplikasi)*: Menampilkan kartu hero *Recommended Version* di posisi teratas + accordion penampil seluruh versi lengkap dengan badge klasifikasi `[Stable]`, `[Beta]`, `[Alpha]`, dan `[Pre-release]`.
+  4. *Langkah 4 (Mode Target & Kurasi Patch)*: Pemilih mode interaktif (Mode Root vs Mode Non-Root) dan kurasi patch lengkap dengan konfigurasi opsi dinamis tanpa hardcoded parameters.
+  5. *Langkah 5 (Build & Penyelesaian)*: Ringkasan menyeluruh konfigurasi, live terminal progress, integrasi pasang langsung ke Root Manager (APatch/Magisk/KSU/ReSukiSU/KSU-Next) atau unduh file flashable ZIP/APK.
+- **Returning User Dashboard**: Pengguna yang telah menyelesaikan setup otomatis langsung disajikan Full Morphe Dashboard tanpa mengulang wizard. Menampilkan badge `[✓ Configured]` pada aplikasi yang sudah dikonfigurasi, eksekusi instan 1-klik *Quick Patch*, tombol `[⚙️ Setup Ulang]` di bilah atas, serta tombol `[⋮ Edit Setup]` per kartu aplikasi.
+- **Smart MicroG / GmsCore Warning Modal**: Sistem peringatan interaktif yang mendeteksi pemilihan patch MicroG secara pintar (mencegah crash/duplikasi layanan Google Play pada Mode Root dan menjamin login Google Account tetap aktif pada Mode Non-Root).
+- **Silent Developer Console**: Akses tersembunyi bagi pengembang via 5-klik cepat pada teks engine di Info Modal `(i)` untuk memicu GitHub Actions Release Dispatch secara senyap tanpa notifikasi toast, dengan sanitasi input ketat dan proteksi penuh dari hardcoded credential leaks.
+- **Modular Codebase Integrity (< 1,000 Lines Limit)**: Pemisahan bersih logika wizard ke `web/css/wizard.css` dan `web/js/ui-wizard.js`, memastikan 100% file di repositori tetap berada di bawah batas 1.000 baris.
+
 ## v2.1.14 (2026-10-12)
 
 ### Dedicated Port 8088 & Anti-Collision Engine (Fix Lynx Kernel Manager Conflict)

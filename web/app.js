@@ -1,6 +1,6 @@
 /**
  * YouTube RVX — Application Bootstrap & Event Orchestrator
- * Version: 2.1.14
+ * Version: 2.1.15
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -15,6 +15,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   await fetchAndRenderPatches(STATE.currentSource);
   await fetchInstalledAppInfo();
   syncAllSummaries();
+
+  // Initialize Wizard or Dashboard based on setup status
+  if (typeof initWizardOrDashboard === 'function') {
+    initWizardOrDashboard();
+  }
+
   registerServiceWorker();
 });
 
@@ -49,7 +55,8 @@ function switchScreen(screenId) {
     home: 'screenHome',
     version: 'screenVersion',
     patches: 'screenPatches',
-    progress: 'screenProgress'
+    progress: 'screenProgress',
+    wizard: 'screenWizard'
   };
   Object.entries(screenMap).forEach(([key, domId]) => {
     const el = document.getElementById(domId);
@@ -449,6 +456,152 @@ function initEventListeners() {
       }
     }
   });
+
+  // Setup Wizard & Returning Dashboard Event Handlers
+  document.querySelectorAll('.wizard-step-node').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const step = parseInt(btn.dataset.step, 10);
+      if (step) goToWizardStep(step);
+    });
+  });
+
+  document.getElementById('btnRestartWizard')?.addEventListener('click', () => {
+    goToWizardStep(1);
+    switchScreen('wizard');
+  });
+
+  document.getElementById('btnWizardToggleUi')?.addEventListener('click', () => {
+    setUiMode(STATE.uiMode === 'morphe' ? 'tui' : 'morphe');
+  });
+
+  document.getElementById('btnWizardInfo')?.addEventListener('click', () => {
+    syncAllSummaries();
+    document.getElementById('infoModal')?.classList.remove('hidden');
+  });
+
+  // Wizard Step 1 Handlers
+  document.getElementById('btnWizStep1Next')?.addEventListener('click', () => goToWizardStep(2));
+  document.getElementById('btnWizardReleaseNotes')?.addEventListener('click', showPatchNotesModal);
+  document.getElementById('wizardPatchReleaseSelect')?.addEventListener('change', (e) => {
+    STATE.patchTag = e.target.value;
+    const mainSelect = document.getElementById('selectPatchRelease');
+    if (mainSelect) mainSelect.value = e.target.value;
+    syncAllSummaries();
+  });
+
+  // Wizard Step 2 Handlers
+  document.getElementById('btnWizStep2Back')?.addEventListener('click', () => goToWizardStep(1));
+  document.getElementById('btnWizStep2Next')?.addEventListener('click', () => goToWizardStep(3));
+
+  // Wizard Step 3 Handlers
+  document.getElementById('btnWizStep3Back')?.addEventListener('click', () => goToWizardStep(2));
+  document.getElementById('btnWizStep3Next')?.addEventListener('click', () => goToWizardStep(4));
+  document.getElementById('btnWizardToggleAllVersions')?.addEventListener('click', () => {
+    STATE.showAllVersions = !STATE.showAllVersions;
+    renderWizardVersionStep();
+  });
+
+  // Wizard Step 4 Handlers
+  document.getElementById('modeCardRoot')?.addEventListener('click', () => setTargetMode('root'));
+  document.getElementById('modeCardNonRoot')?.addEventListener('click', () => setTargetMode('non-root'));
+  document.getElementById('btnWizPatchesSearch')?.addEventListener('click', () => {
+    const box = document.getElementById('wizardPatchesSearchBox');
+    box?.classList.toggle('hidden');
+    if (box && !box.classList.contains('hidden')) {
+      document.getElementById('inputWizPatchSearch')?.focus();
+    }
+  });
+  document.getElementById('inputWizPatchSearch')?.addEventListener('input', (e) => {
+    STATE.patchSearchQuery = e.target.value;
+    renderMorphePatchList();
+  });
+  document.getElementById('btnWizPatchesDefault')?.addEventListener('click', () => {
+    STATE.selectedPatches.clear();
+    STATE.patches.forEach(p => {
+      if (p.use !== false) STATE.selectedPatches.add(p.name);
+    });
+    adjustMicrogForMode(STATE.targetMode);
+    renderMorphePatchList();
+    syncAllSummaries();
+  });
+  document.getElementById('btnWizPatchesAll')?.addEventListener('click', () => {
+    STATE.patches.forEach(p => STATE.selectedPatches.add(p.name));
+    renderMorphePatchList();
+    syncAllSummaries();
+  });
+  document.getElementById('btnWizStep4Back')?.addEventListener('click', () => goToWizardStep(3));
+  document.getElementById('btnWizStep4Next')?.addEventListener('click', () => goToWizardStep(5));
+
+  // Wizard Step 5 Handlers
+  document.getElementById('btnWizardStartBuild')?.addEventListener('click', () => {
+    triggerBuildPipeline();
+    switchScreen('progress');
+  });
+  document.getElementById('btnWizardRootInstall')?.addEventListener('click', () => {
+    document.getElementById('btnHeroHotMount')?.click();
+  });
+  document.getElementById('btnWizardSaveFile')?.addEventListener('click', () => {
+    document.getElementById('btnHeroExportZip')?.click();
+  });
+  document.getElementById('btnWizardFinish')?.addEventListener('click', () => {
+    completeWizardAndEnterDashboard();
+  });
+  document.getElementById('btnWizStep5Back')?.addEventListener('click', () => goToWizardStep(4));
+
+  // Silent Developer Listener & Dispatch
+  const infoVerEl = document.getElementById('infoEngineStatus');
+  if (infoVerEl && typeof registerSilentDeveloperListener === 'function') {
+    registerSilentDeveloperListener(infoVerEl);
+  }
+  document.getElementById('btnCloseDevModal')?.addEventListener('click', () => {
+    document.getElementById('silentDevModal')?.classList.add('hidden');
+  });
+  document.getElementById('btnDevDispatchTrigger')?.addEventListener('click', async () => {
+    const alertBox = document.getElementById('devDispatchAlert');
+    const repo = document.getElementById('inputDevRepo')?.value.trim();
+    const branch = document.getElementById('inputDevBranch')?.value.trim();
+    const token = document.getElementById('inputDevToken')?.value.trim();
+
+    if (!token) {
+      if (alertBox) {
+        alertBox.textContent = 'Personal Access Token (PAT) wajib diisi.';
+        alertBox.className = 'morphe-alert text-danger';
+        alertBox.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (alertBox) {
+      alertBox.textContent = 'Mengirim release dispatch...';
+      alertBox.className = 'morphe-alert';
+      alertBox.classList.remove('hidden');
+    }
+
+    try {
+      await triggerSilentDeveloperDispatch({
+        token,
+        repo,
+        branch,
+        eventType: 'build-rvx',
+        payload: {
+          package_name: STATE.currentApp?.packageName || 'com.google.android.youtube',
+          target_version: STATE.currentVersion,
+          source: STATE.currentSource,
+          tag: STATE.patchTag,
+          mode: STATE.targetMode
+        }
+      });
+      if (alertBox) {
+        alertBox.textContent = 'Dispatch berhasil dikirim ke GitHub Actions!';
+        alertBox.className = 'morphe-alert text-success';
+      }
+    } catch (err) {
+      if (alertBox) {
+        alertBox.textContent = `Dispatch error: ${err.message}`;
+        alertBox.className = 'morphe-alert text-danger';
+      }
+    }
+  });
 }
 
 function registerServiceWorker() {
@@ -457,7 +610,7 @@ function registerServiceWorker() {
     if (isLocalhost && 'caches' in window) {
       caches.keys().then((keys) => {
         keys.forEach((k) => {
-          if (k !== 'rvx-builder-v2.1.14') {
+          if (k !== 'rvx-builder-v2.1.15') {
             caches.delete(k);
           }
         });

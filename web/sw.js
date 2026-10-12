@@ -1,14 +1,16 @@
-const CACHE_NAME = 'rvx-builder-v2.1.14';
+const CACHE_NAME = 'rvx-builder-v2.1.15';
 const ASSETS_TO_CACHE = [
   './index.html',
   './style.css',
   './css/base.css',
   './css/morphe.css',
+  './css/wizard.css',
   './css/tui.css',
   './css/responsive.css',
   './js/state.js',
   './js/api.js',
   './js/ui-morphe.js',
+  './js/ui-wizard.js',
   './js/ui-tui.js',
   './app.js',
   './manifest.json',

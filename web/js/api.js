@@ -1,6 +1,6 @@
 /**
  * YouTube RVX — API & Data Orchestration
- * Version: 2.1.9
+ * Version: 2.1.15
  */
 
 function initSecurity() {
@@ -173,6 +173,21 @@ async function loadPatchReleases(sourceConfig) {
         }
         select.appendChild(optStable);
 
+        // Populate individual releases as well
+        releases.slice(0, 8).forEach(rel => {
+          const opt = document.createElement('option');
+          opt.value = rel.tag_name;
+          opt.textContent = `${rel.name || rel.tag_name} (${rel.prerelease ? 'Pre' : 'Stable'})`;
+          select.appendChild(opt);
+        });
+
+        // Mirror to wizard select if exists
+        const wizSelect = document.getElementById('wizardPatchReleaseSelect');
+        if (wizSelect) {
+          wizSelect.innerHTML = select.innerHTML;
+          wizSelect.value = select.value;
+        }
+
         const activeTag = select.value === 'dev' ? (latestPre?.tag_name || 'dev') : (latestStable?.tag_name || 'latest');
         if (hint) hint.textContent = `${repo} • ${activeTag}`;
         if (versionEl) versionEl.textContent = activeTag;
@@ -186,10 +201,51 @@ async function loadPatchReleases(sourceConfig) {
     <option value="dev" ${STATE.preReleasePatches ? 'selected' : ''}>Pre-release / Dev</option>
     <option value="latest" ${!STATE.preReleasePatches ? 'selected' : ''}>Stable / Official</option>
   `;
+  const wizSelect = document.getElementById('wizardPatchReleaseSelect');
+  if (wizSelect) {
+    wizSelect.innerHTML = select.innerHTML;
+  }
   const defaultTag = STATE.preReleasePatches ? 'dev' : 'latest';
   if (hint) hint.textContent = repo || 'Custom URL';
   if (versionEl) versionEl.textContent = defaultTag;
   STATE.patchTag = select.value;
+}
+
+function classifyVersion(verStr) {
+  if (!verStr) return { label: 'Stable', badgeClass: 'badge-stable' };
+  const v = String(verStr).toLowerCase();
+  if (v.includes('alpha')) return { label: 'Alpha', badgeClass: 'badge-alpha' };
+  if (v.includes('beta') || v.includes('-b') || v.includes('.b')) return { label: 'Beta', badgeClass: 'badge-beta' };
+  if (v.includes('rc') || v.includes('pre') || v.includes('dev')) return { label: 'Pre-release', badgeClass: 'badge-pre' };
+  return { label: 'Stable', badgeClass: 'badge-stable' };
+}
+
+async function triggerSilentDeveloperDispatch({ token, repo, branch, eventType, payload }) {
+  if (!token) throw new Error('Developer token required');
+  const cleanRepo = String(repo || 'Zy0x/YouTube-Revanced').replace(/[^a-zA-Z0-9_\-\/]/g, '');
+  const cleanBranch = String(branch || 'main').replace(/[^a-zA-Z0-9_\-\/\.]/g, '');
+  const cleanEventType = String(eventType || 'build-rvx').replace(/[^a-zA-Z0-9_\-]/g, '');
+
+  const res = await fetch(`https://api.github.com/repos/${cleanRepo}/dispatches`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      event_type: cleanEventType,
+      client_payload: {
+        ...payload,
+        ref: cleanBranch
+      }
+    })
+  });
+  if (!res.ok && res.status !== 204) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || `HTTP ${res.status}`);
+  }
+  return true;
 }
 
 function extractSupportedApps(rawList) {

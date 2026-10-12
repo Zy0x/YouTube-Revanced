@@ -9,7 +9,7 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23E53935'><path d='M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z'/></svg>">
-  <link rel="stylesheet" href="style.css?v=2.1.9">
+  <link rel="stylesheet" href="style.css?v=2.1.15">
 </head>
 <body class="mode-morphe">
 
@@ -30,24 +30,236 @@
          SCREEN 1: MORPHE HOME ("What app do you want to patch?")
          1:1 Reference: docs/images/common/choose-app.jpg
          ------------------------------------------------------------------- -->
+    <!-- ===================================================================
+         SETUP WIZARD (Fresh Navigation untuk Pengguna Baru / Setup Ulang)
+         5 Langkah Terstruktur & Terpandu
+         =================================================================== -->
+    <section id="screenWizard" class="wizard-screen" aria-label="Setup Wizard">
+      <!-- Wizard Top Header -->
+      <div class="wizard-top-bar">
+        <div class="wizard-brand">
+          <div class="wizard-brand-icon">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="#FFFFFF"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </div>
+          <span class="wizard-brand-title">RVX Setup Wizard</span>
+        </div>
+        <div class="wizard-top-actions">
+          <button type="button" id="btnWizardToggleUi" class="icon-circle-btn" title="TUI Mode" aria-label="TUI Mode">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          </button>
+          <button type="button" id="btnWizardInfo" class="icon-circle-btn" title="Info" aria-label="Info">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stepper Progress Nodes (1 to 5) -->
+      <nav class="wizard-stepper" aria-label="Progress Langkah">
+        <div class="wizard-stepper-track"><div id="wizardStepperProgress" class="wizard-stepper-progress"></div></div>
+        <button type="button" class="wizard-step-node active" data-step="1" aria-label="Langkah 1: Sumber">
+          <span class="step-node-bubble">1</span>
+          <span class="step-node-label">Sumber</span>
+        </button>
+        <button type="button" class="wizard-step-node" data-step="2" aria-label="Langkah 2: Aplikasi">
+          <span class="step-node-bubble">2</span>
+          <span class="step-node-label">Aplikasi</span>
+        </button>
+        <button type="button" class="wizard-step-node" data-step="3" aria-label="Langkah 3: Versi">
+          <span class="step-node-bubble">3</span>
+          <span class="step-node-label">Versi</span>
+        </button>
+        <button type="button" class="wizard-step-node" data-step="4" aria-label="Langkah 4: Mode & Patch">
+          <span class="step-node-bubble">4</span>
+          <span class="step-node-label">Mode &amp; Patch</span>
+        </button>
+        <button type="button" class="wizard-step-node" data-step="5" aria-label="Langkah 5: Build">
+          <span class="step-node-bubble">5</span>
+          <span class="step-node-label">Build</span>
+        </button>
+      </nav>
+
+      <!-- PANE 1: SOURCE & PATCH RELEASE -->
+      <div id="wizardStep1" class="wizard-step-pane active">
+        <div class="wizard-pane-header">
+          <h2 class="wizard-pane-title">1. Pilih Sumber &amp; Rilis Patch</h2>
+          <p class="wizard-pane-desc">Pilih repositori penyedia patch yang ingin Anda gunakan untuk memodifikasi aplikasi.</p>
+        </div>
+        <div id="wizardSourcesGrid" class="source-cards-grid" role="radiogroup" aria-label="Pilih Sumber"></div>
+        <div class="wizard-release-box">
+          <div class="wizard-release-header">
+            <span class="wizard-release-title">Versi Saluran Rilis</span>
+            <span class="source-card-tag">GitHub Tag</span>
+          </div>
+          <div class="wizard-release-row">
+            <select id="wizardPatchReleaseSelect" class="wizard-select" aria-label="Pilih Tag Rilis"></select>
+            <button type="button" id="btnWizardReleaseNotes" class="btn-release-info" title="Lihat Catatan Rilis / Changelog" aria-label="Changelog Release">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="wizard-nav-actions">
+          <button type="button" id="btnWizStep1Next" class="morphe-pill-btn morphe-pill-sky btn-next">
+            Lanjut: Pilih Aplikasi ›
+          </button>
+        </div>
+      </div>
+
+      <!-- PANE 2: TARGET APPLICATION -->
+      <div id="wizardStep2" class="wizard-step-pane">
+        <div class="wizard-pane-header">
+          <h2 class="wizard-pane-title">2. Pilih Aplikasi Target</h2>
+          <p class="wizard-pane-desc">Pilih aplikasi yang ingin dipatch dari daftar aplikasi yang didukung oleh sumber ini.</p>
+        </div>
+        <div id="wizardAppsGrid" class="morphe-apps-grid" role="radiogroup" aria-label="Pilih Aplikasi Target"></div>
+        <div class="wizard-nav-actions">
+          <button type="button" id="btnWizStep2Back" class="morphe-pill-btn morphe-pill-outline btn-back">‹ Kembali</button>
+          <button type="button" id="btnWizStep2Next" class="morphe-pill-btn morphe-pill-sky btn-next">Lanjut: Pilih Versi ›</button>
+        </div>
+      </div>
+
+      <!-- PANE 3: APP TARGET VERSION -->
+      <div id="wizardStep3" class="wizard-step-pane">
+        <div class="wizard-pane-header">
+          <h2 class="wizard-pane-title">3. Versi Target APK</h2>
+          <p class="wizard-pane-desc">Pilih versi original unpatched APK untuk <strong id="wizardVersionAppName">YouTube</strong>.</p>
+        </div>
+        <!-- Recommended Hero Banner -->
+        <div id="wizardRecVersionHero" class="version-rec-hero" role="button" tabindex="0">
+          <div class="version-rec-left">
+            <span class="version-rec-tag">⭐ Versi Rekomendasi</span>
+            <span id="wizardRecVersionNum" class="version-rec-num">v21.13.164</span>
+            <span class="version-rec-sub">Dites paling stabil dan kompatibel dengan seluruh patch</span>
+          </div>
+          <span class="badge-version badge-stable">Recommended</span>
+        </div>
+        <!-- All versions list -->
+        <div id="wizardVersionList" class="morphe-version-list" role="radiogroup"></div>
+        <div class="version-more-row">
+          <button type="button" id="btnWizardToggleAllVersions" class="morphe-subtle-link">Tampilkan semua versi</button>
+        </div>
+        <div class="wizard-nav-actions">
+          <button type="button" id="btnWizStep3Back" class="morphe-pill-btn morphe-pill-outline btn-back">‹ Kembali</button>
+          <button type="button" id="btnWizStep3Next" class="morphe-pill-btn morphe-pill-sky btn-next">Lanjut: Mode &amp; Patches ›</button>
+        </div>
+      </div>
+
+      <!-- PANE 4: TARGET MODE & PATCHES -->
+      <div id="wizardStep4" class="wizard-step-pane">
+        <div class="wizard-pane-header">
+          <h2 class="wizard-pane-title">4. Target Mode &amp; Kurasi Patch</h2>
+          <p class="wizard-pane-desc">Tentukan mode instalasi target dan pilih fitur patch yang ingin Anda pasang.</p>
+        </div>
+        <!-- Mode Switcher -->
+        <div class="mode-switcher-grid">
+          <div id="modeCardRoot" class="mode-pill-card active" role="radio" aria-checked="true" tabindex="0">
+            <div class="mode-card-header">
+              <div class="mode-icon-circle">🛡️</div>
+              <span class="source-card-check">✓</span>
+            </div>
+            <strong class="mode-card-title">Mode Root</strong>
+            <span class="mode-card-desc">Magisk / KernelSU / APatch / ReSukiSU. Tanpa MicroG.</span>
+          </div>
+          <div id="modeCardNonRoot" class="mode-pill-card" role="radio" aria-checked="false" tabindex="0">
+            <div class="mode-card-header">
+              <div class="mode-icon-circle">📱</div>
+              <span class="source-card-check"></span>
+            </div>
+            <strong class="mode-card-title">Mode Non-Root</strong>
+            <span class="mode-card-desc">Standalone APK. Wajib GmsCore/MicroG untuk login.</span>
+          </div>
+        </div>
+        <!-- Patch quick controls -->
+        <div class="morphe-actions-toolbar" style="margin-bottom: 12px;">
+          <button type="button" id="btnWizPatchesSearch" class="morphe-chip-btn">Cari Patch</button>
+          <button type="button" id="btnWizPatchesDefault" class="morphe-chip-btn">Default</button>
+          <button type="button" id="btnWizPatchesAll" class="morphe-chip-btn">Pilih Semua</button>
+        </div>
+        <div id="wizardPatchesSearchBox" class="version-search-drawer hidden" style="margin-bottom: 12px;">
+          <input type="search" id="inputWizPatchSearch" class="morphe-input" placeholder="Ketik nama fitur/patch...">
+        </div>
+        <div id="wizardPatchCategoriesContainer" class="morphe-categories-stack"></div>
+        <div class="wizard-nav-actions">
+          <button type="button" id="btnWizStep4Back" class="morphe-pill-btn morphe-pill-outline btn-back">‹ Kembali</button>
+          <button type="button" id="btnWizStep4Next" class="morphe-pill-btn morphe-pill-sky btn-next">Lanjut ke Build ›</button>
+        </div>
+      </div>
+
+      <!-- PANE 5: BUILD & FINISH -->
+      <div id="wizardStep5" class="wizard-step-pane">
+        <div class="wizard-pane-header">
+          <h2 class="wizard-pane-title">5. Ringkasan &amp; Eksekusi Build</h2>
+          <p class="wizard-pane-desc">Periksa kembali ringkasan konfigurasi sebelum memulai proses patching.</p>
+        </div>
+        <div class="wizard-summary-card">
+          <div class="wizard-summary-grid">
+            <div class="summary-item">
+              <span class="summary-item-label">Aplikasi Target</span>
+              <span id="summaryAppName" class="summary-item-value">YouTube</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-item-label">Versi APK</span>
+              <span id="summaryVersion" class="summary-item-value">v21.13.164</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-item-label">Sumber Patch</span>
+              <span id="summarySource" class="summary-item-value">Anddea RVX</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-item-label">Mode Target</span>
+              <span id="summaryMode" class="summary-item-value">Mode Root</span>
+            </div>
+            <div class="summary-item" style="grid-column: span 2;">
+              <span class="summary-item-label">Jumlah Patch Terpilih</span>
+              <span id="summaryPatchesCount" class="summary-item-value">68 aktif</span>
+            </div>
+          </div>
+        </div>
+        <div class="morphe-version-actions">
+          <button type="button" id="btnWizardStartBuild" class="morphe-pill-btn morphe-pill-sky btn-block">
+            🚀 Mulai Patch Sekarang
+          </button>
+          <button type="button" id="btnWizardRootInstall" class="morphe-pill-btn morphe-pill-outline btn-block hidden">
+            ⚡ Pasang Langsung ke Root Manager
+          </button>
+          <button type="button" id="btnWizardSaveFile" class="morphe-pill-btn morphe-pill-outline btn-block">
+            💾 Simpan / Unduh ZIP &amp; APK
+          </button>
+          <button type="button" id="btnWizardFinish" class="morphe-pill-btn morphe-pill-slate-blue btn-block">
+            ✅ Selesai &amp; Masuk Dashboard
+          </button>
+        </div>
+        <div class="wizard-nav-actions">
+          <button type="button" id="btnWizStep5Back" class="morphe-pill-btn morphe-pill-outline btn-back">‹ Kembali</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- -------------------------------------------------------------------
+         SCREEN 1: MORPHE HOME / RETURNING USER DASHBOARD
+         1:1 Reference: docs/images/common/choose-app.jpg
+         ------------------------------------------------------------------- -->
     <section id="screenHome" class="morphe-screen active" aria-label="Morphe Home">
-      <!-- Subtle Top-Right Info (i) & TUI Toggle -->
-      <div class="home-top-utility">
-        <button type="button" id="btnToggleUiMode" class="icon-circle-btn" title="Switch to Termux Revancify-Xisr TUI" aria-label="Switch to Termux TUI">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+      <!-- Returning User Top Bar: Setup Ulang & Utilities -->
+      <div class="dashboard-top-nav">
+        <button type="button" id="btnRestartWizard" class="btn-setup-ulang" title="Mulai ulang konfigurasi dari awal">
+          <span>⚙️ Setup Ulang</span>
         </button>
-        <button type="button" id="btnOpenInfoModal" class="icon-circle-btn" title="System & App Info" aria-label="Information">
-          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        </button>
+        <div class="home-top-utility" style="padding-top: 0;">
+          <button type="button" id="btnToggleUiMode" class="icon-circle-btn" title="Switch to Termux Revancify-Xisr TUI" aria-label="Switch to Termux TUI">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          </button>
+          <button type="button" id="btnOpenInfoModal" class="icon-circle-btn" title="System & App Info" aria-label="Information">
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </button>
+        </div>
       </div>
 
       <div class="morphe-home-center">
-        <div class="morphe-step-badge"><span>LANGKAH 1 DARI 5</span> • Pilih Target Aplikasi &amp; Sumber Patch</div>
         <h1 class="morphe-home-greeting">What app do you want to patch?</h1>
 
-        <!-- Dynamic Morphe App Cards Grid (Populated dynamically for all apps in .mpp) -->
+        <!-- Dynamic Morphe App Cards Grid (Populated dynamically with [✓ Configured] badges) -->
         <div id="homeAppsGrid" class="morphe-apps-grid" role="radiogroup" aria-label="Select Application">
-          <!-- Rendered dynamically by renderAppCards() in ui-morphe.js -->
+          <!-- Rendered dynamically by renderAppCardsWithConfigStatus() -->
         </div>
       </div>
 
@@ -712,12 +924,54 @@
         </div>
       </div>
     </div>
+  <!-- 7. Smart MicroG Warning Modal -->
+  <div id="smartMicrogModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="microgModalTitle">
+    <div class="modal-card morphe-sheet-card">
+      <div class="modal-body">
+        <div class="warning-icon-circle" aria-hidden="true">⚠️</div>
+        <h3 id="microgModalTitle" class="modal-warning-title">Peringatan Konfigurasi</h3>
+        <p id="microgModalMsg" class="modal-warning-text"></p>
+        <div class="morphe-version-actions">
+          <button type="button" id="btnMicrogAutoFix" class="morphe-pill-btn morphe-pill-sky btn-block">Perbaiki Otomatis</button>
+          <button type="button" id="btnMicrogIgnore" class="morphe-pill-btn morphe-pill-outline btn-block">Tetap Lanjutkan</button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <script src="js/state.js?v=2.1.14"></script>
-  <script src="js/api.js?v=2.1.14"></script>
-  <script src="js/ui-morphe.js?v=2.1.14"></script>
-  <script src="js/ui-tui.js?v=2.1.14"></script>
-  <script src="app.js?v=2.1.14"></script>
+  <!-- 8. Silent Developer Console (Secret 5-Click) -->
+  <div id="silentDevModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalDevTitle">
+    <div class="modal-card morphe-sheet-card">
+      <div class="modal-header">
+        <h3 id="modalDevTitle" class="modal-title">Developer Release Dispatch</h3>
+        <button type="button" id="btnCloseDevModal" class="btn-close" aria-label="Close Developer Console">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-group">
+          <label class="settings-group-title" for="inputDevRepo">Repository</label>
+          <input type="text" id="inputDevRepo" class="morphe-input" value="Zy0x/YouTube-Revanced">
+        </div>
+        <div class="settings-group">
+          <label class="settings-group-title" for="inputDevBranch">Branch</label>
+          <input type="text" id="inputDevBranch" class="morphe-input" value="main">
+        </div>
+        <div class="settings-group">
+          <label class="settings-group-title" for="inputDevToken">GitHub Token (PAT)</label>
+          <input type="password" id="inputDevToken" class="morphe-input" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off">
+        </div>
+        <div id="devDispatchAlert" class="morphe-alert hidden" role="alert"></div>
+        <div class="morphe-version-actions">
+          <button type="button" id="btnDevDispatchTrigger" class="morphe-pill-btn morphe-pill-sky btn-block">Dispatch Release</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/state.js?v=2.1.15"></script>
+  <script src="js/api.js?v=2.1.15"></script>
+  <script src="js/ui-morphe.js?v=2.1.15"></script>
+  <script src="js/ui-wizard.js?v=2.1.15"></script>
+  <script src="js/ui-tui.js?v=2.1.15"></script>
+  <script src="app.js?v=2.1.15"></script>
 </body>
 </html>

@@ -1,13 +1,19 @@
 /**
  * YouTube RVX — State Management & Constants
- * Version: 2.1.14
+ * Version: 2.1.15
  */
 
 const STATE = {
   uiMode: localStorage.getItem('rvx_ui_mode') || 'morphe',
-  activeScreen: 'home', // 'home' | 'version' | 'patches' | 'progress'
+  activeScreen: 'home', // 'home' | 'version' | 'patches' | 'progress' | 'wizard'
   tuiScreen: 'main',
   tuiSelectedIndex: 0,
+
+  // Setup Wizard & Returning User Dashboard State
+  setupCompleted: localStorage.getItem('rvx_setup_completed') === 'true',
+  wizardStep: 1, // 1: Source & Release, 2: App, 3: Version, 4: Mode & Patches, 5: Build
+  targetMode: localStorage.getItem('rvx_target_mode') || 'root', // 'root' | 'non-root'
+  appConfigs: {},
 
   // Multi-Application MPP Support
   allManifestPatches: [],
@@ -43,12 +49,15 @@ const STATE = {
   patchSearchQuery: '',
   editingPatchName: null,
 
+  // MicroG smart prompt tracking
+  microgWarningDismissed: false,
+
   authToken: localStorage.getItem('rvx_gh_pat') || '',
   authUser: null,
   engineMode: 'local',
   daemonOnline: false,
   daemonUrl: '',
-  daemonVersion: '2.1.11',
+  daemonVersion: '2.1.15',
   eventSource: null,
   logHistory: [
     { type: 'I', text: 'Remove background playback restrictions succeeded' },
@@ -285,5 +294,44 @@ function resetSourcesToDefault() {
   STATE.currentSource = 'anddea';
   localStorage.setItem('rvx_active_source', 'anddea');
 }
+
+function loadAppConfigs() {
+  try {
+    const raw = localStorage.getItem('rvx_app_configs');
+    if (raw) return JSON.parse(raw);
+  } catch (_) {}
+  return {};
+}
+
+function saveAppConfig(pkgId, config) {
+  if (!pkgId) return;
+  STATE.appConfigs[pkgId] = {
+    ...config,
+    configuredAt: new Date().toISOString()
+  };
+  try {
+    localStorage.setItem('rvx_app_configs', JSON.stringify(STATE.appConfigs));
+  } catch (_) {}
+}
+
+function getAppConfig(pkgId) {
+  if (!pkgId) return null;
+  return STATE.appConfigs[pkgId] || null;
+}
+
+function isAppConfigured(pkgId) {
+  if (!pkgId) return false;
+  return !!(STATE.appConfigs && STATE.appConfigs[pkgId]);
+}
+
+function resetAllAppConfigs() {
+  STATE.appConfigs = {};
+  localStorage.removeItem('rvx_app_configs');
+  localStorage.removeItem('rvx_setup_completed');
+  STATE.setupCompleted = false;
+}
+
+// Initialize loaded app configs
+STATE.appConfigs = loadAppConfigs();
 
 

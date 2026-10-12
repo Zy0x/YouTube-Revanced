@@ -107,8 +107,8 @@ Magisk, KernelSU, and APatch root managers strictly require shell entrypoints (`
 ### 2. Modular Design & Strict < 1000 Lines Limit
 To ensure maximum maintainability and prevent code bloat:
 - **Strict Line Limit**: All project scripts and code files (`.rs`, `.js`, `.css`, `.sh`, `.bat`, `.py`) **must strictly remain under 1,000 lines of code**.
-- **Modular JavaScript**: Split cleanly into `web/js/state.js`, `web/js/api.js`, `web/js/ui-morphe.js`, `web/js/ui-tui.js`, and `web/app.js`.
-- **Modular Stylesheets**: Split cleanly into `web/css/base.css`, `web/css/morphe.css`, `web/css/tui.css`, `web/css/responsive.css`, and `web/style.css`.
+- **Modular JavaScript**: Split cleanly into `web/js/state.js`, `web/js/api.js`, `web/js/ui-morphe.js`, `web/js/ui-wizard.js`, `web/js/ui-tui.js`, and `web/app.js`.
+- **Modular Stylesheets**: Split cleanly into `web/css/base.css`, `web/css/morphe.css`, `web/css/wizard.css`, `web/css/tui.css`, `web/css/responsive.css`, and `web/style.css`.
 - **Modular Rust CLI**: Split into `daemon/src/cli/` submodules (`service.rs`, `action.rs`, `install.rs`, `uninstall.rs`, `pack.rs`).
 
 ### 3. Universal Multi-Application Support Across All `.mpp` Bundles
@@ -124,15 +124,20 @@ The engine supports unlimited patch sources without hardcoded constraints:
 - **Pre-Configured RVX Catalog**: Anddea Patches (`anddea/revanced-patches`), Morphe Official (`MorpheApp/morphe-patches`), Inotia00 RVX (`inotia00/revanced-patches`), and ReVanced Official (`ReVanced/revanced-patches`).
 - **Termux TUI Native Management**: Add, delete, and switch custom sources seamlessly inside the Revancify-Xisr terminal interface.
 
-### 5. Clear 5-Step Workflow Hierarchy
-The workflow is organized into an intuitive sequential pipeline guiding users from start to module installation:
-1. **Langkah 1 (Akses & Pilih Aplikasi)**: Buka patcher (WebUI / Termux TUI) dan pilih aplikasi target beserta sumber patch (Anddea, Morphe, RVX, Official, atau Custom Source).
-2. **Langkah 2 (Cocokkan Versi Target APK)**: Pilih versi APK yang direkomendasikan (`[👍 Recommended]`) agar patch bekerja stabil tanpa force-close.
-3. **Langkah 3 (Kurasi Patch & Konfigurasi Opsi)**: Pilih patch yang diinginkan (atau gunakan Golden Preset). Sesuaikan opsi patch individual via ikon gear ⚙️.
-4. **Langkah 4 (Kompilasi Modul via Engine)**: Jalankan patch engine. Rust daemon & Morphe CLI memproses bytecode, menyuntikkan patch, dan membuat modul ZIP.
-5. **Langkah 5 (Selesai & Aktivasi Modul ZIP)**:
-   - **Metode A (Live Hot-Mount)**: Langsung bind-mount APK hasil patch ke Android yang sedang berjalan tanpa perlu reboot.
-   - **Metode B (Flashable ZIP Modul)**: Simpan file ZIP modul, buka Magisk / KernelSU / APatch > tab Modules > Install from storage > pilih ZIP > Reboot.
+### 5. Fresh 5-Step Setup Wizard & Returning User Dashboard Flow
+The interface features an intelligent adaptive routing system between first-time configuration and subsequent usage:
+1. **Fresh Onboarding Setup Wizard (First-Time User)**:
+   - *Langkah 1 (Sumber & Versi Patch)*: Pilih sumber repositori dan versi saluran rilis lengkap dengan tombol info `(i)` catatan rilis resmi (changelog).
+   - *Langkah 2 (Pilih Aplikasi Target)*: Grid pemilihan aplikasi multi-mpp yang adaptif.
+   - *Langkah 3 (Pilih Versi APK)*: Banner hero *Recommended Version* di posisi teratas + accordion penampil seluruh versi lengkap dengan badge status `[Stable]`, `[Beta]`, `[Alpha]`, dan `[Pre-release]`.
+   - *Langkah 4 (Mode Target & Kurasi Patch)*: Sakelar mode cerdas (`Mode Root` vs `Mode Non-Root`) dengan modal konfirmasi interaktif deteksi MicroG/GmsCore + kurasi opsi dinamis tanpa hardcoding.
+   - *Langkah 5 (Build & Selesai)*: Ringkasan konfigurasi, live streaming logs, dan opsi pasang langsung ke Root Manager (APatch/Magisk/KSU/ReSukiSU/KSU-Next) atau unduh ZIP/APK.
+2. **Returning User Dashboard (Pembukaan Kedua Kali & Seterusnya)**:
+   - Saat pengguna kembali atau setup telah selesai, aplikasi langsung menyajikan **Full Morphe Dashboard** tanpa langkah wizard.
+   - Kartu aplikasi yang sudah disetup otomatis berstatus `[✓ Configured]` dan dapat langsung di-patch dengan 1-klik *Instant Quick Patch*.
+   - Tersedia tombol `[⚙️ Setup Ulang]` di bilah atas untuk mengulang wizard dari awal kapan saja, serta tombol menu `[⋮ Edit Setup]` di kartu untuk mengedit konfigurasi aplikasi terkait secara independen.
+3. **Silent Developer Console**:
+   - Klik 5 kali pada teks status engine di Info Modal `(i)` membuka console pengembang rahasia tanpa toast atau notifikasi publik untuk mengirim trigger rilis ke GitHub Actions secara aman.
 
 ## 📜 Sources & References  
 - 🔧 [Revancify Tools](https://github.com/decipher3114/Revancify)

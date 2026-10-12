@@ -1,11 +1,17 @@
 /**
  * YouTube RVX — Morphe UI Renderers & Pipeline
- * Version: 2.1.10
+ * Version: 2.1.15
  */
 
 function renderAppCards() {
   const container = document.getElementById('homeAppsGrid');
   if (!container) return;
+
+  if (STATE.setupCompleted && typeof renderAppCardsWithConfigStatus === 'function') {
+    renderAppCardsWithConfigStatus();
+    return;
+  }
+
   container.innerHTML = '';
 
   const apps = STATE.availableApps || [];
@@ -262,9 +268,13 @@ function renderVersionSelector() {
       row.setAttribute('role', 'radio');
       row.setAttribute('aria-checked', isSelected ? 'true' : 'false');
 
-      const rightHtml = item.isRecommended
-        ? `<span class="ver-pill-rec">${SVG_THUMB}<span>Recommended</span></span>`
-        : '';
+      const cls = typeof classifyVersion === 'function' ? classifyVersion(ver) : { label: 'Stable', badgeClass: 'badge-stable' };
+      const rightHtml = `
+        <div class="version-badges-row">
+          <span class="badge-version ${cls.badgeClass}">${cls.label}</span>
+          ${item.isRecommended ? `<span class="ver-pill-rec">${SVG_THUMB}<span>Recommended</span></span>` : ''}
+        </div>
+      `;
 
       row.innerHTML = `
         <div class="ver-row-left">
@@ -337,12 +347,16 @@ function renderMorphePatchList() {
         openPatchOptionsModal(patch);
         return;
       }
+      const willBeChecked = !STATE.selectedPatches.has(patch.name);
       if (STATE.selectedPatches.has(patch.name)) {
         STATE.selectedPatches.delete(patch.name);
         card.classList.remove('selected');
       } else {
         STATE.selectedPatches.add(patch.name);
         card.classList.add('selected');
+      }
+      if (typeof checkMicrogSmartWarning === 'function') {
+        checkMicrogSmartWarning(patch.name, willBeChecked);
       }
       syncAllSummaries();
     });
