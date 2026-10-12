@@ -117,17 +117,28 @@ The patch engine dynamically discovers and supports **every application** packag
 - **Dynamic Theming & App Cards**: Generates styled Morphe gradient cards and Termux TUI menu items per application with accurate patch counts, target version options, and custom icons.
 - **Concurrent Multi-App Magisk Bind Mounts**: Mounts all patched applications present in `$MODPATH/app/` (`YouTubeRevanced.apk`, `YouTubeMusicRevanced.apk`, `RedditRevanced.apk`, etc.) into their respective device base APK locations simultaneously.
 
-### 4. Flexible & Unlimited Patch Sources Ecosystem
+### 4. Flexible & Unlimited Patch Sources Ecosystem & Interactive Release Studio
 The engine supports unlimited patch sources without hardcoded constraints:
-- **1:1 Authentic Morphe Sources Sheet**: Mirrors `MorpheApp/morphe-manager` (`01-sources-sheet.jpg`) with source avatars, `Pre-installed`/`Custom` badges, detailed metrics (`Patches ›`, `Version ›`, `Apps ›`), browser launch, refresh, and Material 3 toggles for `Pre-release patches` and `Experimental app versions`.
-- **Custom Source Addition & Management**: Add any public or private GitHub repository (`owner/repo`) or raw JSON manifest link with persistent `localStorage` storage and live switching.
-- **Pre-Configured RVX Catalog**: Anddea Patches (`anddea/revanced-patches`), Morphe Official (`MorpheApp/morphe-patches`), Inotia00 RVX (`inotia00/revanced-patches`), and ReVanced Official (`ReVanced/revanced-patches`).
+- **Expanded 8 RVX Catalog Sources**: Pre-configured with top community and official repositories:
+  1. *Anddea RVX* (`anddea/revanced-patches`) — Recommended, deeply customizable features and rapid active releases.
+  2. *Inotia00 Classic* (`inotia00/revanced-patches`) — Classic RVX, high stability foundation.
+  3. *Morphe Official* (`MorpheApp/morphe-patches`) — Curated by the official Morphe ecosystem team.
+  4. *ReVanced Upstream* (`ReVanced/revanced-patches`) — Official upstream core patches.
+  5. *Rufous (j-hc)* (`j-hc/revanced-patches`) — Daily automated compilations with root module readiness.
+  6. *YT-Advanced* (`yt-advanced/revanced-patches`) — Community variant optimized for YouTube and Music feeds.
+  7. *Cuchri RVX* (`cuynu/yt-advanced`) — Advanced patch variant with video playback tweaks.
+  8. *Piko Patches* (`crimera/revanced-patches`) — Lightweight, slimmed down patch set for responsive performance.
+- **Inline Custom Source Drawer**: Add any custom GitHub repository (`owner/repo`) or raw JSON manifest URL directly within Step 1 without navigating away.
+- **Interactive Release Channel Studio**:
+  - 3 curated channel cards: `⚡ Dev / Pre-release` (Bleeding Edge), `🛡️ Stable / Official` (Recommended), and `🏷️ Specific Tags` (Tag History).
+  - Live GitHub tag browser with release timestamps, status badges (`Pre` vs `Stable`), and inline `(i)` release notes / changelog modal.
+  - Direct manual tag / commit SHA applicator for advanced users.
 - **Termux TUI Native Management**: Add, delete, and switch custom sources seamlessly inside the Revancify-Xisr terminal interface.
 
 ### 5. Fresh 5-Step Setup Wizard & Returning User Dashboard Flow
 The interface features an intelligent adaptive routing system between first-time configuration and subsequent usage:
 1. **Fresh Onboarding Setup Wizard (First-Time User)**:
-   - *Langkah 1 (Sumber & Versi Patch)*: Pilih sumber repositori dan versi saluran rilis lengkap dengan tombol info `(i)` catatan rilis resmi (changelog).
+   - *Langkah 1 (Katalog Sumber & Release Studio)*: Pilih dari 8 sumber bawaan atau tambah sumber kustom + pilih saluran rilis via kartu segmen atau riwayat tag GitHub dengan tombol `(i)` catatan rilis.
    - *Langkah 2 (Pilih Aplikasi Target)*: Grid pemilihan aplikasi multi-mpp yang adaptif.
    - *Langkah 3 (Pilih Versi APK)*: Banner hero *Recommended Version* di posisi teratas + accordion penampil seluruh versi lengkap dengan badge status `[Stable]`, `[Beta]`, `[Alpha]`, dan `[Pre-release]`.
    - *Langkah 4 (Mode Target & Kurasi Patch)*: Sakelar mode cerdas (`Mode Root` vs `Mode Non-Root`) dengan modal konfirmasi interaktif deteksi MicroG/GmsCore + kurasi opsi dinamis tanpa hardcoding.

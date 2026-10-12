@@ -7,29 +7,15 @@
     "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/anddea/revanced-patches@main/patches-list.json",
     "defaultReleaseType": "dev",
     "isDefault": true,
-    "isPreinstalled": true,
+    "badge": "Recommended",
     "avatarText": "A",
-    "avatarColor": "#E53E3E",
-    "description": "Primary patch source featuring deep customization and rich features for YouTube RVX.",
+    "avatarGradient": "linear-gradient(135deg, #EF4444 0%, #991B1B 100%)",
+    "description": "Fitur kustomisasi terlengkap untuk YouTube RVX dengan update rutin paling aktif.",
     "fallbackTags": [
-      { "tag_name": "v4.3.1-dev.1", "name": "v4.3.1-dev.1 (Prerelease)", "prerelease": true },
-      { "tag_name": "v4.3.0", "name": "v4.3.0 (Stable)", "prerelease": false }
-    ]
-  },
-  {
-    "id": "morphe",
-    "name": "Morphe Patches",
-    "repository": "MorpheApp/morphe-patches",
-    "manifestUrl": "https://raw.githubusercontent.com/MorpheApp/morphe-patches/refs/heads/main/patches-list.json",
-    "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/MorpheApp/morphe-patches@main/patches-list.json",
-    "defaultReleaseType": "latest",
-    "isDefault": false,
-    "isPreinstalled": true,
-    "avatarText": "M",
-    "avatarColor": "#3182CE",
-    "description": "Official patch source from the Morphe ecosystem team.",
-    "fallbackTags": [
-      { "tag_name": "v1.18.0", "name": "v1.18.0 (Stable)", "prerelease": false }
+      { "tag_name": "v4.3.1-dev.1", "name": "v4.3.1-dev.1 (Dev)", "prerelease": true, "published_at": "2026-10-10T12:00:00Z" },
+      { "tag_name": "v4.3.0", "name": "v4.3.0 (Stable)", "prerelease": false, "published_at": "2026-10-05T12:00:00Z" },
+      { "tag_name": "v4.2.1", "name": "v4.2.1 (Stable)", "prerelease": false, "published_at": "2026-09-28T12:00:00Z" },
+      { "tag_name": "v4.2.0", "name": "v4.2.0 (Stable)", "prerelease": false, "published_at": "2026-09-20T12:00:00Z" }
     ]
   },
   {
@@ -40,12 +26,30 @@
     "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/inotia00/revanced-patches@revanced-extended/patches.json",
     "defaultReleaseType": "latest",
     "isDefault": false,
-    "isPreinstalled": true,
+    "badge": "Classic RVX",
     "avatarText": "I",
-    "avatarColor": "#805AD5",
-    "description": "Classic ReVanced Extended patches by developer inotia00.",
+    "avatarGradient": "linear-gradient(135deg, #8B5CF6 0%, #5B21B6 100%)",
+    "description": "Pondasi klasik ReVanced Extended orisinil oleh inotia00 dengan stabilitas tinggi.",
     "fallbackTags": [
-      { "tag_name": "v2.190.1", "name": "v2.190.1 (Stable)", "prerelease": false }
+      { "tag_name": "v2.190.1", "name": "v2.190.1 (Stable)", "prerelease": false, "published_at": "2026-09-15T12:00:00Z" },
+      { "tag_name": "v2.190.0", "name": "v2.190.0 (Stable)", "prerelease": false, "published_at": "2026-09-01T12:00:00Z" }
+    ]
+  },
+  {
+    "id": "morphe",
+    "name": "Morphe Official",
+    "repository": "MorpheApp/morphe-patches",
+    "manifestUrl": "https://raw.githubusercontent.com/MorpheApp/morphe-patches/refs/heads/main/patches-list.json",
+    "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/MorpheApp/morphe-patches@main/patches-list.json",
+    "defaultReleaseType": "latest",
+    "isDefault": false,
+    "badge": "Morphe Team",
+    "avatarText": "M",
+    "avatarGradient": "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)",
+    "description": "Patches resmi dari tim pengembang ekosistem Morphe Manager.",
+    "fallbackTags": [
+      { "tag_name": "v1.18.0", "name": "v1.18.0 (Stable)", "prerelease": false, "published_at": "2026-10-01T12:00:00Z" },
+      { "tag_name": "v1.17.2", "name": "v1.17.2 (Stable)", "prerelease": false, "published_at": "2026-09-15T12:00:00Z" }
     ]
   },
   {
@@ -56,12 +60,78 @@
     "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/ReVanced/revanced-patches@main/patches.json",
     "defaultReleaseType": "latest",
     "isDefault": false,
-    "isPreinstalled": true,
+    "badge": "Official Upstream",
     "avatarText": "R",
-    "avatarColor": "#38A169",
-    "description": "Official upstream patches from the ReVanced Project team.",
+    "avatarGradient": "linear-gradient(135deg, #10B981 0%, #047857 100%)",
+    "description": "Patches inti upstream resmi dari tim ReVanced Project global.",
     "fallbackTags": [
-      { "tag_name": "v4.16.0", "name": "v4.16.0 (Stable)", "prerelease": false }
+      { "tag_name": "v4.16.0", "name": "v4.16.0 (Stable)", "prerelease": false, "published_at": "2026-10-02T12:00:00Z" },
+      { "tag_name": "v4.15.1", "name": "v4.15.1 (Stable)", "prerelease": false, "published_at": "2026-09-18T12:00:00Z" }
+    ]
+  },
+  {
+    "id": "j-hc",
+    "name": "Rufous (j-hc)",
+    "repository": "j-hc/revanced-patches",
+    "manifestUrl": "https://raw.githubusercontent.com/j-hc/revanced-patches/refs/heads/main/patches.json",
+    "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/j-hc/revanced-patches@main/patches.json",
+    "defaultReleaseType": "latest",
+    "isDefault": false,
+    "badge": "Daily Builds",
+    "avatarText": "J",
+    "avatarGradient": "linear-gradient(135deg, #F59E0B 0%, #B45309 100%)",
+    "description": "Kompilasi harian otomatis dengan integrasi Magisk & Root Module siap pakai.",
+    "fallbackTags": [
+      { "tag_name": "20261010", "name": "Build 20261010", "prerelease": false, "published_at": "2026-10-10T04:00:00Z" },
+      { "tag_name": "20261005", "name": "Build 20261005", "prerelease": false, "published_at": "2026-10-05T04:00:00Z" }
+    ]
+  },
+  {
+    "id": "yt-advanced",
+    "name": "YT-Advanced",
+    "repository": "yt-advanced/revanced-patches",
+    "manifestUrl": "https://raw.githubusercontent.com/yt-advanced/revanced-patches/refs/heads/main/patches.json",
+    "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/yt-advanced/revanced-patches@main/patches.json",
+    "defaultReleaseType": "latest",
+    "isDefault": false,
+    "badge": "Community",
+    "avatarText": "Y",
+    "avatarGradient": "linear-gradient(135deg, #EC4899 0%, #BE185D 100%)",
+    "description": "Varian patch fleksibel untuk optimasi YouTube dan YouTube Music audio feed.",
+    "fallbackTags": [
+      { "tag_name": "v3.12.0", "name": "v3.12.0 (Stable)", "prerelease": false, "published_at": "2026-09-25T12:00:00Z" }
+    ]
+  },
+  {
+    "id": "cuynu",
+    "name": "Cuchri RVX",
+    "repository": "cuynu/yt-advanced",
+    "manifestUrl": "https://raw.githubusercontent.com/cuynu/yt-advanced/refs/heads/main/patches.json",
+    "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/cuynu/yt-advanced@main/patches.json",
+    "defaultReleaseType": "latest",
+    "isDefault": false,
+    "badge": "Enhanced",
+    "avatarText": "C",
+    "avatarGradient": "linear-gradient(135deg, #06B6D4 0%, #0E7490 100%)",
+    "description": "Patch modifikasi tingkat lanjut dengan tambahan tweak video playback.",
+    "fallbackTags": [
+      { "tag_name": "v2.8.4", "name": "v2.8.4 (Stable)", "prerelease": false, "published_at": "2026-09-20T12:00:00Z" }
+    ]
+  },
+  {
+    "id": "piko",
+    "name": "Piko Patches",
+    "repository": "crimera/revanced-patches",
+    "manifestUrl": "https://raw.githubusercontent.com/crimera/revanced-patches/refs/heads/main/patches.json",
+    "manifestCdnUrl": "https://cdn.jsdelivr.net/gh/crimera/revanced-patches@main/patches.json",
+    "defaultReleaseType": "latest",
+    "isDefault": false,
+    "badge": "Lightweight",
+    "avatarText": "P",
+    "avatarGradient": "linear-gradient(135deg, #6366F1 0%, #4338CA 100%)",
+    "description": "Varian patch ringan dan ramping dengan performa rendering responsif.",
+    "fallbackTags": [
+      { "tag_name": "v1.9.0", "name": "v1.9.0 (Stable)", "prerelease": false, "published_at": "2026-09-12T12:00:00Z" }
     ]
   }
 ]

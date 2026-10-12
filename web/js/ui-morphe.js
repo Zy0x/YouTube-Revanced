@@ -675,13 +675,13 @@ function appendTerminalLog(line, type = 'I') {
   }
 }
 
-function showPatchNotesModal() {
+function showPatchNotesModal(specificTag) {
   const modal = document.getElementById('patchNotesModal');
   const content = document.getElementById('patchNotesContent');
   const title = document.getElementById('modalPatchNotesTitle');
   if (!modal || !content) return;
 
-  const currentTag = STATE.patchTag || 'dev';
+  const currentTag = (typeof specificTag === 'string' && specificTag) ? specificTag : (STATE.patchTag || 'dev');
   const releases = STATE.patchReleases || [];
   let foundRelease = null;
 

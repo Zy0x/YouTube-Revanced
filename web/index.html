@@ -9,7 +9,7 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23E53935'><path d='M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z'/></svg>">
-  <link rel="stylesheet" href="style.css?v=2.1.15">
+  <link rel="stylesheet" href="style.css?v=2.1.16">
 </head>
 <body class="mode-morphe">
 
@@ -21,19 +21,9 @@
     <span class="bokeh-circle b4"></span>
   </div>
 
-  <!-- =====================================================================
-       MODE 1: 1:1 ULTRA-CLEAN MORPHE MANAGER INTERFACE
-       ===================================================================== -->
+  <!-- MODE 1: MORPHE MANAGER INTERFACE -->
   <main id="morpheAppContainer" class="morphe-shell" role="main">
-
-    <!-- -------------------------------------------------------------------
-         SCREEN 1: MORPHE HOME ("What app do you want to patch?")
-         1:1 Reference: docs/images/common/choose-app.jpg
-         ------------------------------------------------------------------- -->
-    <!-- ===================================================================
-         SETUP WIZARD (Fresh Navigation untuk Pengguna Baru / Setup Ulang)
-         5 Langkah Terstruktur & Terpandu
-         =================================================================== -->
+    <!-- SETUP WIZARD (5 Guided Steps) -->
     <section id="screenWizard" class="wizard-screen" aria-label="Setup Wizard">
       <!-- Wizard Top Header -->
       <div class="wizard-top-bar">
@@ -81,22 +71,129 @@
       <!-- PANE 1: SOURCE & PATCH RELEASE -->
       <div id="wizardStep1" class="wizard-step-pane active">
         <div class="wizard-pane-header">
-          <h2 class="wizard-pane-title">1. Pilih Sumber &amp; Rilis Patch</h2>
-          <p class="wizard-pane-desc">Pilih repositori penyedia patch yang ingin Anda gunakan untuk memodifikasi aplikasi.</p>
-        </div>
-        <div id="wizardSourcesGrid" class="source-cards-grid" role="radiogroup" aria-label="Pilih Sumber"></div>
-        <div class="wizard-release-box">
-          <div class="wizard-release-header">
-            <span class="wizard-release-title">Versi Saluran Rilis</span>
-            <span class="source-card-tag">GitHub Tag</span>
+          <div class="wizard-pane-header-row">
+            <div>
+              <h2 class="wizard-pane-title">1. Pilih Sumber &amp; Rilis Patch</h2>
+              <p class="wizard-pane-desc">Pilih repositori penyedia patch dan saluran rilis yang ingin Anda gunakan.</p>
+            </div>
+            <div class="wizard-sources-toolbar">
+              <span id="wizardSourcesCountBadge" class="wizard-counter-pill">8 Sumber Siap Pakai</span>
+              <button type="button" id="btnWizToggleAddSource" class="wizard-btn-action" title="Tambah Sumber Patch Kustom">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>Tambah</span>
+              </button>
+              <button type="button" id="btnWizResetSources" class="wizard-btn-action-ghost" title="Reset ke Sumber Bawaan">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              </button>
+            </div>
           </div>
-          <div class="wizard-release-row">
-            <select id="wizardPatchReleaseSelect" class="wizard-select" aria-label="Pilih Tag Rilis"></select>
-            <button type="button" id="btnWizardReleaseNotes" class="btn-release-info" title="Lihat Catatan Rilis / Changelog" aria-label="Changelog Release">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            </button>
+        </div>
+
+        <!-- Inline Expandable Drawer for Adding Custom Patch Source -->
+        <div id="wizAddSourceDrawer" class="wizard-drawer-card hidden">
+          <div class="drawer-header">
+            <span class="drawer-title">✨ Tambah Sumber Patch Kustom</span>
+            <button type="button" id="btnWizCloseAddSource" class="btn-drawer-close" aria-label="Tutup form">&times;</button>
+          </div>
+          <div class="drawer-grid">
+            <div class="form-group">
+              <label for="inputWizSourceName">Nama Sumber</label>
+              <input type="text" id="inputWizSourceName" class="morphe-input" placeholder="e.g. My Custom Patches" maxlength="40">
+            </div>
+            <div class="form-group">
+              <label for="inputWizSourceRepo">GitHub Owner/Repo atau URL Raw Manifest</label>
+              <input type="text" id="inputWizSourceRepo" class="morphe-input" placeholder="e.g. user/revanced-patches atau https://.../patches.json">
+            </div>
+            <div class="form-group">
+              <label for="selectWizSourceChannel">Saluran Default</label>
+              <select id="selectWizSourceChannel" class="morphe-select">
+                <option value="latest" selected>Stable / Official</option>
+                <option value="dev">Pre-release / Dev</option>
+              </select>
+            </div>
+          </div>
+          <div class="drawer-actions">
+            <button type="button" id="btnWizSaveCustomSource" class="morphe-pill-btn morphe-pill-sky btn-sm">Simpan &amp; Aktifkan</button>
+            <button type="button" id="btnWizCancelAddSource" class="morphe-pill-btn morphe-pill-outline btn-sm">Batal</button>
           </div>
         </div>
+
+        <!-- Rich Interactive Sources Grid -->
+        <div id="wizardSourcesGrid" class="wizard-sources-grid" role="radiogroup" aria-label="Pilih Sumber Patch"></div>
+
+        <!-- Interactive Release Channel Studio -->
+        <div class="wizard-release-studio">
+          <div class="studio-header">
+            <div class="studio-title-box">
+              <span class="studio-badge">RELEASE STUDIO</span>
+              <h3 class="studio-title">Saluran &amp; Riwayat Tag Rilis</h3>
+            </div>
+            <div id="studioActivePill" class="studio-active-pill" title="Saluran dan tag yang saat ini aktif">
+              <span class="studio-dot"></span>
+              <span id="studioActiveLabel">Memuat tag...</span>
+            </div>
+          </div>
+
+          <!-- 3 Segment Cards for Release Selection -->
+          <div class="channel-segments-grid" role="radiogroup" aria-label="Tipe Saluran Rilis">
+            <div id="segmentDev" class="channel-segment-card active" role="radio" aria-checked="true" tabindex="0">
+              <div class="segment-icon">⚡</div>
+              <div class="segment-body">
+                <div class="segment-title-row">
+                  <strong>Dev / Pre-release</strong>
+                  <span class="segment-badge badge-dev">Bleeding Edge</span>
+                </div>
+                <p class="segment-desc">Update patch tercepat &amp; dukungan APK versi terkini.</p>
+              </div>
+              <span class="segment-check">✓</span>
+            </div>
+
+            <div id="segmentStable" class="channel-segment-card" role="radio" aria-checked="false" tabindex="0">
+              <div class="segment-icon">🛡️</div>
+              <div class="segment-body">
+                <div class="segment-title-row">
+                  <strong>Stable / Official</strong>
+                  <span class="segment-badge badge-stable">Rekomendasi</span>
+                </div>
+                <p class="segment-desc">Rilis resmi teruji dan stabil untuk pemakaian sehari-hari.</p>
+              </div>
+              <span class="segment-check"></span>
+            </div>
+
+            <div id="segmentTags" class="channel-segment-card" role="radio" aria-checked="false" tabindex="0">
+              <div class="segment-icon">🏷️</div>
+              <div class="segment-body">
+                <div class="segment-title-row">
+                  <strong>Pilih Tag Spesifik</strong>
+                  <span class="segment-badge badge-tags">Riwayat Tag</span>
+                </div>
+                <p class="segment-desc">Pilih versi rilis tertentu atau masukkan tag kustom.</p>
+              </div>
+              <span class="segment-check"></span>
+            </div>
+          </div>
+
+          <!-- Expandable Tag Browser -->
+          <div id="studioTagsBrowser" class="studio-tags-browser hidden">
+            <div class="tags-browser-toolbar">
+              <span class="tags-browser-title">Daftar Tag Rilis dari Sumber</span>
+              <button type="button" id="btnStudioRefreshTags" class="btn-tags-refresh" title="Segarkan tag dari GitHub">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                <span>Refresh</span>
+              </button>
+            </div>
+            <div id="studioTagsList" class="studio-tags-list" role="radiogroup" aria-label="Daftar Tag Rilis"></div>
+            <div class="studio-custom-tag-box">
+              <input type="text" id="inputStudioCustomTag" class="morphe-input" placeholder="Atau ketik nama tag / commit SHA manual (e.g. v4.16.2)...">
+              <button type="button" id="btnStudioApplyCustomTag" class="morphe-pill-btn morphe-pill-sky btn-sm">Terapkan</button>
+            </div>
+          </div>
+
+          <!-- Hidden legacy elements kept for script compatibility -->
+          <select id="wizardPatchReleaseSelect" class="sr-only" aria-hidden="true" tabindex="-1"></select>
+          <button type="button" id="btnWizardReleaseNotes" class="sr-only" aria-hidden="true" tabindex="-1"></button>
+        </div>
+
         <div class="wizard-nav-actions">
           <button type="button" id="btnWizStep1Next" class="morphe-pill-btn morphe-pill-sky btn-next">
             Lanjut: Pilih Aplikasi ›
@@ -234,10 +331,7 @@
       </div>
     </section>
 
-    <!-- -------------------------------------------------------------------
-         SCREEN 1: MORPHE HOME / RETURNING USER DASHBOARD
-         1:1 Reference: docs/images/common/choose-app.jpg
-         ------------------------------------------------------------------- -->
+    <!-- SCREEN 1: MORPHE HOME -->
     <section id="screenHome" class="morphe-screen active" aria-label="Morphe Home">
       <!-- Returning User Top Bar: Setup Ulang & Utilities -->
       <div class="dashboard-top-nav">
@@ -278,10 +372,7 @@
       </div>
     </section>
 
-    <!-- -------------------------------------------------------------------
-         SCREEN 2: MORPHE TARGET VERSION SELECTION
-         1:1 Reference: docs/images/patching-expert-mode/02-apk-availability.jpg
-         ------------------------------------------------------------------- -->
+    <!-- SCREEN 2: TARGET VERSION SELECTION -->
     <section id="screenVersion" class="morphe-screen" aria-label="Target YouTube Version">
       <div class="version-top-bar">
         <button type="button" id="btnVersionBackHome" class="icon-circle-btn" aria-label="Back to Home" title="Back">
@@ -336,10 +427,7 @@
       </div>
     </section>
 
-    <!-- -------------------------------------------------------------------
-         SCREEN 3: MORPHE EXPERT MODE — PATCH SELECTION
-         1:1 Reference: docs/images/patching-expert-mode/03-patch-selection.jpg
-         ------------------------------------------------------------------- -->
+    <!-- SCREEN 3: EXPERT MODE PATCH SELECTION -->
     <section id="screenPatches" class="morphe-screen" aria-label="Expert Mode Patch Selection">
 
       <!-- 1:1 Edge-to-Edge Dynamic App Top Header -->
@@ -412,10 +500,7 @@
       </div>
     </section>
 
-    <!-- -------------------------------------------------------------------
-         SCREEN 4: MORPHE APPLYING PATCHES & LIVE LOGS
-         1:1 Reference: docs/images/patching-expert-mode/05-patching-progress.jpg
-         ------------------------------------------------------------------- -->
+    <!-- SCREEN 4: MORPHE LIVE PROGRESS & LOGS -->
     <section id="screenProgress" class="morphe-screen" aria-label="Patching Progress and Logs">
 
       <div class="morphe-step-badge morphe-step-badge-inset"><span>LANGKAH 4 DARI 5</span> • Kompilasi &amp; Pembuatan Modul</div>
@@ -496,10 +581,8 @@
             <p class="method-desc">Menyimpan arsip modul ZIP standar yang siap di-flash secara permanen di semua root manager.</p>
             <div class="method-steps-box">
               <ol class="method-steps-list">
-                <li>Klik tombol <strong>Save ZIP</strong> di bawah untuk menyimpan file modul.</li>
-                <li>Buka aplikasi Root Manager (<strong>Magisk</strong>, <strong>KernelSU</strong>, atau <strong>APatch</strong>).</li>
-                <li>Masuk ke menu <strong>Modules / Modul</strong> &rarr; pilih <strong>Install from storage</strong>.</li>
-                <li>Pilih file ZIP yang baru disimpan, tunggu proses flashing, lalu tekan <strong>Reboot</strong>.</li>
+                <li>Simpan file ZIP modul &rarr; Buka Root Manager (<strong>Magisk / KSU / APatch</strong>).</li>
+                <li>Pilih <strong>Modules</strong> &rarr; <strong>Install from storage</strong> &rarr; pilih ZIP &rarr; <strong>Reboot</strong>.</li>
               </ol>
             </div>
             <button type="button" id="btnHeroExportZip" class="morphe-pill-btn morphe-pill-outline btn-block">
@@ -529,19 +612,7 @@
           <div id="morpheStructuredLogs" class="structured-logs-list">
             <div class="morphe-log-row">
               <span class="log-badge log-badge-info">I</span>
-              <span class="log-msg">Remove background playback restrictions succeeded</span>
-            </div>
-            <div class="morphe-log-row">
-              <span class="log-badge log-badge-info">I</span>
-              <span class="log-msg">Return YouTube Dislike succeeded</span>
-            </div>
-            <div class="morphe-log-row">
-              <span class="log-badge log-badge-info">I</span>
-              <span class="log-msg">SponsorBlock succeeded</span>
-            </div>
-            <div class="morphe-log-row">
-              <span class="log-badge log-badge-info">I</span>
-              <span class="log-msg">Spoof video streams succeeded</span>
+              <span class="log-msg">Ready to patch.</span>
             </div>
           </div>
           <pre id="terminalLogs" class="sr-only">Ready.</pre>
@@ -565,10 +636,7 @@
 
   </main>
 
-  <!-- =====================================================================
-       MODE 2: 1:1 AUTHENTIC TERMUX CLI REVANCIFY-XISR TUI REPLICA
-       Reference: Xisrr1/Revancify-Xisr (main.sh + config/.DIALOGRC_DARK)
-       ===================================================================== -->
+  <!-- MODE 2: TERMUX REVANCIFY-XISR TUI -->
   <section id="tuiAppContainer" class="tui-shell hidden" aria-label="Revancify-Xisr Termux TUI">
     <div class="tui-terminal-frame">
       <div class="tui-dialog-window" role="dialog" aria-labelledby="tuiDialogTitle">
@@ -588,18 +656,15 @@
 
         <div class="tui-dialog-footer">
           <button type="button" class="tui-btn tui-btn-active" id="btnTuiPrimary">&lt; Select &gt;</button>
-          <button type="button" class="tui-btn" id="btnTuiBack">&lt; Back &gt;</button>
-          <button type="button" class="tui-btn" id="btnTuiExitToGui">&lt; Morphe GUI &gt;</button>
+          <button type="button" id="btnTuiBack" class="tui-btn">&lt; Back &gt;</button>
+          <button type="button" id="btnTuiExitToGui" class="tui-btn">&lt; Morphe GUI &gt;</button>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- =====================================================================
-       MODALS & BOTTOM SHEETS (Information (i), Sources, Patch Options, Settings)
-       ===================================================================== -->
-
-  <!-- 0. Clean System & Build Info (i) Modal (Houses all technical details neatly) -->
+  <!-- MODALS & BOTTOM SHEETS -->
+  <!-- 0. System & App Info Modal -->
   <div id="infoModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalInfoTitle">
     <div class="modal-card morphe-sheet-card">
       <div class="sheet-grab-handle" aria-hidden="true"></div>
@@ -609,73 +674,27 @@
       </div>
       <div class="modal-body">
         <div class="morphe-source-details-box">
-          <div class="source-detail-row">
-            <span>Package Name</span>
-            <code class="mono-code">com.google.android.youtube</code>
-          </div>
-          <div class="source-detail-row">
-            <span>Target Version</span>
-            <strong id="infoTargetVersion">v21.13.164</strong>
-          </div>
-          <div class="source-detail-row">
-            <span>Installed on Device</span>
-            <strong id="installedVerText">Detecting...</strong>
-          </div>
-          <div class="source-detail-row">
-            <span>Active Patch Source</span>
-            <strong id="infoActiveSource">Anddea (dev)</strong>
-          </div>
-          <div class="source-detail-row">
-            <span>Enabled Patches</span>
-            <strong id="infoActivePatches">78 / 83</strong>
-          </div>
-          <div class="source-detail-row">
-            <span>Execution Engine</span>
-            <strong id="infoEngineStatus">On-Device Daemon (v2.1.14)</strong>
-          </div>
-          <div class="source-detail-row">
-            <span>Viewport Telemetry</span>
-            <span id="viewportResolutionText" class="morphe-muted-hint">Resolving...</span>
-          </div>
+          <div class="source-detail-row"><span>Package Name</span><code class="mono-code">com.google.android.youtube</code></div>
+          <div class="source-detail-row"><span>Target Version</span><strong id="infoTargetVersion">v21.13.164</strong></div>
+          <div class="source-detail-row"><span>Installed on Device</span><strong id="installedVerText">Detecting...</strong></div>
+          <div class="source-detail-row"><span>Active Patch Source</span><strong id="infoActiveSource">Anddea (dev)</strong></div>
+          <div class="source-detail-row"><span>Enabled Patches</span><strong id="infoActivePatches">78 / 83</strong></div>
+          <div class="source-detail-row"><span>Execution Engine</span><strong id="infoEngineStatus">On-Device Daemon</strong></div>
+          <div class="source-detail-row"><span>Viewport Telemetry</span><span id="viewportResolutionText" class="morphe-muted-hint">Resolving...</span></div>
         </div>
 
         <!-- Panduan Hierarki Alur Kerja -->
         <div class="morphe-hierarchy-guide-box">
           <h4 class="guide-title">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
             Panduan Hierarki 5 Langkah Alur Kerja
           </h4>
           <div class="hierarchy-flow">
-            <div class="hierarchy-step-item">
-              <div class="step-num-badge">1</div>
-              <div class="step-content">
-                <strong>Akses &amp; Pilih Aplikasi:</strong> Buka patcher di browser/Termux, tentukan aplikasi yang ingin dipatch (YouTube, Music, Reddit, Twitter, dsb.) dan tentukan patch source (Anddea, Morphe, RVX, Official).
-              </div>
-            </div>
-            <div class="hierarchy-step-item">
-              <div class="step-num-badge">2</div>
-              <div class="step-content">
-                <strong>Cocokkan Versi APK:</strong> Pilih versi target dengan badge <em>[👍 Recommended]</em> agar patch bekerja stabil tanpa force close.
-              </div>
-            </div>
-            <div class="hierarchy-step-item">
-              <div class="step-num-badge">3</div>
-              <div class="step-content">
-                <strong>Kurasi Patch &amp; Opsi:</strong> Tentukan patch yang aktif (atau gunakan tombol Golden Preset 👍). Tekan ikon gear ⚙️ untuk konfigurasi custom package, branding icon, dsb.
-              </div>
-            </div>
-            <div class="hierarchy-step-item">
-              <div class="step-num-badge">4</div>
-              <div class="step-content">
-                <strong>Kompilasi Modul (Engine):</strong> Tekan tombol "Patch". Daemon Rust/C memproses APK, menyuntikkan dex patch bytecode, dan merakit zip modul.
-              </div>
-            </div>
-            <div class="hierarchy-step-item">
-              <div class="step-num-badge">5</div>
-              <div class="step-content">
-                <strong>Aktivasi / Install Modul ZIP:</strong> Pilih <em>Live Hot-Mount</em> untuk langsung pakai tanpa reboot, ATAU simpan <em>ZIP</em> dan flash via Magisk / KernelSU / APatch lalu reboot.
-              </div>
-            </div>
+            <div class="hierarchy-step-item"><div class="step-num-badge">1</div><div class="step-content"><strong>Akses &amp; Pilih Aplikasi:</strong> Tentukan aplikasi &amp; patch source (Anddea, Morphe, Inotia00, dsb).</div></div>
+            <div class="hierarchy-step-item"><div class="step-num-badge">2</div><div class="step-content"><strong>Cocokkan Versi APK:</strong> Pilih versi target dengan badge <em>[Recommended]</em> untuk stabilitas optimal.</div></div>
+            <div class="hierarchy-step-item"><div class="step-num-badge">3</div><div class="step-content"><strong>Kurasi Patch &amp; Opsi:</strong> Pilih patch aktif atau Golden Preset 👍 serta sesuaikan opsi patch.</div></div>
+            <div class="hierarchy-step-item"><div class="step-num-badge">4</div><div class="step-content"><strong>Kompilasi Modul (Engine):</strong> Daemon Rust/C memproses APK dan merakit modul ZIP.</div></div>
+            <div class="hierarchy-step-item"><div class="step-num-badge">5</div><div class="step-content"><strong>Aktivasi / Install Modul:</strong> Gunakan <em>Live Hot-Mount</em> atau simpan <em>ZIP</em> dan flash di Root Manager.</div></div>
           </div>
         </div>
 
@@ -967,11 +986,11 @@
     </div>
   </div>
 
-  <script src="js/state.js?v=2.1.15"></script>
-  <script src="js/api.js?v=2.1.15"></script>
-  <script src="js/ui-morphe.js?v=2.1.15"></script>
-  <script src="js/ui-wizard.js?v=2.1.15"></script>
-  <script src="js/ui-tui.js?v=2.1.15"></script>
-  <script src="app.js?v=2.1.15"></script>
+  <script src="js/state.js?v=2.1.16"></script>
+  <script src="js/api.js?v=2.1.16"></script>
+  <script src="js/ui-morphe.js?v=2.1.16"></script>
+  <script src="js/ui-wizard.js?v=2.1.16"></script>
+  <script src="js/ui-tui.js?v=2.1.16"></script>
+  <script src="app.js?v=2.1.16"></script>
 </body>
 </html>

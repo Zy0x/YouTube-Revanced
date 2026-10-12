@@ -69,32 +69,83 @@ function goToWizardStep(step) {
 }
 
 /* ==========================================================================
-   STEP 1: SOURCE & PATCH RELEASE SELECTION
+   STEP 1: SOURCE & PATCH RELEASE SELECTION (RICH CATALOG & RELEASE STUDIO)
    ========================================================================== */
+function getSourceBadgeClass(badge) {
+  if (!badge) return 'badge-source-morphe';
+  const b = String(badge).toLowerCase();
+  if (b.includes('recommend')) return 'badge-source-recommended';
+  if (b.includes('classic')) return 'badge-source-classic';
+  if (b.includes('morphe')) return 'badge-source-morphe';
+  if (b.includes('upstream')) return 'badge-source-upstream';
+  if (b.includes('daily')) return 'badge-source-daily';
+  if (b.includes('community')) return 'badge-source-community';
+  if (b.includes('enhanced')) return 'badge-source-enhanced';
+  if (b.includes('lightweight')) return 'badge-source-lightweight';
+  if (b.includes('custom')) return 'badge-source-custom';
+  return 'badge-source-morphe';
+}
+
 function renderWizardSourceStep() {
   const container = document.getElementById('wizardSourcesGrid');
   if (!container) return;
   container.innerHTML = '';
 
+  const countBadge = document.getElementById('wizardSourcesCountBadge');
+  if (countBadge) {
+    countBadge.textContent = `${STATE.sources.length} Sumber Siap Pakai`;
+  }
+
   STATE.sources.forEach(src => {
     const isActive = src.id === STATE.currentSource;
     const displayName = getSourceDisplayName(src.id);
+    const repoText = src.repository || (src.manifestUrl ? 'Manifest URL' : `${src.id}/patches`);
+    const badgeText = src.badge || (src.isPreinstalled !== false ? 'Official' : 'Custom');
+    const badgeClass = getSourceBadgeClass(badgeText);
+    const avatarBg = src.avatarGradient || src.avatarColor || '#3B82F6';
+    const avatarChar = src.avatarText || displayName.charAt(0).toUpperCase();
+
     const card = document.createElement('div');
-    card.className = `source-card ${isActive ? 'active' : ''}`;
+    card.className = `wizard-source-card ${isActive ? 'active' : ''}`;
     card.setAttribute('role', 'radio');
     card.setAttribute('aria-checked', isActive ? 'true' : 'false');
-    card.title = src.description || displayName;
+    card.tabIndex = 0;
+
+    const isDeletable = !src.isPreinstalled && !src.isDefault;
 
     card.innerHTML = `
-      <div class="source-card-avatar" style="background: ${src.avatarColor || '#3182CE'}">${src.avatarText || displayName.charAt(0)}</div>
-      <div class="source-card-meta">
-        <span class="source-card-title">${escapeHtml(displayName)}</span>
-        <span class="source-card-tag">${src.isPreinstalled !== false ? 'Official / Pre-installed' : 'Custom'}</span>
+      <div class="wizard-source-top">
+        <div class="wizard-source-avatar" style="background: ${avatarBg}">${escapeHtml(avatarChar)}</div>
+        <div class="wizard-source-info">
+          <div class="wizard-source-title-row">
+            <span class="wizard-source-name">${escapeHtml(src.name || displayName)}</span>
+            <span class="wizard-source-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
+          </div>
+          <span class="wizard-source-repo">${escapeHtml(repoText)}</span>
+        </div>
       </div>
-      <span class="source-card-check">${isActive ? '✓' : ''}</span>
+      <p class="wizard-source-desc">${escapeHtml(src.description || 'Repositori modifikasi patch aplikasi.')}</p>
+      <div class="wizard-source-bottom">
+        ${isDeletable ? `
+          <button type="button" class="btn-delete-custom-src" title="Hapus sumber ini">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <span>Hapus</span>
+          </button>
+        ` : '<span></span>'}
+        <span class="wizard-source-check">${isActive ? '✓' : ''}</span>
+      </div>
     `;
 
-    card.addEventListener('click', async () => {
+    card.addEventListener('click', async (e) => {
+      if (e.target.closest('.btn-delete-custom-src')) {
+        e.stopPropagation();
+        if (confirm(`Hapus sumber "${src.name || displayName}"?`)) {
+          deleteCustomSource(src.id);
+          await selectPatchSource(STATE.currentSource);
+          renderWizardSourceStep();
+        }
+        return;
+      }
       await selectPatchSource(src.id);
       renderWizardSourceStep();
     });
@@ -102,11 +153,239 @@ function renderWizardSourceStep() {
     container.appendChild(card);
   });
 
+  bindWizardSourceToolbar();
+  renderWizardReleaseStudio();
+}
+
+function bindWizardSourceToolbar() {
+  const drawer = document.getElementById('wizAddSourceDrawer');
+  const btnToggle = document.getElementById('btnWizToggleAddSource');
+  const btnClose = document.getElementById('btnWizCloseAddSource');
+  const btnCancel = document.getElementById('btnWizCancelAddSource');
+  const btnSave = document.getElementById('btnWizSaveCustomSource');
+  const btnReset = document.getElementById('btnWizResetSources');
+
+  if (btnToggle && drawer) {
+    btnToggle.onclick = () => drawer.classList.toggle('hidden');
+  }
+  if (btnClose && drawer) {
+    btnClose.onclick = () => drawer.classList.add('hidden');
+  }
+  if (btnCancel && drawer) {
+    btnCancel.onclick = () => drawer.classList.add('hidden');
+  }
+
+  if (btnSave && drawer) {
+    btnSave.onclick = async () => {
+      const nameInput = document.getElementById('inputWizSourceName');
+      const repoInput = document.getElementById('inputWizSourceRepo');
+      const chanInput = document.getElementById('selectWizSourceChannel');
+      const name = nameInput ? nameInput.value.trim() : '';
+      const repo = repoInput ? repoInput.value.trim() : '';
+      const channel = chanInput ? chanInput.value : 'latest';
+
+      if (!repo) {
+        alert('Harap masukkan repositori GitHub (owner/repo) atau URL manifest raw.');
+        return;
+      }
+
+      const added = addCustomSource({
+        name: name || repo,
+        repository: repo.includes('://') ? '' : repo,
+        manifestUrl: repo.includes('://') ? repo : '',
+        defaultReleaseType: channel
+      });
+
+      if (added) {
+        if (nameInput) nameInput.value = '';
+        if (repoInput) repoInput.value = '';
+        drawer.classList.add('hidden');
+        await selectPatchSource(added.id);
+        renderWizardSourceStep();
+      }
+    };
+  }
+
+  if (btnReset) {
+    btnReset.onclick = async () => {
+      if (confirm('Reset seluruh daftar sumber kembali ke 8 sumber bawaan resmi?')) {
+        resetSourcesToDefault();
+        await selectPatchSource('anddea');
+        renderWizardSourceStep();
+      }
+    };
+  }
+}
+
+function renderWizardReleaseStudio() {
+  const activeSrc = STATE.sources.find(s => s.id === STATE.currentSource) || STATE.sources[0];
+  const releases = (STATE.patchReleases && STATE.patchReleases.length > 0)
+    ? STATE.patchReleases
+    : (activeSrc?.fallbackTags || []);
+
+  const latestPre = releases.find(r => r.prerelease);
+  const latestStable = releases.find(r => !r.prerelease);
+
+  // Active Tag Determination
+  const currentTag = STATE.patchTag || (STATE.preReleasePatches ? 'dev' : 'latest');
+  const isDev = currentTag === 'dev';
+  const isStable = currentTag === 'latest';
+  const isSpecificTag = !isDev && !isStable;
+
+  // Active Label in Studio Header
+  const activeLabel = document.getElementById('studioActiveLabel');
+  if (activeLabel) {
+    if (isDev) {
+      activeLabel.textContent = `⚡ Saluran Dev ${latestPre ? `(${latestPre.tag_name})` : ''}`;
+    } else if (isStable) {
+      activeLabel.textContent = `🛡️ Saluran Stable ${latestStable ? `(${latestStable.tag_name})` : ''}`;
+    } else {
+      activeLabel.textContent = `🏷️ Tag: ${currentTag}`;
+    }
+  }
+
+  // Segment Cards
+  const segDev = document.getElementById('segmentDev');
+  const segStable = document.getElementById('segmentStable');
+  const segTags = document.getElementById('segmentTags');
+  const tagsBrowser = document.getElementById('studioTagsBrowser');
+
+  if (segDev) {
+    segDev.classList.toggle('active', isDev);
+    segDev.setAttribute('aria-checked', isDev ? 'true' : 'false');
+    const chk = segDev.querySelector('.segment-check');
+    if (chk) chk.textContent = isDev ? '✓' : '';
+    segDev.onclick = () => {
+      STATE.patchTag = 'dev';
+      STATE.preReleasePatches = true;
+      syncReleaseChannelSelection('dev');
+      renderWizardReleaseStudio();
+    };
+  }
+
+  if (segStable) {
+    segStable.classList.toggle('active', isStable);
+    segStable.setAttribute('aria-checked', isStable ? 'true' : 'false');
+    const chk = segStable.querySelector('.segment-check');
+    if (chk) chk.textContent = isStable ? '✓' : '';
+    segStable.onclick = () => {
+      STATE.patchTag = 'latest';
+      STATE.preReleasePatches = false;
+      syncReleaseChannelSelection('latest');
+      renderWizardReleaseStudio();
+    };
+  }
+
+  if (segTags) {
+    segTags.classList.toggle('active', isSpecificTag);
+    segTags.setAttribute('aria-checked', isSpecificTag ? 'true' : 'false');
+    const chk = segTags.querySelector('.segment-check');
+    if (chk) chk.textContent = isSpecificTag ? '✓' : '';
+    segTags.onclick = () => {
+      if (tagsBrowser) tagsBrowser.classList.toggle('hidden');
+    };
+  }
+
+  if (tagsBrowser) {
+    if (isSpecificTag) {
+      tagsBrowser.classList.remove('hidden');
+    }
+  }
+
+  // Populate Tags Browser List
+  const tagsListContainer = document.getElementById('studioTagsList');
+  if (tagsListContainer) {
+    tagsListContainer.innerHTML = '';
+
+    if (releases.length === 0) {
+      tagsListContainer.innerHTML = '<div class="studio-tag-item"><span class="morphe-muted-hint">Tidak ada riwayat tag rilis untuk sumber ini.</span></div>';
+    } else {
+      releases.slice(0, 10).forEach(rel => {
+        const tagName = rel.tag_name || rel.name;
+        const isSelected = STATE.patchTag === tagName;
+        const isPre = !!rel.prerelease;
+        const badgeClass = isPre ? 'badge-source-daily' : 'badge-source-upstream';
+        const dateStr = rel.published_at ? formatDate(rel.published_at) : 'Rilis Baru';
+
+        const row = document.createElement('div');
+        row.className = `studio-tag-item ${isSelected ? 'active' : ''}`;
+        row.setAttribute('role', 'radio');
+        row.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+
+        row.innerHTML = `
+          <div class="studio-tag-left">
+            <span class="studio-tag-name">${escapeHtml(tagName)}</span>
+            <span class="studio-tag-badge ${badgeClass}">${isPre ? 'Pre' : 'Stable'}</span>
+            <span class="studio-tag-date">${escapeHtml(dateStr)}</span>
+          </div>
+          <div class="studio-tag-right">
+            <button type="button" class="btn-tag-info" title="Lihat catatan rilis untuk tag ${escapeHtml(tagName)}">ℹ</button>
+            <span class="segment-check">${isSelected ? '✓' : ''}</span>
+          </div>
+        `;
+
+        row.addEventListener('click', (e) => {
+          if (e.target.closest('.btn-tag-info')) {
+            e.stopPropagation();
+            showPatchNotesModal(tagName);
+            return;
+          }
+          STATE.patchTag = tagName;
+          syncReleaseChannelSelection(tagName);
+          renderWizardReleaseStudio();
+        });
+
+        tagsListContainer.appendChild(row);
+      });
+    }
+  }
+
+  // Refresh Tags Button
+  const btnRefresh = document.getElementById('btnStudioRefreshTags');
+  if (btnRefresh) {
+    btnRefresh.onclick = async () => {
+      btnRefresh.disabled = true;
+      btnRefresh.style.opacity = '0.5';
+      await loadPatchReleases(activeSrc);
+      renderWizardReleaseStudio();
+      btnRefresh.disabled = false;
+      btnRefresh.style.opacity = '1';
+    };
+  }
+
+  // Manual Custom Tag Apply
+  const btnApplyTag = document.getElementById('btnStudioApplyCustomTag');
+  const inputTag = document.getElementById('inputStudioCustomTag');
+  if (btnApplyTag && inputTag) {
+    btnApplyTag.onclick = () => {
+      const val = inputTag.value.trim();
+      if (!val) return;
+      STATE.patchTag = val;
+      syncReleaseChannelSelection(val);
+      renderWizardReleaseStudio();
+      inputTag.value = '';
+    };
+  }
+}
+
+function syncReleaseChannelSelection(tagVal) {
   const wizSelect = document.getElementById('wizardPatchReleaseSelect');
   const mainSelect = document.getElementById('selectPatchRelease');
-  if (wizSelect && mainSelect) {
-    wizSelect.innerHTML = mainSelect.innerHTML;
-    wizSelect.value = STATE.patchTag || mainSelect.value;
+  if (wizSelect) wizSelect.value = tagVal;
+  if (mainSelect) mainSelect.value = tagVal;
+  const versionEl = document.getElementById('sourceSheetVersion');
+  if (versionEl) versionEl.textContent = tagVal;
+  syncAllSummaries();
+}
+
+function formatDate(isoStr) {
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return 'Terbaru';
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  } catch (_) {
+    return 'Terbaru';
   }
 }
 

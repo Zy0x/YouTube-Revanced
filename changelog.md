@@ -1,3 +1,23 @@
+## v2.1.16 (2026-10-12)
+
+### Redesign Katalog Sumber Patch & Interactive Release Channel Studio
+- **Katalog Lengkap Sumber RVX**: Memperluas pilihan sumber patch bawaan menjadi 8 repositori terpopuler dari ekosistem RVX dan ReVanced:
+  1. *Anddea RVX* (`anddea/revanced-patches`) — Recommended, fitur kustomisasi terlengkap dengan update rutin paling aktif.
+  2. *Inotia00 Classic* (`inotia00/revanced-patches`) — Classic RVX, fondasi orisinil dengan stabilitas tinggi.
+  3. *Morphe Official* (`MorpheApp/morphe-patches`) — Morphe Team, kurasi resmi ekosistem Morphe Manager.
+  4. *ReVanced Upstream* (`ReVanced/revanced-patches`) — Official Upstream, patches inti resmi upstream ReVanced global.
+  5. *Rufous (j-hc)* (`j-hc/revanced-patches`) — Daily Builds, kompilasi harian otomatis siap pakai untuk root module.
+  6. *YT-Advanced* (`yt-advanced/revanced-patches`) — Community, varian fleksibel untuk YouTube dan YouTube Music.
+  7. *Cuchri RVX* (`cuynu/yt-advanced`) — Enhanced, patch modifikasi tingkat lanjut dengan tweak playback.
+  8. *Piko Patches* (`crimera/revanced-patches`) — Lightweight, varian patch ramping dan ringan.
+- **Redesign Kartu Sumber yang Elegan**: Setiap kartu sumber dirancang dengan squircle gradient avatar, badge status (`Recommended`, `Classic RVX`, `Morphe Team`, dll.), repositori monospace, deskripsi mendalam, status checkmark radio aktif, serta tombol hapus mandiri untuk sumber kustom.
+- **Bilah Aksi & Drawer Tambah Sumber Kustom**: Penambahan toolbar Step 1 berisi counter pill (`8 Sumber Siap Pakai`), tombol `[+ Tambah]` untuk membuka drawer input inline (nama, repo GitHub/URL manifest, default channel) tanpa berpindah layar, dan tombol `[↺ Reset]` untuk mengembalikan 8 sumber bawaan resmi.
+- **Interactive Release Channel Studio**: Merombak total dropdown `<select>` menjadi studio rilis interaktif:
+  - 3 kartu segmen terkurasi: `⚡ Dev / Pre-release` (Bleeding Edge), `🛡️ Stable / Official` (Rekomendasi), dan `🏷️ Pilih Tag Spesifik` (Riwayat Tag).
+  - Browser tag rilis interaktif yang memuat riwayat rilis GitHub nyata lengkap dengan tanggal rilis, badge status (`Pre` vs `Stable`), dan tombol `(i)` catatan rilis untuk membaca changelog resmi per tag rilis.
+  - Input langsung tag kustom / commit SHA untuk pengguna mahir.
+- **Pemisahan Modular (`web/css/wizard-sources.css`)**: Mengikuti pedoman modularitas, memisahkan styling Step 1 ke file CSS tersendiri sehingga seluruh berkas proyek tetap berada di bawah batas ketat 1.000 baris kode.
+
 ## v2.1.15 (2026-10-12)
 
 ### Complete Setup Wizard Overhaul, Returning User Dashboard & Smart Mode Engine

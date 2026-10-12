@@ -192,9 +192,15 @@ async function loadPatchReleases(sourceConfig) {
         if (hint) hint.textContent = `${repo} • ${activeTag}`;
         if (versionEl) versionEl.textContent = activeTag;
         STATE.patchTag = select.value;
+        if (typeof renderWizardReleaseStudio === 'function') renderWizardReleaseStudio();
         return;
       }
     } catch (_) {}
+  }
+
+  // Fallback to source pre-configured fallback tags if available
+  if (Array.isArray(sourceConfig.fallbackTags) && sourceConfig.fallbackTags.length > 0) {
+    STATE.patchReleases = sourceConfig.fallbackTags;
   }
 
   select.innerHTML = `
@@ -209,6 +215,7 @@ async function loadPatchReleases(sourceConfig) {
   if (hint) hint.textContent = repo || 'Custom URL';
   if (versionEl) versionEl.textContent = defaultTag;
   STATE.patchTag = select.value;
+  if (typeof renderWizardReleaseStudio === 'function') renderWizardReleaseStudio();
 }
 
 function classifyVersion(verStr) {

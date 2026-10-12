@@ -80,21 +80,11 @@ const DEFAULT_SOURCES = [
     defaultReleaseType: 'dev',
     isDefault: true,
     isPreinstalled: true,
+    badge: 'Recommended',
     avatarText: 'A',
-    avatarColor: '#E53E3E',
-    description: 'Feature-rich ReVanced Extended patches with deep customization'
-  },
-  {
-    id: 'morphe',
-    name: 'Morphe Patches',
-    repository: 'MorpheApp/morphe-patches',
-    manifestUrl: 'https://raw.githubusercontent.com/MorpheApp/morphe-patches/refs/heads/main/patches-list.json',
-    defaultReleaseType: 'latest',
-    isDefault: false,
-    isPreinstalled: true,
-    avatarText: 'M',
-    avatarColor: '#3182CE',
-    description: 'Official patches curated by the Morphe ecosystem team'
+    avatarColor: '#EF4444',
+    avatarGradient: 'linear-gradient(135deg, #EF4444 0%, #991B1B 100%)',
+    description: 'Fitur kustomisasi terlengkap untuk YouTube RVX dengan update rutin paling aktif'
   },
   {
     id: 'inotia00',
@@ -104,9 +94,25 @@ const DEFAULT_SOURCES = [
     defaultReleaseType: 'latest',
     isDefault: false,
     isPreinstalled: true,
+    badge: 'Classic RVX',
     avatarText: 'I',
-    avatarColor: '#805AD5',
-    description: 'Classic ReVanced Extended patches by developer inotia00'
+    avatarColor: '#8B5CF6',
+    avatarGradient: 'linear-gradient(135deg, #8B5CF6 0%, #5B21B6 100%)',
+    description: 'Pondasi klasik ReVanced Extended orisinil oleh inotia00 dengan stabilitas tinggi'
+  },
+  {
+    id: 'morphe',
+    name: 'Morphe Official',
+    repository: 'MorpheApp/morphe-patches',
+    manifestUrl: 'https://raw.githubusercontent.com/MorpheApp/morphe-patches/refs/heads/main/patches-list.json',
+    defaultReleaseType: 'latest',
+    isDefault: false,
+    isPreinstalled: true,
+    badge: 'Morphe Team',
+    avatarText: 'M',
+    avatarColor: '#3B82F6',
+    avatarGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+    description: 'Patches resmi terkurasi oleh tim ekosistem Morphe Manager'
   },
   {
     id: 'revanced',
@@ -116,9 +122,67 @@ const DEFAULT_SOURCES = [
     defaultReleaseType: 'latest',
     isDefault: false,
     isPreinstalled: true,
+    badge: 'Official Upstream',
     avatarText: 'R',
-    avatarColor: '#38A169',
-    description: 'Official upstream patches from the ReVanced Project team'
+    avatarColor: '#10B981',
+    avatarGradient: 'linear-gradient(135deg, #10B981 0%, #047857 100%)',
+    description: 'Patches inti upstream resmi dari tim ReVanced Project global'
+  },
+  {
+    id: 'j-hc',
+    name: 'Rufous (j-hc)',
+    repository: 'j-hc/revanced-patches',
+    manifestUrl: 'https://raw.githubusercontent.com/j-hc/revanced-patches/refs/heads/main/patches.json',
+    defaultReleaseType: 'latest',
+    isDefault: false,
+    isPreinstalled: true,
+    badge: 'Daily Builds',
+    avatarText: 'J',
+    avatarColor: '#F59E0B',
+    avatarGradient: 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
+    description: 'Kompilasi harian otomatis dengan integrasi Magisk & Root Module siap pakai'
+  },
+  {
+    id: 'yt-advanced',
+    name: 'YT-Advanced',
+    repository: 'yt-advanced/revanced-patches',
+    manifestUrl: 'https://raw.githubusercontent.com/yt-advanced/revanced-patches/refs/heads/main/patches.json',
+    defaultReleaseType: 'latest',
+    isDefault: false,
+    isPreinstalled: true,
+    badge: 'Community',
+    avatarText: 'Y',
+    avatarColor: '#EC4899',
+    avatarGradient: 'linear-gradient(135deg, #EC4899 0%, #BE185D 100%)',
+    description: 'Varian patch fleksibel untuk optimasi YouTube dan YouTube Music feed'
+  },
+  {
+    id: 'cuynu',
+    name: 'Cuchri RVX',
+    repository: 'cuynu/yt-advanced',
+    manifestUrl: 'https://raw.githubusercontent.com/cuynu/yt-advanced/refs/heads/main/patches.json',
+    defaultReleaseType: 'latest',
+    isDefault: false,
+    isPreinstalled: true,
+    badge: 'Enhanced',
+    avatarText: 'C',
+    avatarColor: '#06B6D4',
+    avatarGradient: 'linear-gradient(135deg, #06B6D4 0%, #0E7490 100%)',
+    description: 'Patch modifikasi tingkat lanjut dengan tambahan tweak video playback'
+  },
+  {
+    id: 'piko',
+    name: 'Piko Patches',
+    repository: 'crimera/revanced-patches',
+    manifestUrl: 'https://raw.githubusercontent.com/crimera/revanced-patches/refs/heads/main/patches.json',
+    defaultReleaseType: 'latest',
+    isDefault: false,
+    isPreinstalled: true,
+    badge: 'Lightweight',
+    avatarText: 'P',
+    avatarColor: '#6366F1',
+    avatarGradient: 'linear-gradient(135deg, #6366F1 0%, #4338CA 100%)',
+    description: 'Varian patch ringan dan ramping dengan performa rendering responsif'
   }
 ];
 
@@ -255,8 +319,10 @@ function addCustomSource(source) {
     defaultReleaseType: source.defaultReleaseType || 'latest',
     isDefault: false,
     isPreinstalled: false,
+    badge: 'Custom',
     avatarText: name.charAt(0).toUpperCase() || 'C',
-    avatarColor: '#4FD1C5',
+    avatarColor: '#14B8A6',
+    avatarGradient: 'linear-gradient(135deg, #14B8A6 0%, #0F766E 100%)',
     description: source.description || (isUrl ? `Custom URL: ${cleanRepo}` : `GitHub: ${cleanRepo}`)
   };
 

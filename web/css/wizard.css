@@ -174,77 +174,8 @@
   line-height: 1.45;
 }
 
-/* Step 1: Source & Release Box */
-.wizard-source-selector {
-  margin-bottom: 20px;
-}
+/* Step 1: Sources Catalog & Release Studio (Modularized in css/wizard-sources.css) */
 
-.wizard-release-box {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--morphe-border-strong);
-  border-radius: 18px;
-  padding: 16px;
-  margin-top: 16px;
-}
-
-.wizard-release-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.wizard-release-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #E2E8F0;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.wizard-release-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.wizard-select {
-  flex: 1;
-  background: #12141C;
-  color: #FFFFFF;
-  border: 1px solid var(--morphe-border);
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-size: 14px;
-  font-family: inherit;
-  outline: none;
-  transition: border-color 0.2s ease;
-  min-height: 44px;
-}
-
-.wizard-select:focus {
-  border-color: #3B82F6;
-}
-
-.btn-release-info {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--morphe-border);
-  color: #60A5FA;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.15s ease;
-}
-
-.btn-release-info:hover {
-  background: rgba(96, 165, 250, 0.15);
-  border-color: #60A5FA;
-}
 
 /* Step 3: Recommended Version Hero Card */
 .version-rec-hero {
