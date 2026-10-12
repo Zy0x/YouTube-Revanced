@@ -101,6 +101,8 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
+    std::env::set_var("MODPATH", &modpath);
+
     match args.command {
         Some(Commands::Service { modpath: m }) => {
             cli::run_service(m.unwrap_or(modpath)).await?;

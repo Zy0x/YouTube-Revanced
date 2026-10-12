@@ -13,21 +13,21 @@ pub struct WebAssets;
 fn find_file_on_disk(rel_path: &str) -> Option<PathBuf> {
     let clean = rel_path.trim_start_matches('/').trim_start_matches('\\');
 
-    // 1. Direct candidates relative to CWD and standard directories
-    let mut candidate_dirs: Vec<PathBuf> = vec![
-        PathBuf::from("web"),
-        PathBuf::from("webroot"),
-        PathBuf::from("..").join("web"),
-        PathBuf::from("."),
-    ];
+    let mut candidate_dirs: Vec<PathBuf> = Vec::new();
 
-    // 2. Check if MODPATH environment variable is set
+    // 1. Check MODPATH first (always points to module root on Android / local repo on PC)
     if let Ok(modpath_env) = std::env::var("MODPATH") {
         let mp = PathBuf::from(modpath_env);
         candidate_dirs.push(mp.join("web"));
         candidate_dirs.push(mp.join("webroot"));
         candidate_dirs.push(mp);
     }
+
+    // 2. Direct candidates relative to CWD and standard directories
+    candidate_dirs.push(PathBuf::from("web"));
+    candidate_dirs.push(PathBuf::from("webroot"));
+    candidate_dirs.push(PathBuf::from("..").join("web"));
+    candidate_dirs.push(PathBuf::from("."));
 
     // 3. Check relative to current executable directory
     if let Ok(exe) = std::env::current_exe() {

@@ -606,15 +606,24 @@ function initEventListeners() {
 
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (isLocalhost && 'caches' in window) {
-      caches.keys().then((keys) => {
-        keys.forEach((k) => {
-          if (k !== 'rvx-builder-v2.1.15') {
-            caches.delete(k);
+    const isDevHost = window.location.hostname === 'localhost' ||
+                      window.location.hostname === '127.0.0.1' ||
+                      window.location.hostname === '0.0.0.0';
+    if (isDevHost) {
+      // In local launcher mode, unregister any stale SW & purge caches for instant live update!
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        for (const reg of regs) {
+          reg.unregister();
+        }
+      });
+      if ('caches' in window) {
+        caches.keys().then((keys) => {
+          for (const key of keys) {
+            caches.delete(key);
           }
         });
-      });
+      }
+      return;
     }
 
     navigator.serviceWorker.register('sw.js').then((reg) => {
