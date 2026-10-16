@@ -326,11 +326,23 @@ function renderStep2ChannelSection() {
   bindPatchTagPickerModalEvents();
 }
 
+let tagPickerFilter = 'all';
+let tagPickerSearch = '';
+let tagPickerEventsBound = false;
+
 function bindPatchTagPickerModalEvents() {
+  if (tagPickerEventsBound) return;
+  tagPickerEventsBound = true;
+
   const modal = document.getElementById('modalPatchTagPicker');
   const btnClose = document.getElementById('btnCloseTagPicker');
   const btnApplyManual = document.getElementById('btnApplyManualTag');
   const inputManual = document.getElementById('inputManualTag');
+  const btnToggleManual = document.getElementById('btnToggleManualTag');
+  const drawerManual = document.getElementById('drawerManualTag');
+  const iconToggleManual = document.getElementById('manualToggleIcon');
+  const searchInput = document.getElementById('inputSearchPatchTag');
+  const filterPills = document.querySelectorAll('.tag-filter-pill');
 
   if (btnClose && modal) {
     btnClose.onclick = () => modal.classList.add('hidden');
@@ -339,6 +351,13 @@ function bindPatchTagPickerModalEvents() {
   if (modal) {
     modal.onclick = (e) => {
       if (e.target === modal) modal.classList.add('hidden');
+    };
+  }
+
+  if (btnToggleManual && drawerManual) {
+    btnToggleManual.onclick = () => {
+      const isHidden = drawerManual.classList.toggle('hidden');
+      if (iconToggleManual) iconToggleManual.textContent = isHidden ? '▾' : '▴';
     };
   }
 
@@ -353,13 +372,100 @@ function bindPatchTagPickerModalEvents() {
       inputManual.value = '';
     };
   }
+
+  if (searchInput) {
+    searchInput.oninput = (e) => {
+      tagPickerSearch = e.target.value.toLowerCase().trim();
+      renderFilteredTagsList();
+    };
+  }
+
+  filterPills.forEach(pill => {
+    pill.onclick = () => {
+      filterPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      tagPickerFilter = pill.dataset.filter || 'all';
+      renderFilteredTagsList();
+    };
+  });
+}
+
+function renderFilteredTagsList() {
+  const listContainer = document.getElementById('modalTagsList');
+  if (!listContainer) return;
+  const modal = document.getElementById('modalPatchTagPicker');
+
+  const activeSrc = STATE.sources.find(s => s.id === STATE.currentSource) || STATE.sources[0];
+  const releases = (STATE.patchReleases && STATE.patchReleases.length > 0)
+    ? STATE.patchReleases
+    : (activeSrc?.fallbackTags || []);
+
+  const filtered = releases.filter(rel => {
+    const tagName = (rel.tag_name || rel.name || '').toLowerCase();
+    const isPre = !!rel.prerelease;
+
+    if (tagPickerFilter === 'stable' && isPre) return false;
+    if (tagPickerFilter === 'pre' && !isPre) return false;
+    if (tagPickerSearch && !tagName.includes(tagPickerSearch)) return false;
+    return true;
+  });
+
+  listContainer.innerHTML = '';
+  if (filtered.length === 0) {
+    listContainer.innerHTML = '<div class="tag-picker-item" style="justify-content:center;color:#94A3B8;padding:24px 12px;"><span class="morphe-muted-hint">Tidak ada rilis yang cocok dengan filter atau pencarian.</span></div>';
+    return;
+  }
+
+  filtered.slice(0, 30).forEach(rel => {
+    const tagName = rel.tag_name || rel.name;
+    const isPre = !!rel.prerelease;
+    const isSelected = STATE.patchTag === tagName;
+    const dateStr = rel.published_at ? formatDate(rel.published_at) : 'Rilis Baru';
+
+    const row = document.createElement('div');
+    row.className = `tag-picker-item ${isSelected ? 'active' : ''}`;
+    row.setAttribute('role', 'radio');
+    row.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+
+    row.innerHTML = `
+      <div class="tag-item-radio">
+        ${isSelected ? '<span class="source-radio-dot"></span>' : ''}
+      </div>
+      <div class="tag-item-info">
+        <div class="tag-item-name-row">
+          <span class="tag-item-name">${escapeHtml(tagName)}</span>
+          <span class="tag-simple-badge ${isPre ? 'badge-pre' : 'badge-stable'}">${isPre ? 'Pre-release' : 'Stable'}</span>
+        </div>
+        <span class="tag-item-date">${escapeHtml(dateStr)}</span>
+      </div>
+      <button type="button" class="btn-tag-changelog" title="Catatan rilis untuk ${escapeHtml(tagName)}">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>Changelog</span>
+      </button>
+    `;
+
+    row.addEventListener('click', (e) => {
+      if (e.target.closest('.btn-tag-changelog')) {
+        e.stopPropagation();
+        showPatchNotesModal(tagName);
+        return;
+      }
+      STATE.patchTag = tagName;
+      STATE.preReleasePatches = isPre;
+      if (modal) modal.classList.add('hidden');
+      renderStep2ChannelSection();
+      syncReleaseChannelSelection(tagName);
+    });
+
+    listContainer.appendChild(row);
+  });
 }
 
 function openPatchTagPickerModal() {
   const modal = document.getElementById('modalPatchTagPicker');
   const titleEl = document.getElementById('modalTagPickerTitle');
   const subEl = document.getElementById('modalTagPickerSub');
-  const listContainer = document.getElementById('modalTagsList');
+  const searchInput = document.getElementById('inputSearchPatchTag');
 
   const activeSrc = STATE.sources.find(s => s.id === STATE.currentSource) || STATE.sources[0];
   const releases = (STATE.patchReleases && STATE.patchReleases.length > 0)
@@ -367,53 +473,17 @@ function openPatchTagPickerModal() {
     : (activeSrc?.fallbackTags || []);
 
   if (titleEl) titleEl.textContent = 'Pilih Versi Patch';
-  if (subEl) subEl.textContent = `Sumber: ${activeSrc.name || getSourceDisplayName(activeSrc.id)}`;
+  if (subEl) subEl.textContent = `Sumber: ${activeSrc.name || getSourceDisplayName(activeSrc.id)} • ${releases.length} rilis tersedia`;
 
-  if (listContainer) {
-    listContainer.innerHTML = '';
-    if (releases.length === 0) {
-      listContainer.innerHTML = '<div class="tag-picker-item"><span class="morphe-muted-hint">Tidak ada riwayat rilis untuk sumber ini.</span></div>';
-    } else {
-      releases.slice(0, 15).forEach(rel => {
-        const tagName = rel.tag_name || rel.name;
-        const isPre = !!rel.prerelease;
-        const isSelected = STATE.patchTag === tagName;
-        const dateStr = rel.published_at ? formatDate(rel.published_at) : 'Rilis Baru';
+  tagPickerFilter = 'all';
+  tagPickerSearch = '';
+  if (searchInput) searchInput.value = '';
 
-        const row = document.createElement('div');
-        row.className = `tag-picker-item ${isSelected ? 'active' : ''}`;
-        row.setAttribute('role', 'radio');
-        row.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+  const filterPills = document.querySelectorAll('.tag-filter-pill');
+  filterPills.forEach(p => p.classList.toggle('active', p.dataset.filter === 'all'));
 
-        row.innerHTML = `
-          <div class="tag-item-radio"></div>
-          <div class="tag-item-info">
-            <div class="tag-item-name-row">
-              <span class="tag-item-name">${escapeHtml(tagName)}</span>
-              <span class="tag-simple-badge ${isPre ? 'badge-pre' : 'badge-stable'}">${isPre ? 'Pre-release' : 'Stable'}</span>
-            </div>
-            <span class="tag-item-date">${escapeHtml(dateStr)}</span>
-          </div>
-          <button type="button" class="btn-tag-changelog" title="Lihat catatan rilis untuk ${escapeHtml(tagName)}">Changelog</button>
-        `;
-
-        row.addEventListener('click', (e) => {
-          if (e.target.closest('.btn-tag-changelog')) {
-            e.stopPropagation();
-            showPatchNotesModal(tagName);
-            return;
-          }
-          STATE.patchTag = tagName;
-          STATE.preReleasePatches = isPre;
-          if (modal) modal.classList.add('hidden');
-          renderStep2ChannelSection();
-          syncReleaseChannelSelection(tagName);
-        });
-
-        listContainer.appendChild(row);
-      });
-    }
-  }
+  bindPatchTagPickerModalEvents();
+  renderFilteredTagsList();
 
   if (modal) modal.classList.remove('hidden');
 }

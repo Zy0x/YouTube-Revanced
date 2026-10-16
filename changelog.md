@@ -1,3 +1,27 @@
+## v2.1.22 (2026-10-17)
+
+### Rombak Total Langkah 2 & Modern Searchable Tag Picker Overlay
+- **Layout Grid 2-Kolom Ergonomis untuk Repositori Sumber**:
+  - Mengubah tampilan tumpukan vertikal repositori yang boros tempat menjadi grid 2-kolom responsif (`repeat(2, 1fr)`).
+  - 8 sumber kini tertata rapi dalam 4 baris kompak (~190px total), menghemat lebih dari 250px ruang vertikal layar.
+  - Kartu repositori aktif diberi pencahayaan aksen biru modern (`#3B82F6`) dan indikator radio dot yang jelas.
+- **Side-by-Side Dual Channel Selector (Terbaru vs Versi Tag)**:
+  - Saluran rilis ditempatkan tepat di bawah repositori secara berdampingan dalam 1 baris di ponsel Android.
+  - Pengguna dapat langsung melihat kedua opsi saluran rilis tanpa perlu scroll ke bawah layar.
+- **Rombak Total Overlay Pemilih Versi Tag (`#modalPatchTagPicker`)**:
+  - **Live Real-time Search**: Dilengkapi kolom pencarian instan untuk mencari tag tertentu (misal `5.14`, `dev`, `v4`).
+  - **Filter Segmented Pills (Semua, Stable, Pre-release)**: Pengguna dapat menyaring versi rilis hanya dengan 1 ketukan.
+  - **Daftar Versi Rilis yang Disempurnakan**: Tiap baris tag dilengkapi badge `Stable` (emerald green) atau `Pre-release` (amber), tanggal rilis, dan tombol catatan rilis (*Changelog*).
+  - **Collapsible Manual Tag Accordion**: Input tag manual dipindahkan ke bagian bawah sebagai akordeon yang rapi dan elegan, tidak lagi menghalangi daftar rilis utama.
+- **Kepatuhan Batasan Modularitas (< 1.000 Baris)**:
+  - `web/index.html`: 973 baris
+  - `web/js/ui-wizard.js`: 911 baris
+  - `web/css/responsive.css`: 863 baris
+  - `web/css/morphe.css`: 834 baris
+  - `web/css/wizard-sources.css`: 829 lines
+  - `web/js/api.js`: 715 baris
+  - Seluruh file 100% strictly di bawah 1.000 baris kode per file.
+
 ## v2.1.21 (2026-10-16)
 
 ### Desain Minimalis Elegan Anti-AI-Slop & Direct Channel Selector di Langkah 2
