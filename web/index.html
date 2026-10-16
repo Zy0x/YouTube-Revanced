@@ -43,120 +43,149 @@
         </div>
       </div>
 
-      <!-- Stepper Progress Nodes (1 to 5) -->
-      <nav class="wizard-stepper" aria-label="Progress Langkah">
-        <div class="wizard-stepper-track"><div id="wizardStepperProgress" class="wizard-stepper-progress"></div></div>
-        <button type="button" class="wizard-step-node active" data-step="1" aria-label="Langkah 1: Sumber">
-          <span class="step-node-bubble">1</span>
-          <span class="step-node-label">Sumber</span>
-        </button>
-        <button type="button" class="wizard-step-node" data-step="2" aria-label="Langkah 2: Aplikasi">
-          <span class="step-node-bubble">2</span>
-          <span class="step-node-label">Aplikasi</span>
-        </button>
-        <button type="button" class="wizard-step-node" data-step="3" aria-label="Langkah 3: Versi">
-          <span class="step-node-bubble">3</span>
-          <span class="step-node-label">Versi</span>
-        </button>
-        <button type="button" class="wizard-step-node" data-step="4" aria-label="Langkah 4: Mode & Patch">
-          <span class="step-node-bubble">4</span>
-          <span class="step-node-label">Mode &amp; Patch</span>
-        </button>
-        <button type="button" class="wizard-step-node" data-step="5" aria-label="Langkah 5: Build">
-          <span class="step-node-bubble">5</span>
-          <span class="step-node-label">Build</span>
-        </button>
-      </nav>
+      <!-- M3 Minimalist Top Progress & Step Header -->
+      <div class="m3-stepper-container">
+        <div class="m3-progress-track">
+          <div id="wizardProgressBar" class="m3-progress-indicator" style="width: 20%;"></div>
+        </div>
+        <div class="m3-step-meta">
+          <span id="wizardStepCounter" class="m3-step-pill">Langkah 1 dari 5</span>
+          <span id="wizardStepTitle" class="m3-step-name">Sumber &amp; Saluran Patch</span>
+        </div>
+      </div>
+
+      <!-- Legacy Stepper Compatibility -->
+      <nav class="wizard-stepper sr-only" aria-hidden="true" tabindex="-1"><div class="wizard-stepper-track"><div id="wizardStepperProgress" class="wizard-stepper-progress"></div></div><button type="button" class="wizard-step-node active" data-step="1"><span class="step-node-bubble">1</span></button><button type="button" class="wizard-step-node" data-step="2"><span class="step-node-bubble">2</span></button><button type="button" class="wizard-step-node" data-step="3"><span class="step-node-bubble">3</span></button><button type="button" class="wizard-step-node" data-step="4"><span class="step-node-bubble">4</span></button><button type="button" class="wizard-step-node" data-step="5"><span class="step-node-bubble">5</span></button></nav>
 
       <!-- PANE 1: SOURCE & PATCH RELEASE -->
       <div id="wizardStep1" class="wizard-step-pane active">
         <div class="wizard-pane-header">
-          <div class="wizard-pane-header-row">
-            <div>
-              <h2 class="wizard-pane-title">1. Sumber &amp; Saluran Patch</h2>
-              <p class="wizard-pane-desc">Pilih repositori patch dan target rilis untuk proses build.</p>
+          <h2 class="wizard-pane-title">1. Sumber &amp; Saluran Patch</h2>
+          <p class="wizard-pane-desc">Pilih repositori patch dan target rilis untuk proses build.</p>
+        </div>
+
+        <!-- M3 Single Clean Summary Card (Tap to open Bottom Sheet) -->
+        <div id="cardCurrentSourceSummary" class="m3-summary-card" role="button" tabindex="0">
+          <div class="m3-summary-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          </div>
+          <div class="m3-summary-body">
+            <span class="m3-summary-label">Repositori &amp; Saluran Aktif</span>
+            <span id="summarySourceName" class="m3-summary-title">Anddea Patches</span>
+            <span id="summarySourceChannel" class="m3-summary-sub">Saluran Dev • v4.3.1-dev.1</span>
+          </div>
+          <div class="m3-summary-action-badge">
+            <span>Ubah</span>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+
+        <!-- Android M3 Bottom Sheet Modal for Source & Channel Picker -->
+        <div id="sourcePickerBottomSheet" class="m3-bottom-sheet-overlay hidden">
+          <div class="m3-bottom-sheet-scrim" id="scrimCloseSourceSheet"></div>
+          <div class="m3-bottom-sheet">
+            <div class="m3-sheet-handle-bar"><div class="m3-sheet-handle"></div></div>
+            <div class="m3-sheet-header">
+              <h3 class="m3-sheet-title">Konfigurasi Sumber &amp; Saluran</h3>
+              <button type="button" id="btnCloseSourceSheet" class="m3-sheet-close-btn" aria-label="Tutup">&times;</button>
             </div>
-            <div class="wizard-sources-toolbar">
-              <span id="wizardSourcesCountBadge" class="sources-count-text">8 sumber</span>
-              <button type="button" id="btnWizToggleAddSource" class="btn-clean-action" title="Tambah Sumber Patch Kustom">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                <span>Tambah</span>
-              </button>
-              <button type="button" id="btnWizResetSources" class="btn-clean-ghost" title="Reset ke Sumber Bawaan">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-              </button>
+            
+            <!-- M3 Sheet Navigation Tabs -->
+            <div class="m3-sheet-tabs" role="tablist">
+              <button type="button" id="tabSheetSources" class="m3-sheet-tab active" role="tab" aria-selected="true">Sumber Patch</button>
+              <button type="button" id="tabSheetChannel" class="m3-sheet-tab" role="tab" aria-selected="false">Saluran Rilis</button>
+            </div>
+            
+            <!-- Sheet Pane 1: Sources List -->
+            <div id="sheetPaneSources" class="m3-sheet-tab-pane active">
+              <div class="sheet-pane-toolbar">
+                <span id="wizardSourcesCountBadge" class="sheet-count-text">8 sumber</span>
+                <div class="sheet-toolbar-actions">
+                  <button type="button" id="btnWizToggleAddSource" class="btn-clean-action btn-sm">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span>Tambah</span>
+                  </button>
+                  <button type="button" id="btnWizResetSources" class="btn-clean-ghost btn-sm" title="Reset bawaan">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Inline Custom Source Drawer inside Sheet -->
+              <div id="wizAddSourceDrawer" class="wizard-drawer-panel hidden">
+                <div class="drawer-header">
+                  <span class="drawer-title">Tambah Sumber Kustom</span>
+                  <button type="button" id="btnWizCloseAddSource" class="btn-drawer-close" aria-label="Tutup form">&times;</button>
+                </div>
+                <div class="drawer-grid">
+                  <div class="form-group">
+                    <label for="inputWizSourceName">Nama Sumber</label>
+                    <input type="text" id="inputWizSourceName" class="morphe-input" placeholder="e.g. My Custom Patches" maxlength="40">
+                  </div>
+                  <div class="form-group">
+                    <label for="inputWizSourceRepo">GitHub Owner/Repo atau URL Raw Manifest</label>
+                    <input type="text" id="inputWizSourceRepo" class="morphe-input" placeholder="e.g. user/revanced-patches atau https://.../patches.json">
+                  </div>
+                  <div class="form-group">
+                    <label for="selectWizSourceChannel">Saluran Default</label>
+                    <select id="selectWizSourceChannel" class="morphe-select">
+                      <option value="latest" selected>Stable / Official</option>
+                      <option value="dev">Pre-release / Dev</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="drawer-actions">
+                  <button type="button" id="btnWizSaveCustomSource" class="btn-clean-primary btn-sm">Simpan</button>
+                  <button type="button" id="btnWizCancelAddSource" class="btn-clean-ghost btn-sm">Batal</button>
+                </div>
+              </div>
+
+              <!-- Compact Sources Grid inside Sheet -->
+              <div id="wizardSourcesGrid" class="wizard-sources-compact-list" role="radiogroup" aria-label="Pilih Sumber Patch"></div>
+            </div>
+            
+            <!-- Sheet Pane 2: Channel & Tags -->
+            <div id="sheetPaneChannel" class="m3-sheet-tab-pane">
+              <div class="channel-section-header">
+                <label class="channel-section-label">Pilih Saluran</label>
+                <span id="studioActiveLabel" class="channel-active-indicator">Memuat tag...</span>
+              </div>
+
+              <!-- Clean Segmented Control -->
+              <div class="channel-segmented-control" role="radiogroup" aria-label="Tipe Saluran Rilis">
+                <button type="button" id="segmentDev" class="channel-segment-btn active" role="radio" aria-checked="true">
+                  <span>Dev / Pre-release</span>
+                </button>
+                <button type="button" id="segmentStable" class="channel-segment-btn" role="radio" aria-checked="false">
+                  <span>Stable</span>
+                </button>
+                <button type="button" id="segmentTags" class="channel-segment-btn" role="radio" aria-checked="false">
+                  <span>Pilih Tag</span>
+                </button>
+              </div>
+
+              <!-- Compact Expandable Tag Browser -->
+              <div id="studioTagsBrowser" class="studio-tags-browser hidden">
+                <div class="tags-browser-toolbar">
+                  <input type="text" id="inputStudioCustomTag" class="morphe-input tag-input-compact" placeholder="Ketik tag / commit manual (e.g. v4.3.0)...">
+                  <button type="button" id="btnStudioApplyCustomTag" class="btn-clean-primary btn-sm">Terapkan</button>
+                  <button type="button" id="btnStudioRefreshTags" class="btn-clean-ghost btn-sm" title="Segarkan tag dari GitHub">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                  </button>
+                </div>
+                <div id="studioTagsList" class="studio-tags-compact-list" role="radiogroup" aria-label="Daftar Tag Rilis"></div>
+              </div>
+            </div>
+
+            <div class="m3-sheet-footer">
+              <button type="button" id="btnApplySourceSheet" class="btn-clean-primary btn-block">Terapkan &amp; Tutup</button>
             </div>
           </div>
         </div>
 
-        <!-- Inline Expandable Drawer for Adding Custom Patch Source -->
-        <div id="wizAddSourceDrawer" class="wizard-drawer-panel hidden">
-          <div class="drawer-header">
-            <span class="drawer-title">Tambah Sumber Kustom</span>
-            <button type="button" id="btnWizCloseAddSource" class="btn-drawer-close" aria-label="Tutup form">&times;</button>
-          </div>
-          <div class="drawer-grid">
-            <div class="form-group">
-              <label for="inputWizSourceName">Nama Sumber</label>
-              <input type="text" id="inputWizSourceName" class="morphe-input" placeholder="e.g. My Custom Patches" maxlength="40">
-            </div>
-            <div class="form-group">
-              <label for="inputWizSourceRepo">GitHub Owner/Repo atau URL Raw Manifest</label>
-              <input type="text" id="inputWizSourceRepo" class="morphe-input" placeholder="e.g. user/revanced-patches atau https://.../patches.json">
-            </div>
-            <div class="form-group">
-              <label for="selectWizSourceChannel">Saluran Default</label>
-              <select id="selectWizSourceChannel" class="morphe-select">
-                <option value="latest" selected>Stable / Official</option>
-                <option value="dev">Pre-release / Dev</option>
-              </select>
-            </div>
-          </div>
-          <div class="drawer-actions">
-            <button type="button" id="btnWizSaveCustomSource" class="btn-clean-primary btn-sm">Simpan</button>
-            <button type="button" id="btnWizCancelAddSource" class="btn-clean-ghost btn-sm">Batal</button>
-          </div>
-        </div>
-
-        <!-- Compact Sources List -->
-        <div id="wizardSourcesGrid" class="wizard-sources-compact-list" role="radiogroup" aria-label="Pilih Sumber Patch"></div>
-
-        <!-- Clean Release Channel Section -->
-        <div class="wizard-channel-section">
-          <div class="channel-section-header">
-            <label class="channel-section-label">Saluran Rilis</label>
-            <span id="studioActiveLabel" class="channel-active-indicator">Memuat tag...</span>
-          </div>
-
-          <!-- Clean Segmented Control -->
-          <div class="channel-segmented-control" role="radiogroup" aria-label="Tipe Saluran Rilis">
-            <button type="button" id="segmentDev" class="channel-segment-btn active" role="radio" aria-checked="true">
-              <span>Dev / Pre-release</span>
-            </button>
-            <button type="button" id="segmentStable" class="channel-segment-btn" role="radio" aria-checked="false">
-              <span>Stable</span>
-            </button>
-            <button type="button" id="segmentTags" class="channel-segment-btn" role="radio" aria-checked="false">
-              <span>Pilih Tag</span>
-            </button>
-          </div>
-
-          <!-- Compact Expandable Tag Browser -->
-          <div id="studioTagsBrowser" class="studio-tags-browser hidden">
-            <div class="tags-browser-toolbar">
-              <input type="text" id="inputStudioCustomTag" class="morphe-input tag-input-compact" placeholder="Ketik tag / commit manual (e.g. v4.3.0)...">
-              <button type="button" id="btnStudioApplyCustomTag" class="btn-clean-primary btn-sm">Terapkan</button>
-              <button type="button" id="btnStudioRefreshTags" class="btn-clean-ghost btn-sm" title="Segarkan tag dari GitHub">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-              </button>
-            </div>
-            <div id="studioTagsList" class="studio-tags-compact-list" role="radiogroup" aria-label="Daftar Tag Rilis"></div>
-          </div>
-
-          <!-- Hidden legacy elements kept for script compatibility -->
-          <select id="wizardPatchReleaseSelect" class="sr-only" aria-hidden="true" tabindex="-1"></select>
-          <button type="button" id="btnWizardReleaseNotes" class="sr-only" aria-hidden="true" tabindex="-1"></button>
-        </div>
+        <!-- Hidden legacy elements kept for script compatibility -->
+        <select id="wizardPatchReleaseSelect" class="sr-only" aria-hidden="true" tabindex="-1"></select>
+        <button type="button" id="btnWizardReleaseNotes" class="sr-only" aria-hidden="true" tabindex="-1"></button>
 
         <div class="wizard-nav-actions">
           <button type="button" id="btnWizStep1Next" class="btn-clean-primary btn-next">
@@ -210,30 +239,30 @@
           <h2 class="wizard-pane-title">4. Target Mode &amp; Kurasi Patch</h2>
           <p class="wizard-pane-desc">Tentukan mode instalasi target dan pilih fitur patch yang ingin Anda pasang.</p>
         </div>
-        <!-- Mode Switcher -->
-        <div class="mode-switcher-grid">
-          <div id="modeCardRoot" class="mode-pill-card active" role="radio" aria-checked="true" tabindex="0">
-            <div class="mode-card-header">
-              <div class="mode-icon-circle">🛡️</div>
-              <span class="source-card-check">✓</span>
+        <!-- M3 Segmented Mode Switcher -->
+        <div class="m3-mode-segmented-control" role="radiogroup" aria-label="Target Mode">
+          <div id="modeCardRoot" class="m3-mode-segment-btn active" role="radio" aria-checked="true" tabindex="0">
+            <span class="m3-mode-segment-icon">🛡️</span>
+            <div class="m3-mode-segment-content">
+              <strong class="m3-mode-segment-title">Mode Root</strong>
+              <span class="m3-mode-segment-sub">Magisk / KernelSU / APatch</span>
             </div>
-            <strong class="mode-card-title">Mode Root</strong>
-            <span class="mode-card-desc">Magisk / KernelSU / APatch / ReSukiSU. Tanpa MicroG.</span>
+            <span class="m3-mode-segment-check">✓</span>
           </div>
-          <div id="modeCardNonRoot" class="mode-pill-card" role="radio" aria-checked="false" tabindex="0">
-            <div class="mode-card-header">
-              <div class="mode-icon-circle">📱</div>
-              <span class="source-card-check"></span>
+          <div id="modeCardNonRoot" class="m3-mode-segment-btn" role="radio" aria-checked="false" tabindex="0">
+            <span class="m3-mode-segment-icon">📱</span>
+            <div class="m3-mode-segment-content">
+              <strong class="m3-mode-segment-title">Mode Non-Root</strong>
+              <span class="m3-mode-segment-sub">APK Biasa + GmsCore</span>
             </div>
-            <strong class="mode-card-title">Mode Non-Root</strong>
-            <span class="mode-card-desc">Standalone APK. Wajib GmsCore/MicroG untuk login.</span>
+            <span class="m3-mode-segment-check"></span>
           </div>
         </div>
         <!-- Patch quick controls -->
         <div class="morphe-actions-toolbar" style="margin-bottom: 12px;">
-          <button type="button" id="btnWizPatchesSearch" class="morphe-chip-btn">Cari Patch</button>
-          <button type="button" id="btnWizPatchesDefault" class="morphe-chip-btn">Default</button>
-          <button type="button" id="btnWizPatchesAll" class="morphe-chip-btn">Pilih Semua</button>
+          <button type="button" id="btnWizPatchesSearch" class="m3-chip-btn">🔍 Cari Patch</button>
+          <button type="button" id="btnWizPatchesDefault" class="m3-chip-btn">Default</button>
+          <button type="button" id="btnWizPatchesAll" class="m3-chip-btn">Pilih Semua</button>
         </div>
         <div id="wizardPatchesSearchBox" class="version-search-drawer hidden" style="margin-bottom: 12px;">
           <input type="search" id="inputWizPatchSearch" class="morphe-input" placeholder="Ketik nama fitur/patch...">

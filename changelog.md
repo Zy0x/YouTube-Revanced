@@ -1,3 +1,22 @@
+## v2.1.18 (2026-10-16)
+
+### Material You 3 (M3) Native Android Redesign & Clean Bottom Sheet Architecture
+- **Penyederhanaan Langkah 1 dengan Single Summary Card**: Menggantikan seluruh daftar sumber yang memadati layar dengan satu kartu ringkasan Material You yang elegan dan bernapas lega di halaman utama (`Anddea Patches • Saluran Dev (v4.3.1-dev.1)`).
+- **Android Native Bottom Sheet Modal**:
+  - Mengisolasi konfigurasi sumber dan saluran rilis ke dalam Bottom Sheet modal khas Android yang meluncur mulus dari bawah dengan backdrop blur dan drag handle.
+  - Dilengkapi tab switching internal M3: Tab 1 untuk pemilihan 8 repositori patch (+ drawer custom source inline) dan Tab 2 untuk pemilihan saluran rilis (Dev, Stable, Tag Browser).
+- **Minimalist Top Stepper & Progress Bar**:
+  - Menghilangkan deretan 5 bulatan angka horizontal yang berjejal di layar ponsel.
+  - Menggantinya dengan bilah progres tipis M3 di puncak layar dan indikator langkah minimalis (`Langkah 1 dari 5: Sumber & Saluran Patch`), membuat layar Android terasa luas dan tidak sesak.
+- **M3 Segmented Button untuk Target Mode**:
+  - Mendesain ulang pemilih Mode Root (Magisk/KernelSU/APatch) dan Mode Non-Root (GmsCore/MicroG) menjadi segmented button horizontal berdampingan dengan ikon yang jelas dan status aktif terintegrasi.
+- **Kepatuhan Ketat Modularitas (< 1.000 Baris)**:
+  - `web/index.html`: 989 baris
+  - `web/js/ui-wizard.js`: 852 baris
+  - `web/css/wizard-sources.css`: 710 baris
+  - `web/css/wizard.css`: 632 baris
+  - Seluruh file 100% mematuhi batas ketat di bawah 1.000 baris kode per skrip.
+
 ## v2.1.17 (2026-10-12)
 
 ### Clean, Compact & Anti-AI-Slop Redesign (Minimalist Engineering UI)

@@ -40,6 +40,27 @@ function goToWizardStep(step) {
     progressLine.style.width = `${pct}%`;
   }
 
+  // M3 Minimalist Stepper Update
+  const m3Bar = document.getElementById('wizardProgressBar');
+  if (m3Bar) {
+    m3Bar.style.width = `${step * 20}%`;
+  }
+  const stepCounter = document.getElementById('wizardStepCounter');
+  if (stepCounter) {
+    stepCounter.textContent = `Langkah ${step} dari 5`;
+  }
+  const stepTitle = document.getElementById('wizardStepTitle');
+  if (stepTitle) {
+    const titles = [
+      'Sumber & Saluran Patch',
+      'Pilih Aplikasi Target',
+      'Versi Target APK',
+      'Target Mode & Patch',
+      'Ringkasan & Eksekusi Build'
+    ];
+    stepTitle.textContent = titles[step - 1] || '';
+  }
+
   // Switch Active Step Pane
   for (let i = 1; i <= 5; i++) {
     const pane = document.getElementById(`wizardStep${i}`);
@@ -147,6 +168,7 @@ function renderWizardSourceStep() {
 
   bindWizardSourceToolbar();
   renderWizardReleaseStudio();
+  bindSourcePickerBottomSheet();
 }
 
 function bindWizardSourceToolbar() {
@@ -356,6 +378,67 @@ function renderWizardReleaseStudio() {
       inputTag.value = '';
     };
   }
+
+  // Update M3 Summary Card on Main Screen
+  const summaryName = document.getElementById('summarySourceName');
+  const summaryChannel = document.getElementById('summarySourceChannel');
+  if (summaryName) {
+    summaryName.textContent = activeSrc.name || getSourceDisplayName(activeSrc.id);
+  }
+  if (summaryChannel) {
+    if (isDev) {
+      summaryChannel.textContent = `Saluran Dev • ${latestPre ? latestPre.tag_name : 'v4.x-dev'}`;
+    } else if (isStable) {
+      summaryChannel.textContent = `Saluran Stable • ${latestStable ? latestStable.tag_name : 'Resmi'}`;
+    } else {
+      summaryChannel.textContent = `Tag Spesifik • ${currentTag}`;
+    }
+  }
+}
+
+function bindSourcePickerBottomSheet() {
+  const summaryCard = document.getElementById('cardCurrentSourceSummary');
+  const sheetOverlay = document.getElementById('sourcePickerBottomSheet');
+  const btnClose = document.getElementById('btnCloseSourceSheet');
+  const scrim = document.getElementById('scrimCloseSourceSheet');
+  const btnApply = document.getElementById('btnApplySourceSheet');
+
+  const tabSources = document.getElementById('tabSheetSources');
+  const tabChannel = document.getElementById('tabSheetChannel');
+  const paneSources = document.getElementById('sheetPaneSources');
+  const paneChannel = document.getElementById('sheetPaneChannel');
+
+  const openSheet = () => {
+    if (sheetOverlay) sheetOverlay.classList.remove('hidden');
+  };
+  const closeSheet = () => {
+    if (sheetOverlay) sheetOverlay.classList.add('hidden');
+    renderWizardReleaseStudio();
+  };
+
+  if (summaryCard) summaryCard.onclick = openSheet;
+  if (btnClose) btnClose.onclick = closeSheet;
+  if (scrim) scrim.onclick = closeSheet;
+  if (btnApply) btnApply.onclick = closeSheet;
+
+  if (tabSources && tabChannel && paneSources && paneChannel) {
+    tabSources.onclick = () => {
+      tabSources.classList.add('active');
+      tabSources.setAttribute('aria-selected', 'true');
+      tabChannel.classList.remove('active');
+      tabChannel.setAttribute('aria-selected', 'false');
+      paneSources.classList.add('active');
+      paneChannel.classList.remove('active');
+    };
+    tabChannel.onclick = () => {
+      tabChannel.classList.add('active');
+      tabChannel.setAttribute('aria-selected', 'true');
+      tabSources.classList.remove('active');
+      tabSources.setAttribute('aria-selected', 'false');
+      paneChannel.classList.add('active');
+      paneSources.classList.remove('active');
+    };
+  }
 }
 
 function syncReleaseChannelSelection(tagVal) {
@@ -506,7 +589,15 @@ function renderWizardVersionStep() {
    ========================================================================== */
 function renderWizardModeAndPatchesStep() {
   updateModeSwitcherUI();
+  bindModeSwitcherEvents();
   renderMorphePatchList();
+}
+
+function bindModeSwitcherEvents() {
+  const cardRoot = document.getElementById('modeCardRoot');
+  const cardNonRoot = document.getElementById('modeCardNonRoot');
+  if (cardRoot) cardRoot.onclick = () => setTargetMode('root');
+  if (cardNonRoot) cardNonRoot.onclick = () => setTargetMode('non-root');
 }
 
 function updateModeSwitcherUI() {
@@ -519,6 +610,11 @@ function updateModeSwitcherUI() {
     cardNonRoot.classList.toggle('active', !isRoot);
     cardRoot.setAttribute('aria-checked', isRoot ? 'true' : 'false');
     cardNonRoot.setAttribute('aria-checked', !isRoot ? 'true' : 'false');
+
+    const chkRoot = cardRoot.querySelector('.m3-mode-segment-check') || cardRoot.querySelector('.source-card-check');
+    const chkNon = cardNonRoot.querySelector('.m3-mode-segment-check') || cardNonRoot.querySelector('.source-card-check');
+    if (chkRoot) chkRoot.textContent = isRoot ? '✓' : '';
+    if (chkNon) chkNon.textContent = !isRoot ? '✓' : '';
   }
 }
 

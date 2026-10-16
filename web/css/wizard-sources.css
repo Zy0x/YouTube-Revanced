@@ -3,6 +3,254 @@
    Version: 2.1.17 (Minimalist Engineering UI, Anti-AI Slop)
    ========================================================================== */
 
+/* M3 Clean Summary Card */
+.m3-summary-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin: 12px 0 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 72px;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+  user-select: none;
+}
+
+.m3-summary-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.m3-summary-card:active {
+  transform: scale(0.99);
+}
+
+.m3-summary-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38BDF8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.m3-summary-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.m3-summary-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--morphe-muted, #94A3B8);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.m3-summary-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m3-summary-sub {
+  font-size: 12.5px;
+  color: #38BDF8;
+  font-family: var(--font-mono, monospace);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m3-summary-action-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  font-size: 12.5px;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.m3-summary-card:hover .m3-summary-action-badge {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38BDF8;
+  color: #38BDF8;
+}
+
+/* M3 Native Android Bottom Sheet */
+.m3-bottom-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  transition: opacity 0.25s ease;
+}
+
+.m3-bottom-sheet-overlay.hidden {
+  display: none !important;
+}
+
+.m3-bottom-sheet-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.m3-bottom-sheet {
+  position: relative;
+  z-index: 2;
+  background: #11151E;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px 24px 0 0;
+  padding: 12px 18px 24px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 -8px 36px rgba(0, 0, 0, 0.6);
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.m3-sheet-handle-bar {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 8px;
+  cursor: grab;
+}
+
+.m3-sheet-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.m3-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.m3-sheet-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0;
+}
+
+.m3-sheet-close-btn {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: var(--morphe-muted, #94A3B8);
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.m3-sheet-close-btn:hover {
+  color: #FFFFFF;
+}
+
+.m3-sheet-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 3px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+
+.m3-sheet-tab {
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--morphe-muted, #94A3B8);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.m3-sheet-tab:hover {
+  color: #FFFFFF;
+}
+
+.m3-sheet-tab.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.m3-sheet-tab-pane {
+  display: none;
+  overflow-y: auto;
+  max-height: 54vh;
+  padding-right: 2px;
+}
+
+.m3-sheet-tab-pane.active {
+  display: block;
+}
+
+.sheet-pane-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.sheet-count-text {
+  font-size: 12px;
+  color: var(--morphe-muted, #94A3B8);
+  font-family: var(--font-mono, monospace);
+}
+
+.sheet-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.m3-sheet-footer {
+  padding-top: 14px;
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 /* Step 1 Header & Toolbar */
 .wizard-pane-header-row {
   display: flex;

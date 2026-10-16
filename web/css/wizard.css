@@ -56,7 +56,52 @@
   gap: 8px;
 }
 
-/* Stepper Progress Bar */
+/* M3 Minimalist Stepper & Progress Indicator */
+.m3-stepper-container {
+  margin-bottom: 20px;
+}
+
+.m3-progress-track {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.m3-progress-indicator {
+  height: 100%;
+  background: #38BDF8;
+  border-radius: 2px;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.m3-step-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.m3-step-pill {
+  font-size: 11px;
+  font-weight: 700;
+  color: #38BDF8;
+  background: rgba(56, 189, 248, 0.12);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.02em;
+}
+
+.m3-step-name {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--morphe-muted, #94A3B8);
+}
+
+/* Stepper Progress Bar (Legacy hidden) */
 .wizard-stepper {
   display: flex;
   align-items: center;
@@ -271,6 +316,98 @@
 }
 
 /* Step 4: Target Mode Switcher */
+.m3-mode-segmented-control {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+  width: 100%;
+}
+
+.m3-mode-segment-btn {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 10px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+  min-height: 58px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.m3-chip-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #E2E8F0;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  user-select: none;
+}
+
+.m3-chip-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+
+.m3-mode-segment-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.m3-mode-segment-btn.active {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: #38BDF8;
+}
+
+.m3-mode-segment-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.m3-mode-segment-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.m3-mode-segment-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.m3-mode-segment-sub {
+  font-size: 11px;
+  color: var(--morphe-muted, #94A3B8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m3-mode-segment-check {
+  font-size: 14px;
+  font-weight: 800;
+  color: #38BDF8;
+  width: 16px;
+  text-align: center;
+}
+
 .mode-switcher-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
