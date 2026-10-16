@@ -497,8 +497,19 @@ async function fetchAndRenderPatches(sourceId) {
     const rawList = Array.isArray(data) ? data : (data.patches || []);
     STATE.allManifestPatches = rawList;
 
-    STATE.availableApps = extractSupportedApps(rawList);
-    const curPkg = STATE.currentApp?.packageName;
+    const manifestApps = extractSupportedApps(rawList);
+    const masterApps = typeof getAllSupportedApps === 'function' ? getAllSupportedApps() : (STATE.availableApps || []);
+    manifestApps.forEach(mApp => {
+      const idx = masterApps.findIndex(a => a.packageName === mApp.packageName);
+      if (idx !== -1) {
+        masterApps[idx] = { ...masterApps[idx], ...mApp };
+      } else {
+        masterApps.push(mApp);
+      }
+    });
+    STATE.availableApps = masterApps;
+
+    const curPkg = STATE.currentApp?.packageName || 'com.google.android.youtube';
     const exists = STATE.availableApps.find(a => a.packageName === curPkg);
     const initialPkg = exists ? exists.packageName : STATE.availableApps[0].packageName;
 

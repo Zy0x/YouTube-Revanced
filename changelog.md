@@ -1,3 +1,24 @@
+## v2.1.20 (2026-10-16)
+
+### Katalog Komprehensif Multi-Source & Smart App Discovery di Langkah 1
+- **Agregasi Menyeluruh Seluruh Aplikasi yang Didukung (Multi-Source App Aggregation)**:
+  - Menyediakan katalog lengkap dari seluruh aplikasi yang didukung lintas semua repositori patch: **YouTube**, **YouTube Music**, **Reddit**, **Twitter / X**, **TikTok**, **Instagram**, **Twitch**, **Spotify**, **Duolingo**, dan **Strava**.
+  - Menyematkan metadata ikon SVG presisi, palet warna aksen asli, jumlah patch terdeteksi, versi rekomendasi terverifikasi, dan badge jumlah sumber yang kompatibel pada tiap kartu aplikasi.
+  - Memperbaiki parsing manifest patch agar katalog aplikasi master tidak terpotong menjadi hanya 2 aplikasi saat memuat repositori dengan target terbatas (misalnya Anddea).
+- **Penyaringan Sumber Cerdas (Smart Source Filtering & Auto-Switch)**:
+  - Pada Langkah 2, seluruh repositori disaring dan diurutkan secara dinamis berdasarkan kapabilitas terhadap aplikasi yang dipilih pada Langkah 1.
+  - Repositori yang mendukung aplikasi terpilih ditempatkan di posisi teratas dengan tag `Kompatibel` atau `Default`.
+  - Jika sumber yang sedang aktif tidak mendukung aplikasi yang dipilih (misalnya memilih Reddit saat sumber aktif adalah Anddea), sistem secara otomatis beralih ke sumber kompatibel terbaik (Inotia00/ReVanced).
+  - Repositori yang tidak kompatibel diberi indikator visual transparan dan pencegahan pemilihan tidak sengaja dengan notifikasi panduan yang ramah pengguna.
+- **Kepatuhan Ketat Modularitas (< 1.000 Baris)**:
+  - `web/index.html`: 981 baris
+  - `web/js/ui-wizard.js`: 906 baris
+  - `web/js/api.js`: 715 baris
+  - `web/js/state.js`: 517 baris
+  - `web/css/wizard-sources.css`: 710 baris
+  - `web/css/wizard.css`: 699 baris
+  - Seluruh file proyek 100% strictly berada di bawah batas 1.000 baris kode per file.
+
 ## v2.1.19 (2026-10-16)
 
 ### App-First Discovery Flow & 100dvh App-Shell Architecture (No Body Scrolling)

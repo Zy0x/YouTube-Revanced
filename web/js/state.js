@@ -228,6 +228,41 @@ const KNOWN_APP_METADATA = {
     accentColor: '#00F2FE',
     gradient: 'linear-gradient(135deg, #0C4348 0%, #051A1D 100%)',
     iconSvg: `<svg viewBox="0 0 24 24" width="26" height="26" fill="#FFFFFF"><path d="M12.5 2v12.2a3.8 3.8 0 1 1-3.5-3.8c.4 0 .8.1 1.2.2V6.3c1.5 1.2 3.4 1.9 5.5 1.9V4.5a6.5 6.5 0 0 1-3.2-2.5z"/></svg>`
+  },
+  'com.instagram.android': {
+    name: 'Instagram',
+    alias: 'Instagram',
+    accentColor: '#E1306C',
+    gradient: 'linear-gradient(135deg, #6B1B47 0%, #200715 100%)',
+    iconSvg: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>`
+  },
+  'tv.twitch.android.app': {
+    name: 'Twitch',
+    alias: 'Twitch',
+    accentColor: '#9146FF',
+    gradient: 'linear-gradient(135deg, #3D1A72 0%, #15062A 100%)',
+    iconSvg: `<svg viewBox="0 0 24 24" width="26" height="26" fill="#FFFFFF"><path d="M2.149 0l-1.612 4.119v16.036h5.361v3.845h3.845l3.845-3.845h4.298l6.114-6.114V0H2.149zm19.141 13.065l-3.376 3.376h-4.975l-3.376 3.376v-3.376H4.382V2.149h16.908v10.916zm-9.395-6.837h2.149v6.114h-2.149V6.228zm5.361 0h2.149v6.114h-2.149V6.228z"/></svg>`
+  },
+  'com.spotify.music': {
+    name: 'Spotify',
+    alias: 'Spotify',
+    accentColor: '#1DB954',
+    gradient: 'linear-gradient(135deg, #0F5128 0%, #061F10 100%)',
+    iconSvg: `<svg viewBox="0 0 24 24" width="26" height="26" fill="#FFFFFF"><circle cx="12" cy="12" r="10"/><path d="M8 9.5c3-1 6-1 8.5.5M8.5 12.5c2.5-.8 5-.8 7 .5M9 15.5c2-.5 4-.5 5.5.5" stroke="#000000" stroke-width="2" stroke-linecap="round"/></svg>`
+  },
+  'com.duolingo': {
+    name: 'Duolingo',
+    alias: 'Duolingo',
+    accentColor: '#58CC02',
+    gradient: 'linear-gradient(135deg, #2D6B00 0%, #0F2500 100%)',
+    iconSvg: `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="9" cy="11" r="2" fill="#FFFFFF"/><circle cx="15" cy="11" r="2" fill="#FFFFFF"/><path d="M10 16c1 1 3 1 4 0"/></svg>`
+  },
+  'com.strava': {
+    name: 'Strava',
+    alias: 'Strava',
+    accentColor: '#FC4C02',
+    gradient: 'linear-gradient(135deg, #7A2400 0%, #260B00 100%)',
+    iconSvg: `<svg viewBox="0 0 24 24" width="26" height="26" fill="#FFFFFF"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7.925 15.57h4.172"/></svg>`
   }
 };
 
@@ -238,14 +273,12 @@ function resolveAppMeta(pkgId, fallbackName = null) {
   if (KNOWN_APP_METADATA[normId]) {
     return { ...KNOWN_APP_METADATA[normId], packageName: normId };
   }
-  // Check by name if ID was passed as "YouTube Music" or "Reddit"
   for (const [key, meta] of Object.entries(KNOWN_APP_METADATA)) {
     if (meta.name.toLowerCase() === normId.toLowerCase() || meta.alias.toLowerCase() === normId.toLowerCase()) {
       return { ...meta, packageName: key };
     }
   }
 
-  // Derive human friendly name for unknown packages
   let derivedName = fallbackName;
   if (!derivedName) {
     const parts = normId.split('.');
@@ -266,7 +299,18 @@ const SOURCE_CAPABILITIES = {
   'anddea': ['com.google.android.youtube', 'com.google.android.apps.youtube.music'],
   'inotia00': ['com.google.android.youtube', 'com.google.android.apps.youtube.music', 'com.reddit.frontpage'],
   'morphe': ['com.google.android.youtube', 'com.google.android.apps.youtube.music', 'com.reddit.frontpage', 'com.twitter.android'],
-  'revanced': ['com.google.android.youtube', 'com.google.android.apps.youtube.music', 'com.reddit.frontpage', 'com.twitter.android', 'com.zhiliaoapp.musically'],
+  'revanced': [
+    'com.google.android.youtube',
+    'com.google.android.apps.youtube.music',
+    'com.reddit.frontpage',
+    'com.twitter.android',
+    'com.zhiliaoapp.musically',
+    'com.instagram.android',
+    'tv.twitch.android.app',
+    'com.spotify.music',
+    'com.duolingo',
+    'com.strava'
+  ],
   'j-hc': ['com.google.android.youtube', 'com.google.android.apps.youtube.music'],
   'yt-advanced': ['com.google.android.youtube', 'com.google.android.apps.youtube.music'],
   'cuynu': ['com.google.android.youtube', 'com.google.android.apps.youtube.music'],
@@ -282,32 +326,55 @@ function isSourceCompatibleWithApp(sourceId, pkgName) {
   return true;
 }
 
-function getInitialSupportedApps() {
-  const pkgs = [
-    'com.google.android.youtube',
-    'com.google.android.apps.youtube.music',
-    'com.reddit.frontpage',
-    'com.twitter.android',
-    'com.zhiliaoapp.musically'
-  ];
+function getCompatibleSourcesForApp(pkgName) {
+  if (!pkgName) return STATE.sources && STATE.sources.length ? STATE.sources : DEFAULT_SOURCES;
+  const list = STATE.sources && STATE.sources.length ? STATE.sources : DEFAULT_SOURCES;
+  return list.filter(s => isSourceCompatibleWithApp(s.id, pkgName));
+}
+
+function getAllSupportedApps() {
+  const pkgs = Object.keys(KNOWN_APP_METADATA);
   return pkgs.map(pkg => {
     const meta = resolveAppMeta(pkg);
-    const supportingSources = DEFAULT_SOURCES.filter(s => isSourceCompatibleWithApp(s.id, pkg));
-    const isYt = pkg === 'com.google.android.youtube';
-    const isYtm = pkg === 'com.google.android.apps.youtube.music';
+    const supportingSources = getCompatibleSourcesForApp(pkg);
+    const patchCountMap = {
+      'com.google.android.youtube': 77,
+      'com.google.android.apps.youtube.music': 46,
+      'com.reddit.frontpage': 28,
+      'com.twitter.android': 18,
+      'com.zhiliaoapp.musically': 14,
+      'com.instagram.android': 12,
+      'tv.twitch.android.app': 10,
+      'com.spotify.music': 8,
+      'com.duolingo': 6,
+      'com.strava': 5
+    };
+    const recVerMap = {
+      'com.google.android.youtube': '21.13.164',
+      'com.google.android.apps.youtube.music': '9.15.51',
+      'com.reddit.frontpage': '2024.45.0',
+      'com.twitter.android': '10.60.0',
+      'com.zhiliaoapp.musically': '36.5.4',
+      'com.instagram.android': '350.0.0',
+      'tv.twitch.android.app': '19.2.1',
+      'com.spotify.music': '8.9.74',
+      'com.duolingo': '5.150.4',
+      'com.strava': '380.11'
+    };
     return {
       ...meta,
       packageName: pkg,
-      patchCount: isYt ? 77 : (isYtm ? 46 : 24),
+      patchCount: patchCountMap[pkg] || 10,
       availableVersionsCount: 4,
-      recommendedVersion: isYt ? '21.13.164' : (isYtm ? '9.15.51' : 'latest'),
-      sourcesCount: supportingSources.length
+      recommendedVersion: recVerMap[pkg] || 'latest',
+      sourcesCount: supportingSources.length,
+      supportingSources: supportingSources.map(s => s.name || s.id)
     };
   });
 }
 
-// Preload initial available apps immediately
-STATE.availableApps = getInitialSupportedApps();
+// Master catalog of all supported apps
+STATE.availableApps = getAllSupportedApps();
 
 function capitalize(str) {
   if (!str) return '';

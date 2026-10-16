@@ -123,6 +123,16 @@ function renderWizardSourceStep() {
     countBadge.textContent = `${compatibleSources.length} sumber kompatibel`;
   }
 
+  // Ensure active source is compatible; if not, auto-fallback to first compatible source
+  if (!isSourceCompatibleWithApp(STATE.currentSource, targetPkg)) {
+    const firstCompat = compatibleSources[0] || STATE.sources[0];
+    if (firstCompat && firstCompat.id !== STATE.currentSource) {
+      STATE.currentSource = firstCompat.id;
+      localStorage.setItem('rvx_active_source', firstCompat.id);
+      loadPatchReleases(firstCompat);
+    }
+  }
+
   // Sort sources: compatible ones first
   const sortedSources = [...STATE.sources].sort((a, b) => {
     const compA = isSourceCompatibleWithApp(a.id, targetPkg);
@@ -140,12 +150,13 @@ function renderWizardSourceStep() {
     const isRecommended = src.id === 'anddea' || src.badge === 'Recommended';
 
     const item = document.createElement('div');
-    item.className = `wizard-source-item ${isActive ? 'active' : ''}`;
+    item.className = `wizard-source-item ${isActive ? 'active' : ''} ${!isCompat ? 'incompatible' : ''}`;
     item.setAttribute('role', 'radio');
     item.setAttribute('aria-checked', isActive ? 'true' : 'false');
-    item.tabIndex = 0;
+    item.tabIndex = isCompat ? 0 : -1;
     if (!isCompat) {
       item.style.opacity = '0.45';
+      item.style.filter = 'grayscale(0.6)';
     }
 
     let tagHtml = '';
@@ -182,6 +193,10 @@ function renderWizardSourceStep() {
           await selectPatchSource(STATE.currentSource);
           renderWizardSourceStep();
         }
+        return;
+      }
+      if (!isCompat) {
+        alert(`Sumber "${src.name || displayName}" tidak mendukung ${targetAppName}. Silakan pilih sumber yang kompatibel.`);
         return;
       }
       await selectPatchSource(src.id);
@@ -495,7 +510,11 @@ function renderWizardAppStep() {
   if (!container) return;
   container.innerHTML = '';
 
-  const apps = STATE.availableApps || [];
+  const masterApps = typeof getAllSupportedApps === 'function' ? getAllSupportedApps() : [];
+  const apps = (STATE.availableApps && STATE.availableApps.length >= masterApps.length)
+    ? STATE.availableApps
+    : (masterApps.length > 0 ? masterApps : (STATE.availableApps || []));
+
   if (apps.length === 0) {
     container.innerHTML = '<div class="morphe-ver-row"><span class="morphe-muted-hint">Memuat aplikasi yang didukung...</span></div>';
     return;
@@ -766,7 +785,10 @@ function renderAppCardsWithConfigStatus() {
   if (!container) return;
   container.innerHTML = '';
 
-  const apps = STATE.availableApps || [];
+  const masterApps = typeof getAllSupportedApps === 'function' ? getAllSupportedApps() : [];
+  const apps = (STATE.availableApps && STATE.availableApps.length >= masterApps.length)
+    ? STATE.availableApps
+    : (masterApps.length > 0 ? masterApps : (STATE.availableApps || []));
   apps.forEach(app => {
     const isConfigured = isAppConfigured(app.packageName);
     const savedConfig = getAppConfig(app.packageName);
