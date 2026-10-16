@@ -1,3 +1,28 @@
+## v2.1.21 (2026-10-16)
+
+### Desain Minimalis Elegan Anti-AI-Slop & Direct Channel Selector di Langkah 2
+- **Redesign Langkah 1 (Pilih Aplikasi Target)**:
+  - **Uniform Elevated Dark Surface**: Menghilangkan latar belakang gradien warna-warni pelangi (*candy fruit salad*) dari kartu aplikasi. Seluruh kartu kini menggunakan latar surface netral gelap elegan (`#151922` / border `rgba(255,255,255,0.08)`), mengisolasi aksen warna brand murni pada logo ikon aplikasi.
+  - **Dimensi Ramping & Ergonomis (60px)**: Mengurangi ketebalan kartu dari 88px menjadi 58–60px sehingga 7–8 aplikasi langsung terlihat dalam satu layar ponsel tanpa scroll berlebihan.
+  - **Zero-Redundancy Header & Metadata**: Menghapus teks ganda "Mau Patch Apa?" dan paragraf filler panjang. Metadata diringkas menjadi to-the-point: `${app.patchCount} patches • ${app.sourcesCount} sumber`.
+- **Rombak Total Langkah 2 (Pilih Sumber & Saluran Rilis Langsung)**:
+  - **Direct On-Page Repository Picker**: Menghapus sistem Bottom Sheet modal yang tersembunyi. Pengguna kini langsung memilih repositori sumber yang kompatibel langsung di halaman utama Langkah 2.
+  - **Dual Channel Selector Ramping (Terbaru vs Pilih Versi/Kustom)**:
+    - Opsi 1: `Terbaru (Latest)` — Memilih rilis patch paling mutakhir dan stabil secara otomatis (disertai chip Disarankan).
+    - Opsi 2: `Pilih Versi / Kustom` — Membuka overlay modern minimalis elegan untuk memilih tag versi patch tertentu.
+  - **Modern Tag Picker Overlay Modal**:
+    - Menampilkan seluruh versi rilis secara berurutan dari yang terbaru ke terlama.
+    - Dilengkapi badge sederhana yang bersih untuk `Pre-release` (kuning/amber) dan `Stable` (hijau/emerald), tanggal rilis, dan tombol catatan rilis (*Changelog*).
+  - Menghapus total paragraf filler bertanda bohlam 💡 dan teks penjelasan berulang.
+- **Kepatuhan Batasan Modularitas (< 1.000 Baris)**:
+  - `web/index.html`: 953 baris
+  - `web/css/wizard-sources.css`: 913 baris
+  - `web/css/responsive.css`: 863 baris
+  - `web/js/ui-wizard.js`: 841 baris
+  - `web/css/morphe.css`: 834 baris
+  - `web/js/api.js`: 715 baris
+  - Seluruh file 100% strictly di bawah 1.000 baris kode per file.
+
 ## v2.1.20 (2026-10-16)
 
 ### Katalog Komprehensif Multi-Source & Smart App Discovery di Langkah 1

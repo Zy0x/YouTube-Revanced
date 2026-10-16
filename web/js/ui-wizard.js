@@ -47,18 +47,15 @@ function goToWizardStep(step) {
   }
   const stepCounter = document.getElementById('wizardStepCounter');
   if (stepCounter) {
-    stepCounter.textContent = `Langkah ${step} dari 5`;
+    stepCounter.textContent = `${step} / 5`;
   }
   const stepTitle = document.getElementById('wizardStepTitle');
   if (stepTitle) {
-    const titles = [
-      'Mau Patch Apa?',
-      'Sumber & Saluran Patch',
-      'Versi Target APK',
-      'Target Mode & Patch',
-      'Ringkasan & Eksekusi Build'
-    ];
-    stepTitle.textContent = titles[step - 1] || '';
+    if (step === 1) {
+      stepTitle.textContent = 'Pilih Aplikasi';
+    } else {
+      stepTitle.textContent = (STATE.currentApp && (STATE.currentApp.name || STATE.currentApp.appName)) || 'YouTube';
+    }
   }
 
   // Switch Active Step Pane
@@ -207,8 +204,7 @@ function renderWizardSourceStep() {
   });
 
   bindWizardSourceToolbar();
-  renderWizardReleaseStudio();
-  bindSourcePickerBottomSheet();
+  renderStep2ChannelSection();
 }
 
 function bindWizardSourceToolbar() {
@@ -233,10 +229,8 @@ function bindWizardSourceToolbar() {
     btnSave.onclick = async () => {
       const nameInput = document.getElementById('inputWizSourceName');
       const repoInput = document.getElementById('inputWizSourceRepo');
-      const chanInput = document.getElementById('selectWizSourceChannel');
       const name = nameInput ? nameInput.value.trim() : '';
       const repo = repoInput ? repoInput.value.trim() : '';
-      const channel = chanInput ? chanInput.value : 'latest';
 
       if (!repo) {
         alert('Harap masukkan repositori GitHub (owner/repo) atau URL manifest raw.');
@@ -247,7 +241,7 @@ function bindWizardSourceToolbar() {
         name: name || repo,
         repository: repo.includes('://') ? '' : repo,
         manifestUrl: repo.includes('://') ? repo : '',
-        defaultReleaseType: channel
+        defaultReleaseType: 'latest'
       });
 
       if (added) {
@@ -262,7 +256,7 @@ function bindWizardSourceToolbar() {
 
   if (btnReset) {
     btnReset.onclick = async () => {
-      if (confirm('Reset seluruh daftar sumber kembali ke 8 sumber bawaan resmi?')) {
+      if (confirm('Reset seluruh daftar sumber kembali ke bawaan resmi?')) {
         resetSourcesToDefault();
         await selectPatchSource('anddea');
         renderWizardSourceStep();
@@ -271,109 +265,136 @@ function bindWizardSourceToolbar() {
   }
 }
 
-function renderWizardReleaseStudio() {
+function renderStep2ChannelSection() {
   const activeSrc = STATE.sources.find(s => s.id === STATE.currentSource) || STATE.sources[0];
   const releases = (STATE.patchReleases && STATE.patchReleases.length > 0)
     ? STATE.patchReleases
     : (activeSrc?.fallbackTags || []);
 
-  const latestPre = releases.find(r => r.prerelease);
-  const latestStable = releases.find(r => !r.prerelease);
+  const currentTag = STATE.patchTag || 'latest';
+  const isLatest = currentTag === 'latest';
 
-  // Active Tag Determination
-  const currentTag = STATE.patchTag || (STATE.preReleasePatches ? 'dev' : 'latest');
-  const isDev = currentTag === 'dev';
-  const isStable = currentTag === 'latest';
-  const isSpecificTag = !isDev && !isStable;
+  const btnLatest = document.getElementById('btnChannelLatest');
+  const btnCustom = document.getElementById('btnChannelCustom');
+  const statusChip = document.getElementById('step2ActiveChannelTag');
+  const badgeCurrentTag = document.getElementById('badgeCurrentTag');
+  const subtextCustom = document.getElementById('subtextChannelCustom');
 
-  // Active Label in Channel Header
-  const activeLabel = document.getElementById('studioActiveLabel');
-  if (activeLabel) {
-    if (isDev) {
-      activeLabel.textContent = `Dev ${latestPre ? `(${latestPre.tag_name})` : ''}`;
-    } else if (isStable) {
-      activeLabel.textContent = `Stable ${latestStable ? `(${latestStable.tag_name})` : ''}`;
+  if (btnLatest) {
+    btnLatest.classList.toggle('active', isLatest);
+    btnLatest.setAttribute('aria-checked', isLatest ? 'true' : 'false');
+    btnLatest.onclick = () => {
+      STATE.patchTag = 'latest';
+      STATE.preReleasePatches = false;
+      renderStep2ChannelSection();
+      syncReleaseChannelSelection('latest');
+    };
+  }
+
+  if (btnCustom) {
+    btnCustom.classList.toggle('active', !isLatest);
+    btnCustom.setAttribute('aria-checked', !isLatest ? 'true' : 'false');
+    btnCustom.onclick = () => {
+      openPatchTagPickerModal();
+    };
+  }
+
+  if (badgeCurrentTag) {
+    if (!isLatest) {
+      badgeCurrentTag.textContent = currentTag;
+      badgeCurrentTag.classList.remove('hidden');
     } else {
-      activeLabel.textContent = `Tag: ${currentTag}`;
+      badgeCurrentTag.classList.add('hidden');
     }
   }
 
-  // Segment Buttons
-  const segDev = document.getElementById('segmentDev');
-  const segStable = document.getElementById('segmentStable');
-  const segTags = document.getElementById('segmentTags');
-  const tagsBrowser = document.getElementById('studioTagsBrowser');
-
-  if (segDev) {
-    segDev.classList.toggle('active', isDev);
-    segDev.setAttribute('aria-checked', isDev ? 'true' : 'false');
-    segDev.onclick = () => {
-      STATE.patchTag = 'dev';
-      STATE.preReleasePatches = true;
-      if (tagsBrowser) tagsBrowser.classList.add('hidden');
-      syncReleaseChannelSelection('dev');
-      renderWizardReleaseStudio();
-    };
+  if (subtextCustom) {
+    subtextCustom.textContent = !isLatest
+      ? `Versi aktif: ${currentTag}`
+      : 'Pilih versi tag tertentu atau pre-release';
   }
 
-  if (segStable) {
-    segStable.classList.toggle('active', isStable);
-    segStable.setAttribute('aria-checked', isStable ? 'true' : 'false');
-    segStable.onclick = () => {
-      STATE.patchTag = 'latest';
-      STATE.preReleasePatches = false;
-      if (tagsBrowser) tagsBrowser.classList.add('hidden');
-      syncReleaseChannelSelection('latest');
-      renderWizardReleaseStudio();
-    };
-  }
-
-  if (segTags) {
-    segTags.classList.toggle('active', isSpecificTag);
-    segTags.setAttribute('aria-checked', isSpecificTag ? 'true' : 'false');
-    segTags.onclick = () => {
-      if (tagsBrowser) {
-        tagsBrowser.classList.toggle('hidden');
-        if (!tagsBrowser.classList.contains('hidden')) {
-          segTags.classList.add('active');
-          segDev.classList.remove('active');
-          segStable.classList.remove('active');
-        }
-      }
-    };
-  }
-
-  if (tagsBrowser && isSpecificTag) {
-    tagsBrowser.classList.remove('hidden');
-  }
-
-  // Populate Tags Browser List
-  const tagsListContainer = document.getElementById('studioTagsList');
-  if (tagsListContainer) {
-    tagsListContainer.innerHTML = '';
-
-    if (releases.length === 0) {
-      tagsListContainer.innerHTML = '<div class="studio-tag-row"><span class="morphe-muted-hint">Tidak ada riwayat tag rilis untuk sumber ini.</span></div>';
+  if (statusChip) {
+    if (isLatest) {
+      const latestStable = releases.find(r => !r.prerelease);
+      statusChip.textContent = `Terbaru (Stable${latestStable ? ` • ${latestStable.tag_name}` : ''})`;
     } else {
-      releases.slice(0, 10).forEach(rel => {
+      statusChip.textContent = `Kustom (${currentTag})`;
+    }
+  }
+
+  bindPatchTagPickerModalEvents();
+}
+
+function bindPatchTagPickerModalEvents() {
+  const modal = document.getElementById('modalPatchTagPicker');
+  const btnClose = document.getElementById('btnCloseTagPicker');
+  const btnApplyManual = document.getElementById('btnApplyManualTag');
+  const inputManual = document.getElementById('inputManualTag');
+
+  if (btnClose && modal) {
+    btnClose.onclick = () => modal.classList.add('hidden');
+  }
+
+  if (modal) {
+    modal.onclick = (e) => {
+      if (e.target === modal) modal.classList.add('hidden');
+    };
+  }
+
+  if (btnApplyManual && inputManual) {
+    btnApplyManual.onclick = () => {
+      const val = inputManual.value.trim();
+      if (!val) return;
+      STATE.patchTag = val;
+      if (modal) modal.classList.add('hidden');
+      renderStep2ChannelSection();
+      syncReleaseChannelSelection(val);
+      inputManual.value = '';
+    };
+  }
+}
+
+function openPatchTagPickerModal() {
+  const modal = document.getElementById('modalPatchTagPicker');
+  const titleEl = document.getElementById('modalTagPickerTitle');
+  const subEl = document.getElementById('modalTagPickerSub');
+  const listContainer = document.getElementById('modalTagsList');
+
+  const activeSrc = STATE.sources.find(s => s.id === STATE.currentSource) || STATE.sources[0];
+  const releases = (STATE.patchReleases && STATE.patchReleases.length > 0)
+    ? STATE.patchReleases
+    : (activeSrc?.fallbackTags || []);
+
+  if (titleEl) titleEl.textContent = 'Pilih Versi Patch';
+  if (subEl) subEl.textContent = `Sumber: ${activeSrc.name || getSourceDisplayName(activeSrc.id)}`;
+
+  if (listContainer) {
+    listContainer.innerHTML = '';
+    if (releases.length === 0) {
+      listContainer.innerHTML = '<div class="tag-picker-item"><span class="morphe-muted-hint">Tidak ada riwayat rilis untuk sumber ini.</span></div>';
+    } else {
+      releases.slice(0, 15).forEach(rel => {
         const tagName = rel.tag_name || rel.name;
-        const isSelected = STATE.patchTag === tagName;
         const isPre = !!rel.prerelease;
+        const isSelected = STATE.patchTag === tagName;
         const dateStr = rel.published_at ? formatDate(rel.published_at) : 'Rilis Baru';
 
         const row = document.createElement('div');
-        row.className = `studio-tag-row ${isSelected ? 'active' : ''}`;
+        row.className = `tag-picker-item ${isSelected ? 'active' : ''}`;
         row.setAttribute('role', 'radio');
         row.setAttribute('aria-checked', isSelected ? 'true' : 'false');
 
         row.innerHTML = `
-          <div class="tag-row-main">
-            <span class="tag-radio-dot">${isSelected ? '•' : ''}</span>
-            <span class="tag-name-mono">${escapeHtml(tagName)}</span>
-            <span class="tag-kind-text">${isPre ? 'pre' : 'stable'}</span>
-            <span class="tag-date-muted">${escapeHtml(dateStr)}</span>
+          <div class="tag-item-radio"></div>
+          <div class="tag-item-info">
+            <div class="tag-item-name-row">
+              <span class="tag-item-name">${escapeHtml(tagName)}</span>
+              <span class="tag-simple-badge ${isPre ? 'badge-pre' : 'badge-stable'}">${isPre ? 'Pre-release' : 'Stable'}</span>
+            </div>
+            <span class="tag-item-date">${escapeHtml(dateStr)}</span>
           </div>
-          <button type="button" class="btn-tag-changelog" title="Lihat catatan rilis untuk tag ${escapeHtml(tagName)}">Changelog</button>
+          <button type="button" class="btn-tag-changelog" title="Lihat catatan rilis untuk ${escapeHtml(tagName)}">Changelog</button>
         `;
 
         row.addEventListener('click', (e) => {
@@ -383,102 +404,18 @@ function renderWizardReleaseStudio() {
             return;
           }
           STATE.patchTag = tagName;
+          STATE.preReleasePatches = isPre;
+          if (modal) modal.classList.add('hidden');
+          renderStep2ChannelSection();
           syncReleaseChannelSelection(tagName);
-          renderWizardReleaseStudio();
         });
 
-        tagsListContainer.appendChild(row);
+        listContainer.appendChild(row);
       });
     }
   }
 
-  // Refresh Tags Button
-  const btnRefresh = document.getElementById('btnStudioRefreshTags');
-  if (btnRefresh) {
-    btnRefresh.onclick = async () => {
-      btnRefresh.disabled = true;
-      btnRefresh.style.opacity = '0.5';
-      await loadPatchReleases(activeSrc);
-      renderWizardReleaseStudio();
-      btnRefresh.disabled = false;
-      btnRefresh.style.opacity = '1';
-    };
-  }
-
-  // Manual Custom Tag Apply
-  const btnApplyTag = document.getElementById('btnStudioApplyCustomTag');
-  const inputTag = document.getElementById('inputStudioCustomTag');
-  if (btnApplyTag && inputTag) {
-    btnApplyTag.onclick = () => {
-      const val = inputTag.value.trim();
-      if (!val) return;
-      STATE.patchTag = val;
-      syncReleaseChannelSelection(val);
-      renderWizardReleaseStudio();
-      inputTag.value = '';
-    };
-  }
-
-  // Update M3 Summary Card on Main Screen
-  const summaryName = document.getElementById('summarySourceName');
-  const summaryChannel = document.getElementById('summarySourceChannel');
-  if (summaryName) {
-    summaryName.textContent = activeSrc.name || getSourceDisplayName(activeSrc.id);
-  }
-  if (summaryChannel) {
-    if (isDev) {
-      summaryChannel.textContent = `Saluran Dev • ${latestPre ? latestPre.tag_name : 'v4.x-dev'}`;
-    } else if (isStable) {
-      summaryChannel.textContent = `Saluran Stable • ${latestStable ? latestStable.tag_name : 'Resmi'}`;
-    } else {
-      summaryChannel.textContent = `Tag Spesifik • ${currentTag}`;
-    }
-  }
-}
-
-function bindSourcePickerBottomSheet() {
-  const summaryCard = document.getElementById('cardCurrentSourceSummary');
-  const sheetOverlay = document.getElementById('sourcePickerBottomSheet');
-  const btnClose = document.getElementById('btnCloseSourceSheet');
-  const scrim = document.getElementById('scrimCloseSourceSheet');
-  const btnApply = document.getElementById('btnApplySourceSheet');
-
-  const tabSources = document.getElementById('tabSheetSources');
-  const tabChannel = document.getElementById('tabSheetChannel');
-  const paneSources = document.getElementById('sheetPaneSources');
-  const paneChannel = document.getElementById('sheetPaneChannel');
-
-  const openSheet = () => {
-    if (sheetOverlay) sheetOverlay.classList.remove('hidden');
-  };
-  const closeSheet = () => {
-    if (sheetOverlay) sheetOverlay.classList.add('hidden');
-    renderWizardReleaseStudio();
-  };
-
-  if (summaryCard) summaryCard.onclick = openSheet;
-  if (btnClose) btnClose.onclick = closeSheet;
-  if (scrim) scrim.onclick = closeSheet;
-  if (btnApply) btnApply.onclick = closeSheet;
-
-  if (tabSources && tabChannel && paneSources && paneChannel) {
-    tabSources.onclick = () => {
-      tabSources.classList.add('active');
-      tabSources.setAttribute('aria-selected', 'true');
-      tabChannel.classList.remove('active');
-      tabChannel.setAttribute('aria-selected', 'false');
-      paneSources.classList.add('active');
-      paneChannel.classList.remove('active');
-    };
-    tabChannel.onclick = () => {
-      tabChannel.classList.add('active');
-      tabChannel.setAttribute('aria-selected', 'true');
-      tabSources.classList.remove('active');
-      tabSources.setAttribute('aria-selected', 'false');
-      paneChannel.classList.add('active');
-      paneSources.classList.remove('active');
-    };
-  }
+  if (modal) modal.classList.remove('hidden');
 }
 
 function syncReleaseChannelSelection(tagVal) {
@@ -527,7 +464,6 @@ function renderWizardAppStep() {
     card.className = `morphe-app-card ${isSelected ? 'active-app' : ''}`;
     card.setAttribute('role', 'radio');
     card.setAttribute('aria-checked', isSelected ? 'true' : 'false');
-    card.style.setProperty('--app-bg-gradient', app.gradient);
 
     card.innerHTML = `
       <div class="yt-card-icon" style="background:${app.accentColor || '#B42323'};">
@@ -535,10 +471,10 @@ function renderWizardAppStep() {
       </div>
       <div class="yt-card-text">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <h2 class="yt-card-title">${escapeHtml(app.name)}</h2>
-          ${isConfigured ? '<span class="badge-configured">✓ Configured</span>' : ''}
+          <h3 class="yt-card-title">${escapeHtml(app.name)}</h3>
+          ${isConfigured ? '<span class="badge-configured">Terkonfigurasi</span>' : ''}
         </div>
-        <p class="yt-card-sub">${app.sourcesCount ? `${app.sourcesCount} sumber kompatibel • ` : ''}${app.patchCount} patches</p>
+        <p class="yt-card-sub">${app.patchCount} patches • ${app.sourcesCount || 1} sumber</p>
       </div>
       <div class="app-card-arrow">›</div>
     `;
@@ -794,15 +730,14 @@ function renderAppCardsWithConfigStatus() {
     const savedConfig = getAppConfig(app.packageName);
     const card = document.createElement('div');
     card.className = 'morphe-app-card';
-    card.style.setProperty('--app-bg-gradient', app.gradient);
 
     const statusBadge = isConfigured
-      ? `<span class="badge-configured">✓ Configured</span>`
+      ? `<span class="badge-configured">Terkonfigurasi</span>`
       : `<span class="badge-needs-setup">+ Setup</span>`;
 
     const subText = isConfigured
       ? `v${savedConfig.targetVersion || app.recommendedVersion} • ${savedConfig.mode === 'root' ? 'Mode Root' : 'Non-Root'} (${savedConfig.selectedPatches?.length || app.patchCount} patches)`
-      : `v${app.recommendedVersion} • ${app.patchCount} patches available`;
+      : `v${app.recommendedVersion} • ${app.patchCount} patches • ${app.sourcesCount || 1} sumber`;
 
     card.innerHTML = `
       <div class="yt-card-icon" style="background:${app.accentColor || '#B42323'};">
@@ -810,7 +745,7 @@ function renderAppCardsWithConfigStatus() {
       </div>
       <div class="yt-card-text">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <h2 class="yt-card-title">${escapeHtml(app.name)}</h2>
+          <h3 class="yt-card-title">${escapeHtml(app.name)}</h3>
           ${statusBadge}
         </div>
         <p class="yt-card-sub">${escapeHtml(subText)}</p>

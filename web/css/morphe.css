@@ -32,73 +32,77 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
 }
 
 .morphe-app-card,
 .morphe-yt-card {
   width: 100%;
-  min-height: 88px;
-  background: var(--app-bg-gradient, linear-gradient(96deg, #8F2525 0%, #442E58 50%, #246E75 100%));
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 22px;
-  padding: 16px 20px;
+  min-height: 58px;
+  background: #151922;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 10px 14px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   cursor: pointer;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.40);
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
 .morphe-app-card:hover,
 .morphe-yt-card:hover {
-  border-color: rgba(255, 255, 255, 0.45);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+  background: #1C2230;
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .morphe-app-card:active,
 .morphe-yt-card:active {
-  transform: scale(0.985);
+  transform: scale(0.99);
 }
 
 .morphe-app-card.active-app {
-  border-color: rgba(255, 255, 255, 0.65);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25), 0 14px 34px rgba(0, 0, 0, 0.55);
+  background: #19202E;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 1px #3B82F6, 0 4px 14px rgba(59, 130, 246, 0.15);
 }
 
 .app-card-arrow {
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 19px;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 16px;
   font-weight: 600;
   flex-shrink: 0;
-  padding-left: 6px;
+  padding-left: 4px;
   transition: transform 0.15s ease, color 0.15s ease;
 }
 
 .morphe-app-card:hover .app-card-arrow {
-  transform: translateX(3px);
+  transform: translateX(2px);
   color: #FFFFFF;
 }
 
 .yt-card-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  background: rgba(180, 35, 35, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
+.yt-card-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
 .yt-card-icon-sm {
-  width: 44px;
-  height: 44px;
-  border-radius: 13px;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
 }
 
 .yt-card-text {
@@ -107,16 +111,16 @@
 }
 
 .yt-card-title {
-  font-size: 21px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   color: #FFFFFF;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 .yt-card-sub {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.78);
-  margin-top: 3px;
+  font-size: 12px;
+  color: #94A3B8;
+  margin-top: 2px;
 }
 
 /* Bottom Floating Dock */
