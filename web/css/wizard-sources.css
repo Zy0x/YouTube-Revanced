@@ -60,17 +60,11 @@
   border: 1px solid rgba(56, 189, 248, 0.2);
 }
 
-/* Dual Choice Selector (Terbaru vs Pilih Versi/Kustom) */
+/* Clean Stacked Dual Selector (Terbaru vs Pilih Versi/Kustom) */
 .channel-dual-selector {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-}
-
-@media (max-width: 340px) {
-  .channel-dual-selector {
-    grid-template-columns: 1fr;
-  }
 }
 
 .channel-choice-card {
@@ -713,9 +707,10 @@
 }
 
 /* Compact High-Density Sources Grid/List (2 Columns on mobile & desktop) */
+/* Clean High-Readability Sources List (1 Column Full-Width) */
 .wizard-sources-compact-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   margin-bottom: 16px;
 }
@@ -723,26 +718,26 @@
 .wizard-source-item {
   background: #141822;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 8px 10px;
+  border-radius: 12px;
+  padding: 10px 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   position: relative;
   transition: all 0.15s ease;
-  min-height: 48px;
+  min-height: 52px;
 }
 
 .wizard-source-item:hover {
-  background: #1C2230;
+  background: #1A202E;
   border-color: rgba(255, 255, 255, 0.16);
 }
 
 .wizard-source-item.active {
-  background: rgba(59, 130, 246, 0.12);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(30, 58, 138, 0.18) 100%);
   border-color: #3B82F6;
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.18);
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.16);
 }
 
 .source-item-radio {
@@ -844,9 +839,4 @@
   background: rgba(239, 68, 68, 0.12);
 }
 
-/* Mobile Touch Optimization (Rule 1: Touch Target >= 44-48px) */
-@media (max-width: 360px) {
-  .wizard-sources-compact-list {
-    grid-template-columns: 1fr;
-  }
-}
+

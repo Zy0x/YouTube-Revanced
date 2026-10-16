@@ -1,3 +1,22 @@
+## v2.1.23 (2026-10-17)
+
+### Penyempurnaan Langkah 2: Layout 1-Kolom Bersih & Ergonomis
+- **Restorasi Layout 1-Kolom Penuh untuk Repositori Sumber**:
+  - Mengganti layout 2-kolom yang padat/berantakan dengan tata letak 1-kolom penuh (*full-width*) yang rapi, bersih, dan berjarak lega.
+  - Setiap kartu sumber memiliki ruang horizontal yang leluasa untuk nama repositori, badge status (`Default`, `Kompatibel`), dan jalur repository tanpa terpotong (*no text truncation*).
+  - Kartu aktif disorot dengan gradien biru halus (`rgba(59, 130, 246, 0.12)`), border `#3B82F6`, dan indikator checkmark biru `✓` di sebelah kanan.
+- **Stacked Dual Channel Selector yang Nyaman**:
+  - Saluran rilis (`Terbaru / Latest` dan `Pilih Versi / Kustom`) kini tersusun rapi dalam 1 kolom penuh di bawah daftar sumber.
+  - Teks deskripsi dan badge `Disarankan` memiliki ruang baca yang lapang tanpa pembungkusan kata yang canggung.
+- **Kepatuhan Batasan Modularitas (< 1.000 Baris)**:
+  - `web/index.html`: 972 baris
+  - `web/js/ui-wizard.js`: 912 baris
+  - `web/css/responsive.css`: 863 baris
+  - `web/css/wizard-sources.css`: 836 baris
+  - `web/css/morphe.css`: 834 baris
+  - `web/js/api.js`: 715 baris
+  - Seluruh berkas 100% strictly di bawah 1.000 baris kode per berkas.
+
 ## v2.1.22 (2026-10-17)
 
 ### Rombak Total Langkah 2 & Modern Searchable Tag Picker Overlay
