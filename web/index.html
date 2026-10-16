@@ -50,34 +50,55 @@
         </div>
         <div class="m3-step-meta">
           <span id="wizardStepCounter" class="m3-step-pill">Langkah 1 dari 5</span>
-          <span id="wizardStepTitle" class="m3-step-name">Sumber &amp; Saluran Patch</span>
+          <span id="wizardStepTitle" class="m3-step-name">Mau Patch Apa?</span>
         </div>
       </div>
 
       <!-- Legacy Stepper Compatibility -->
       <nav class="wizard-stepper sr-only" aria-hidden="true" tabindex="-1"><div class="wizard-stepper-track"><div id="wizardStepperProgress" class="wizard-stepper-progress"></div></div><button type="button" class="wizard-step-node active" data-step="1"><span class="step-node-bubble">1</span></button><button type="button" class="wizard-step-node" data-step="2"><span class="step-node-bubble">2</span></button><button type="button" class="wizard-step-node" data-step="3"><span class="step-node-bubble">3</span></button><button type="button" class="wizard-step-node" data-step="4"><span class="step-node-bubble">4</span></button><button type="button" class="wizard-step-node" data-step="5"><span class="step-node-bubble">5</span></button></nav>
 
-      <!-- PANE 1: SOURCE & PATCH RELEASE -->
+      <!-- PANE 1: TARGET APPLICATION (MAU PATCH APA?) -->
       <div id="wizardStep1" class="wizard-step-pane active">
         <div class="wizard-pane-header">
-          <h2 class="wizard-pane-title">1. Sumber &amp; Saluran Patch</h2>
-          <p class="wizard-pane-desc">Pilih repositori patch dan target rilis untuk proses build.</p>
+          <h2 class="wizard-pane-title">1. Mau Patch Apa?</h2>
+          <p class="wizard-pane-desc">Pilih aplikasi yang ingin Anda patch. Kami akan mencarikan repositori patch yang kompatibel.</p>
+        </div>
+        <div class="wizard-pane-scrollable">
+          <div id="wizardAppsGrid" class="morphe-apps-grid" role="radiogroup" aria-label="Pilih Aplikasi Target"></div>
+        </div>
+        <div class="wizard-nav-actions">
+          <button type="button" id="btnWizStep1Next" class="btn-clean-primary btn-next">
+            Lanjut: Pilih Sumber Patch ›
+          </button>
+        </div>
+      </div>
+
+      <!-- PANE 2: SOURCE & PATCH RELEASE (COMPATIBLE SOURCES) -->
+      <div id="wizardStep2" class="wizard-step-pane">
+        <div class="wizard-pane-header">
+          <h2 class="wizard-pane-title">2. Sumber &amp; Saluran Patch</h2>
+          <p class="wizard-pane-desc">Repositori yang mendukung aplikasi <strong id="step2TargetAppName">YouTube</strong>.</p>
         </div>
 
-        <!-- M3 Single Clean Summary Card (Tap to open Bottom Sheet) -->
-        <div id="cardCurrentSourceSummary" class="m3-summary-card" role="button" tabindex="0">
-          <div class="m3-summary-icon">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        <div class="wizard-pane-scrollable">
+          <!-- M3 Single Clean Summary Card (Tap to open Bottom Sheet) -->
+          <div id="cardCurrentSourceSummary" class="m3-summary-card" role="button" tabindex="0">
+            <div class="m3-summary-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            </div>
+            <div class="m3-summary-body">
+              <span class="m3-summary-label">Repositori &amp; Saluran Aktif</span>
+              <span id="summarySourceName" class="m3-summary-title">Anddea Patches</span>
+              <span id="summarySourceChannel" class="m3-summary-sub">Saluran Dev • v4.3.1-dev.1</span>
+            </div>
+            <div class="m3-summary-action-badge">
+              <span>Ubah</span>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
           </div>
-          <div class="m3-summary-body">
-            <span class="m3-summary-label">Repositori &amp; Saluran Aktif</span>
-            <span id="summarySourceName" class="m3-summary-title">Anddea Patches</span>
-            <span id="summarySourceChannel" class="m3-summary-sub">Saluran Dev • v4.3.1-dev.1</span>
-          </div>
-          <div class="m3-summary-action-badge">
-            <span>Ubah</span>
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-          </div>
+          <p style="font-size: 12px; color: var(--morphe-muted, #94A3B8); margin-top: 10px; line-height: 1.4;">
+            💡 Repositori di atas otomatis disaring berdasarkan kompatibilitas dengan aplikasi terpilih. Ketuk kartu untuk mengubah repositori atau memilih saluran rilis.
+          </p>
         </div>
 
         <!-- Android M3 Bottom Sheet Modal for Source & Channel Picker -->
@@ -188,22 +209,10 @@
         <button type="button" id="btnWizardReleaseNotes" class="sr-only" aria-hidden="true" tabindex="-1"></button>
 
         <div class="wizard-nav-actions">
-          <button type="button" id="btnWizStep1Next" class="btn-clean-primary btn-next">
-            Lanjut: Pilih Aplikasi ›
-          </button>
-        </div>
-      </div>
-
-      <!-- PANE 2: TARGET APPLICATION -->
-      <div id="wizardStep2" class="wizard-step-pane">
-        <div class="wizard-pane-header">
-          <h2 class="wizard-pane-title">2. Pilih Aplikasi Target</h2>
-          <p class="wizard-pane-desc">Pilih aplikasi yang ingin dipatch dari daftar aplikasi yang didukung oleh sumber ini.</p>
-        </div>
-        <div id="wizardAppsGrid" class="morphe-apps-grid" role="radiogroup" aria-label="Pilih Aplikasi Target"></div>
-        <div class="wizard-nav-actions">
           <button type="button" id="btnWizStep2Back" class="morphe-pill-btn morphe-pill-outline btn-back">‹ Kembali</button>
-          <button type="button" id="btnWizStep2Next" class="morphe-pill-btn morphe-pill-sky btn-next">Lanjut: Pilih Versi ›</button>
+          <button type="button" id="btnWizStep2Next" class="btn-clean-primary btn-next">
+            Lanjut: Pilih Versi ›
+          </button>
         </div>
       </div>
 
@@ -213,19 +222,21 @@
           <h2 class="wizard-pane-title">3. Versi Target APK</h2>
           <p class="wizard-pane-desc">Pilih versi original unpatched APK untuk <strong id="wizardVersionAppName">YouTube</strong>.</p>
         </div>
-        <!-- Recommended Hero Banner -->
-        <div id="wizardRecVersionHero" class="version-rec-hero" role="button" tabindex="0">
-          <div class="version-rec-left">
-            <span class="version-rec-tag">⭐ Versi Rekomendasi</span>
-            <span id="wizardRecVersionNum" class="version-rec-num">v21.13.164</span>
-            <span class="version-rec-sub">Dites paling stabil dan kompatibel dengan seluruh patch</span>
+        <div class="wizard-pane-scrollable">
+          <!-- Recommended Hero Banner -->
+          <div id="wizardRecVersionHero" class="version-rec-hero" role="button" tabindex="0">
+            <div class="version-rec-left">
+              <span class="version-rec-tag">⭐ Versi Rekomendasi</span>
+              <span id="wizardRecVersionNum" class="version-rec-num">v21.13.164</span>
+              <span class="version-rec-sub">Dites paling stabil dan kompatibel dengan seluruh patch</span>
+            </div>
+            <span class="badge-version badge-stable">Recommended</span>
           </div>
-          <span class="badge-version badge-stable">Recommended</span>
-        </div>
-        <!-- All versions list -->
-        <div id="wizardVersionList" class="morphe-version-list" role="radiogroup"></div>
-        <div class="version-more-row">
-          <button type="button" id="btnWizardToggleAllVersions" class="morphe-subtle-link">Tampilkan semua versi</button>
+          <!-- All versions list -->
+          <div id="wizardVersionList" class="morphe-version-list" role="radiogroup"></div>
+          <div class="version-more-row">
+            <button type="button" id="btnWizardToggleAllVersions" class="morphe-subtle-link">Tampilkan semua versi</button>
+          </div>
         </div>
         <div class="wizard-nav-actions">
           <button type="button" id="btnWizStep3Back" class="morphe-pill-btn morphe-pill-outline btn-back">‹ Kembali</button>
@@ -239,35 +250,37 @@
           <h2 class="wizard-pane-title">4. Target Mode &amp; Kurasi Patch</h2>
           <p class="wizard-pane-desc">Tentukan mode instalasi target dan pilih fitur patch yang ingin Anda pasang.</p>
         </div>
-        <!-- M3 Segmented Mode Switcher -->
-        <div class="m3-mode-segmented-control" role="radiogroup" aria-label="Target Mode">
-          <div id="modeCardRoot" class="m3-mode-segment-btn active" role="radio" aria-checked="true" tabindex="0">
-            <span class="m3-mode-segment-icon">🛡️</span>
-            <div class="m3-mode-segment-content">
-              <strong class="m3-mode-segment-title">Mode Root</strong>
-              <span class="m3-mode-segment-sub">Magisk / KernelSU / APatch</span>
+        <div class="wizard-pane-scrollable">
+          <!-- M3 Segmented Mode Switcher -->
+          <div class="m3-mode-segmented-control" role="radiogroup" aria-label="Target Mode">
+            <div id="modeCardRoot" class="m3-mode-segment-btn active" role="radio" aria-checked="true" tabindex="0">
+              <span class="m3-mode-segment-icon">🛡️</span>
+              <div class="m3-mode-segment-content">
+                <strong class="m3-mode-segment-title">Mode Root</strong>
+                <span class="m3-mode-segment-sub">Magisk / KernelSU / APatch</span>
+              </div>
+              <span class="m3-mode-segment-check">✓</span>
             </div>
-            <span class="m3-mode-segment-check">✓</span>
-          </div>
-          <div id="modeCardNonRoot" class="m3-mode-segment-btn" role="radio" aria-checked="false" tabindex="0">
-            <span class="m3-mode-segment-icon">📱</span>
-            <div class="m3-mode-segment-content">
-              <strong class="m3-mode-segment-title">Mode Non-Root</strong>
-              <span class="m3-mode-segment-sub">APK Biasa + GmsCore</span>
+            <div id="modeCardNonRoot" class="m3-mode-segment-btn" role="radio" aria-checked="false" tabindex="0">
+              <span class="m3-mode-segment-icon">📱</span>
+              <div class="m3-mode-segment-content">
+                <strong class="m3-mode-segment-title">Mode Non-Root</strong>
+                <span class="m3-mode-segment-sub">APK Biasa + GmsCore</span>
+              </div>
+              <span class="m3-mode-segment-check"></span>
             </div>
-            <span class="m3-mode-segment-check"></span>
           </div>
+          <!-- Patch quick controls -->
+          <div class="morphe-actions-toolbar" style="margin-bottom: 12px;">
+            <button type="button" id="btnWizPatchesSearch" class="m3-chip-btn">🔍 Cari Patch</button>
+            <button type="button" id="btnWizPatchesDefault" class="m3-chip-btn">Default</button>
+            <button type="button" id="btnWizPatchesAll" class="m3-chip-btn">Pilih Semua</button>
+          </div>
+          <div id="wizardPatchesSearchBox" class="version-search-drawer hidden" style="margin-bottom: 12px;">
+            <input type="search" id="inputWizPatchSearch" class="morphe-input" placeholder="Ketik nama fitur/patch...">
+          </div>
+          <div id="wizardPatchCategoriesContainer" class="morphe-categories-stack"></div>
         </div>
-        <!-- Patch quick controls -->
-        <div class="morphe-actions-toolbar" style="margin-bottom: 12px;">
-          <button type="button" id="btnWizPatchesSearch" class="m3-chip-btn">🔍 Cari Patch</button>
-          <button type="button" id="btnWizPatchesDefault" class="m3-chip-btn">Default</button>
-          <button type="button" id="btnWizPatchesAll" class="m3-chip-btn">Pilih Semua</button>
-        </div>
-        <div id="wizardPatchesSearchBox" class="version-search-drawer hidden" style="margin-bottom: 12px;">
-          <input type="search" id="inputWizPatchSearch" class="morphe-input" placeholder="Ketik nama fitur/patch...">
-        </div>
-        <div id="wizardPatchCategoriesContainer" class="morphe-categories-stack"></div>
         <div class="wizard-nav-actions">
           <button type="button" id="btnWizStep4Back" class="morphe-pill-btn morphe-pill-outline btn-back">‹ Kembali</button>
           <button type="button" id="btnWizStep4Next" class="morphe-pill-btn morphe-pill-sky btn-next">Lanjut ke Build ›</button>
@@ -280,43 +293,22 @@
           <h2 class="wizard-pane-title">5. Ringkasan &amp; Eksekusi Build</h2>
           <p class="wizard-pane-desc">Periksa kembali ringkasan konfigurasi sebelum memulai proses patching.</p>
         </div>
-        <div class="wizard-summary-card">
-          <div class="wizard-summary-grid">
-            <div class="summary-item">
-              <span class="summary-item-label">Aplikasi Target</span>
-              <span id="summaryAppName" class="summary-item-value">YouTube</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-item-label">Versi APK</span>
-              <span id="summaryVersion" class="summary-item-value">v21.13.164</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-item-label">Sumber Patch</span>
-              <span id="summarySource" class="summary-item-value">Anddea RVX</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-item-label">Mode Target</span>
-              <span id="summaryMode" class="summary-item-value">Mode Root</span>
-            </div>
-            <div class="summary-item" style="grid-column: span 2;">
-              <span class="summary-item-label">Jumlah Patch Terpilih</span>
-              <span id="summaryPatchesCount" class="summary-item-value">68 aktif</span>
+        <div class="wizard-pane-scrollable">
+          <div class="wizard-summary-card">
+            <div class="wizard-summary-grid">
+              <div class="summary-item"><span class="summary-item-label">Aplikasi Target</span><span id="summaryAppName" class="summary-item-value">YouTube</span></div>
+              <div class="summary-item"><span class="summary-item-label">Versi APK</span><span id="summaryVersion" class="summary-item-value">v21.13.164</span></div>
+              <div class="summary-item"><span class="summary-item-label">Sumber Patch</span><span id="summarySource" class="summary-item-value">Anddea RVX</span></div>
+              <div class="summary-item"><span class="summary-item-label">Mode Target</span><span id="summaryMode" class="summary-item-value">Mode Root</span></div>
+              <div class="summary-item" style="grid-column: span 2;"><span class="summary-item-label">Jumlah Patch Terpilih</span><span id="summaryPatchesCount" class="summary-item-value">68 aktif</span></div>
             </div>
           </div>
-        </div>
-        <div class="morphe-version-actions">
-          <button type="button" id="btnWizardStartBuild" class="morphe-pill-btn morphe-pill-sky btn-block">
-            🚀 Mulai Patch Sekarang
-          </button>
-          <button type="button" id="btnWizardRootInstall" class="morphe-pill-btn morphe-pill-outline btn-block hidden">
-            ⚡ Pasang Langsung ke Root Manager
-          </button>
-          <button type="button" id="btnWizardSaveFile" class="morphe-pill-btn morphe-pill-outline btn-block">
-            💾 Simpan / Unduh ZIP &amp; APK
-          </button>
-          <button type="button" id="btnWizardFinish" class="morphe-pill-btn morphe-pill-slate-blue btn-block">
-            ✅ Selesai &amp; Masuk Dashboard
-          </button>
+          <div class="morphe-version-actions">
+            <button type="button" id="btnWizardStartBuild" class="morphe-pill-btn morphe-pill-sky btn-block">🚀 Mulai Patch Sekarang</button>
+            <button type="button" id="btnWizardRootInstall" class="morphe-pill-btn morphe-pill-outline btn-block hidden">⚡ Pasang Langsung ke Root Manager</button>
+            <button type="button" id="btnWizardSaveFile" class="morphe-pill-btn morphe-pill-outline btn-block">💾 Simpan / Unduh ZIP &amp; APK</button>
+            <button type="button" id="btnWizardFinish" class="morphe-pill-btn morphe-pill-slate-blue btn-block">✅ Selesai &amp; Masuk Dashboard</button>
+          </div>
         </div>
         <div class="wizard-nav-actions">
           <button type="button" id="btnWizStep5Back" class="morphe-pill-btn morphe-pill-outline btn-back">‹ Kembali</button>

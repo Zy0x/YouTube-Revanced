@@ -262,6 +262,53 @@ function resolveAppMeta(pkgId, fallbackName = null) {
   };
 }
 
+const SOURCE_CAPABILITIES = {
+  'anddea': ['com.google.android.youtube', 'com.google.android.apps.youtube.music'],
+  'inotia00': ['com.google.android.youtube', 'com.google.android.apps.youtube.music', 'com.reddit.frontpage'],
+  'morphe': ['com.google.android.youtube', 'com.google.android.apps.youtube.music', 'com.reddit.frontpage', 'com.twitter.android'],
+  'revanced': ['com.google.android.youtube', 'com.google.android.apps.youtube.music', 'com.reddit.frontpage', 'com.twitter.android', 'com.zhiliaoapp.musically'],
+  'j-hc': ['com.google.android.youtube', 'com.google.android.apps.youtube.music'],
+  'yt-advanced': ['com.google.android.youtube', 'com.google.android.apps.youtube.music'],
+  'cuynu': ['com.google.android.youtube', 'com.google.android.apps.youtube.music'],
+  'piko': ['com.google.android.youtube', 'com.google.android.apps.youtube.music', 'com.twitter.android']
+};
+
+function isSourceCompatibleWithApp(sourceId, pkgName) {
+  if (!pkgName) return true;
+  const caps = SOURCE_CAPABILITIES[sourceId];
+  if (caps && Array.isArray(caps)) {
+    return caps.includes(pkgName);
+  }
+  return true;
+}
+
+function getInitialSupportedApps() {
+  const pkgs = [
+    'com.google.android.youtube',
+    'com.google.android.apps.youtube.music',
+    'com.reddit.frontpage',
+    'com.twitter.android',
+    'com.zhiliaoapp.musically'
+  ];
+  return pkgs.map(pkg => {
+    const meta = resolveAppMeta(pkg);
+    const supportingSources = DEFAULT_SOURCES.filter(s => isSourceCompatibleWithApp(s.id, pkg));
+    const isYt = pkg === 'com.google.android.youtube';
+    const isYtm = pkg === 'com.google.android.apps.youtube.music';
+    return {
+      ...meta,
+      packageName: pkg,
+      patchCount: isYt ? 77 : (isYtm ? 46 : 24),
+      availableVersionsCount: 4,
+      recommendedVersion: isYt ? '21.13.164' : (isYtm ? '9.15.51' : 'latest'),
+      sourcesCount: supportingSources.length
+    };
+  });
+}
+
+// Preload initial available apps immediately
+STATE.availableApps = getInitialSupportedApps();
+
 function capitalize(str) {
   if (!str) return '';
   return str.charAt(0).toUpperCase() + str.slice(1);

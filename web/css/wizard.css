@@ -3,27 +3,33 @@
    Version: 2.1.15
    ========================================================================== */
 
-/* Wizard Screen & Stepper */
+/* Wizard Screen & Stepper (App Shell) */
 .wizard-screen {
   display: none;
   width: 100%;
   max-width: 640px;
+  height: 100%;
+  height: 100dvh;
   margin: 0 auto;
-  padding: 16px 14px 100px;
+  padding: 12px 16px 0;
+  box-sizing: border-box;
+  flex-direction: column;
+  overflow: hidden;
   animation: fadeIn 0.25s ease-out;
 }
 
 .wizard-screen.active {
-  display: block;
+  display: flex;
 }
 
 .wizard-top-bar {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 0 16px;
+  padding: 8px 0 12px;
   border-bottom: 1px solid var(--morphe-border);
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .wizard-brand {
@@ -58,7 +64,8 @@
 
 /* M3 Minimalist Stepper & Progress Indicator */
 .m3-stepper-container {
-  margin-bottom: 20px;
+  flex-shrink: 0;
+  margin-bottom: 14px;
 }
 
 .m3-progress-track {
@@ -191,18 +198,23 @@
   transition: width 0.25s ease;
 }
 
-/* Wizard Step Panes */
+/* Wizard Step Panes (App Shell) */
 .wizard-step-pane {
   display: none;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
   animation: slideFadeIn 0.25s ease-out;
 }
 
 .wizard-step-pane.active {
-  display: block;
+  display: flex;
 }
 
 .wizard-pane-header {
-  margin-bottom: 20px;
+  flex-shrink: 0;
+  margin-bottom: 14px;
 }
 
 .wizard-pane-title {
@@ -217,6 +229,29 @@
   font-size: 13.5px;
   color: var(--morphe-muted);
   line-height: 1.45;
+}
+
+.wizard-pane-scrollable {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  padding-bottom: 12px;
+}
+
+.wizard-pane-scrollable::-webkit-scrollbar {
+  width: 4px;
+}
+
+.wizard-pane-scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wizard-pane-scrollable::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
 }
 
 /* Step 1: Sources Catalog & Release Studio (Modularized in css/wizard-sources.css) */
@@ -511,12 +546,18 @@
   color: #FFFFFF;
 }
 
-/* Navigation Action Buttons */
+/* Navigation Action Buttons (Pinned Bottom Dock) */
 .wizard-nav-actions {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: auto;
+  padding-top: 12px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--morphe-bg, #0B0C10);
+  z-index: 10;
 }
 
 .wizard-nav-actions .btn-back {

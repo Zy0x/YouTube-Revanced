@@ -1,3 +1,23 @@
+## v2.1.19 (2026-10-16)
+
+### App-First Discovery Flow & 100dvh App-Shell Architecture (No Body Scrolling)
+- **App Shell Architecture (1 Fokus Viewport Tanpa Scroll Body)**:
+  - Mengunci seluruh halaman web pada ketinggian `100dvh` dengan `overflow: hidden`, menghilangkan efek *bounce scrolling* di ponsel.
+  - **Pinned Top Header & Stepper**: Header brand, toggle mode, dan top progress bar M3 terpancang permanen di atas (`flex-shrink: 0`).
+  - **Scrollable Middle Viewport**: Hanya wadah kartu/daftar di tengah (`.wizard-pane-scrollable`) yang dapat di-scroll vertikal secara halus dengan overscroll containment dan scrollbar modern.
+  - **Docked Bottom Navigation**: Tombol navigasi aksi (`‹ Kembali` dan `Lanjut ›`) dipasang permanen di area jangkauan jempol bawah layar (*safe-area aware*), memudahkan interaksi satu tangan.
+- **Pembalikan Alur: App-First Discovery**:
+  - **Langkah 1 (Mau Patch Apa?)**: Menampilkan langsung kartu aplikasi target (YouTube, YouTube Music, Reddit, Twitter/X, TikTok) dengan status kompatibilitas dan jumlah patch.
+  - **Langkah 2 (Sumber & Saluran Patch Terfilter Otomatis)**: Script secara otomatis menyaring seluruh repositori patch berdasarkan kompatibilitas dengan aplikasi yang dipilih di Langkah 1.
+  - Repositori kompatibel otomatis diposisikan di urutan teratas dengan tag `Kompatibel` atau `Default`.
+  - Jika sumber aktif saat ini tidak mendukung aplikasi terpilih, sistem secara cerdas beralih otomatis ke sumber kompatibel terbaik tanpa error.
+- **Kepatuhan Batasan Kode (< 1.000 Baris)**:
+  - `web/index.html`: 981 baris
+  - `web/js/ui-wizard.js`: 884 baris
+  - `web/css/wizard.css`: 699 baris
+  - `web/css/wizard-sources.css`: 710 baris
+  - Seluruh file 100% strictly di bawah 1.000 baris kode per file.
+
 ## v2.1.18 (2026-10-16)
 
 ### Material You 3 (M3) Native Android Redesign & Clean Bottom Sheet Architecture

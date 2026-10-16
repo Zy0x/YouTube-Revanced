@@ -52,8 +52,8 @@ function goToWizardStep(step) {
   const stepTitle = document.getElementById('wizardStepTitle');
   if (stepTitle) {
     const titles = [
+      'Mau Patch Apa?',
       'Sumber & Saluran Patch',
-      'Pilih Aplikasi Target',
       'Versi Target APK',
       'Target Mode & Patch',
       'Ringkasan & Eksekusi Build'
@@ -70,10 +70,10 @@ function goToWizardStep(step) {
   // Render content for target step
   switch (step) {
     case 1:
-      renderWizardSourceStep();
+      renderWizardAppStep();
       break;
     case 2:
-      renderWizardAppStep();
+      renderWizardSourceStep();
       break;
     case 3:
       renderWizardVersionStep();
@@ -108,16 +108,31 @@ function getSourceBadgeClass(badge) {
 }
 
 function renderWizardSourceStep() {
+  const targetPkg = STATE.currentApp ? STATE.currentApp.packageName : 'com.google.android.youtube';
+  const targetAppName = STATE.currentApp ? STATE.currentApp.name : 'YouTube';
+  const appLabel = document.getElementById('step2TargetAppName');
+  if (appLabel) appLabel.textContent = targetAppName;
+
   const container = document.getElementById('wizardSourcesGrid');
   if (!container) return;
   container.innerHTML = '';
 
+  const compatibleSources = STATE.sources.filter(s => isSourceCompatibleWithApp(s.id, targetPkg));
   const countBadge = document.getElementById('wizardSourcesCountBadge');
   if (countBadge) {
-    countBadge.textContent = `${STATE.sources.length} sumber`;
+    countBadge.textContent = `${compatibleSources.length} sumber kompatibel`;
   }
 
-  STATE.sources.forEach(src => {
+  // Sort sources: compatible ones first
+  const sortedSources = [...STATE.sources].sort((a, b) => {
+    const compA = isSourceCompatibleWithApp(a.id, targetPkg);
+    const compB = isSourceCompatibleWithApp(b.id, targetPkg);
+    if (compA !== compB) return compA ? -1 : 1;
+    return 0;
+  });
+
+  sortedSources.forEach(src => {
+    const isCompat = isSourceCompatibleWithApp(src.id, targetPkg);
     const isActive = src.id === STATE.currentSource;
     const displayName = getSourceDisplayName(src.id);
     const repoText = src.repository || (src.manifestUrl ? 'Manifest URL' : `${src.id}/patches`);
@@ -129,6 +144,16 @@ function renderWizardSourceStep() {
     item.setAttribute('role', 'radio');
     item.setAttribute('aria-checked', isActive ? 'true' : 'false');
     item.tabIndex = 0;
+    if (!isCompat) {
+      item.style.opacity = '0.45';
+    }
+
+    let tagHtml = '';
+    if (isCompat) {
+      tagHtml = isRecommended ? '<span class="source-item-tag tag-rec">Default</span>' : '<span class="source-item-tag tag-rec" style="background:rgba(56,189,248,0.15);color:#38BDF8;">Kompatibel</span>';
+    } else {
+      tagHtml = '<span class="source-item-tag" style="background:rgba(239,68,68,0.15);color:#FCA5A5;">Tidak Kompatibel</span>';
+    }
 
     item.innerHTML = `
       <div class="source-item-radio">
@@ -137,7 +162,7 @@ function renderWizardSourceStep() {
       <div class="source-item-main">
         <div class="source-item-title-row">
           <span class="source-item-name">${escapeHtml(src.name || displayName)}</span>
-          ${isRecommended ? '<span class="source-item-tag tag-rec">Default</span>' : ''}
+          ${tagHtml}
           ${isDeletable ? '<span class="source-item-tag tag-custom">Custom</span>' : ''}
         </div>
         <span class="source-item-repo">${escapeHtml(repoText)}</span>
@@ -494,20 +519,27 @@ function renderWizardAppStep() {
           <h2 class="yt-card-title">${escapeHtml(app.name)}</h2>
           ${isConfigured ? '<span class="badge-configured">✓ Configured</span>' : ''}
         </div>
-        <p class="yt-card-sub">v${escapeHtml(app.recommendedVersion)} • ${app.patchCount} patches available</p>
+        <p class="yt-card-sub">${app.sourcesCount ? `${app.sourcesCount} sumber kompatibel • ` : ''}${app.patchCount} patches</p>
       </div>
       <div class="app-card-arrow">›</div>
     `;
 
-    card.addEventListener('click', () => {
+    card.addEventListener('click', async () => {
       selectApp(app.packageName);
+      // Auto-switch to compatible source if current one does not support this app
+      if (!isSourceCompatibleWithApp(STATE.currentSource, app.packageName)) {
+        const bestSrc = STATE.sources.find(s => isSourceCompatibleWithApp(s.id, app.packageName));
+        if (bestSrc) {
+          await selectPatchSource(bestSrc.id);
+        }
+      }
       // Load saved app config if exists
       const saved = getAppConfig(app.packageName);
       if (saved) {
         if (saved.targetVersion) STATE.currentVersion = saved.targetVersion;
         if (saved.mode) STATE.targetMode = saved.mode;
       }
-      goToWizardStep(3);
+      goToWizardStep(2);
     });
 
     container.appendChild(card);
