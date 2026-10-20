@@ -19,13 +19,14 @@ class DaemonManager(private val context: Context) {
     }
 
     private var process: Process? = null
+    private var activePort: Int = DEFAULT_PORT
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(500, TimeUnit.MILLISECONDS)
         .readTimeout(800, TimeUnit.MILLISECONDS)
         .build()
 
     val baseUrl: String
-        get() = "http://127.0.0.1:$DEFAULT_PORT"
+        get() = "http://127.0.0.1:$activePort"
 
     suspend fun startDaemon(): Boolean = withContext(Dispatchers.IO) {
         try {
@@ -34,7 +35,7 @@ class DaemonManager(private val context: Context) {
                 return@withContext true
             }
 
-            val daemonFile = installDaemonBinary()
+            val daemonFile = getDaemonExecutable()
             if (!daemonFile.exists() || !daemonFile.canExecute()) {
                 Log.e(TAG, "Daemon binary not executable at ${daemonFile.absolutePath}")
                 return@withContext false
@@ -44,12 +45,12 @@ class DaemonManager(private val context: Context) {
             val builder = ProcessBuilder(
                 daemonFile.absolutePath,
                 "server",
-                "--modpath", workingDir.absolutePath,
                 "--port", DEFAULT_PORT.toString()
             )
             builder.directory(workingDir)
             builder.environment()["RVX_STANDALONE_APP"] = "1"
             builder.environment()["RVX_APP_PACKAGE"] = context.packageName
+            builder.environment()["MODPATH"] = workingDir.absolutePath
             builder.environment()["HOME"] = workingDir.absolutePath
             builder.environment()["TMPDIR"] = context.cacheDir.absolutePath
             builder.redirectErrorStream(true)
@@ -65,6 +66,15 @@ class DaemonManager(private val context: Context) {
                     var line: String?
                     while (reader.readLine().also { line = it } != null) {
                         Log.d(TAG, "[Core] $line")
+                        val currentLine = line ?: ""
+                        if (currentLine.contains("http://127.0.0.1:")) {
+                            Regex("""http://127\.0\.0\.1:(\d+)""").find(currentLine)?.let { m ->
+                                val detected = m.groupValues[1].toIntOrNull()
+                                if (detected != null) {
+                                    activePort = detected
+                                }
+                            }
+                        }
                     }
                 } catch (e: Exception) {
                     Log.w(TAG, "Log stream closed: ${e.message}")
@@ -85,19 +95,25 @@ class DaemonManager(private val context: Context) {
         }
     }
 
-    private fun installDaemonBinary(): File {
+    private fun getDaemonExecutable(): File {
+        // 1. Android nativeLibraryDir (Primary & SELinux-compliant on Android 10+)
+        val nativeLibDir = File(context.applicationInfo.nativeLibraryDir)
+        val bundledLib = File(nativeLibDir, "librvx_daemon.so")
+        if (bundledLib.exists() && bundledLib.canExecute()) {
+            Log.i(TAG, "Using native binary from nativeLibraryDir: ${bundledLib.absolutePath}")
+            return bundledLib
+        }
+
+        // 2. Fallback: filesDir/bin/rvx-daemon
         val binDir = File(context.filesDir, "bin")
         if (!binDir.exists()) binDir.mkdirs()
 
         val targetFile = File(binDir, "rvx-daemon")
 
-        // 1. Try extracting from jniLibs (if bundled as native library)
-        val nativeLibDir = File(context.applicationInfo.nativeLibraryDir)
-        val bundledLib = File(nativeLibDir, "librvx_daemon.so")
         if (bundledLib.exists()) {
             copyFile(bundledLib, targetFile)
         } else {
-            // 2. Try extracting from assets
+            // Try extracting from assets
             try {
                 context.assets.open("bin/rvx-daemon").use { input ->
                     FileOutputStream(targetFile).use { output ->
@@ -105,7 +121,7 @@ class DaemonManager(private val context: Context) {
                     }
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "Asset bin/rvx-daemon not found, checking existing target: ${e.message}")
+                Log.w(TAG, "Asset bin/rvx-daemon not found: ${e.message}")
             }
         }
 
@@ -128,9 +144,9 @@ class DaemonManager(private val context: Context) {
         }
     }
 
-    suspend fun isDaemonAlive(): Boolean = withContext(Dispatchers.IO) {
+    suspend fun isDaemonAlive(port: Int = activePort): Boolean = withContext(Dispatchers.IO) {
         val request = Request.Builder()
-            .url("$baseUrl/api/v1/system/status")
+            .url("http://127.0.0.1:$port/api/v1/system/status")
             .build()
         try {
             httpClient.newCall(request).execute().use { response ->
@@ -144,7 +160,12 @@ class DaemonManager(private val context: Context) {
     private suspend fun pollUntilReady(maxWaitMs: Long): Boolean {
         val startTime = System.currentTimeMillis()
         while (System.currentTimeMillis() - startTime < maxWaitMs) {
-            if (isDaemonAlive()) return true
+            for (p in listOf(activePort, 8088, 8089, 8090)) {
+                if (isDaemonAlive(p)) {
+                    activePort = p
+                    return true
+                }
+            }
             kotlinx.coroutines.delay(200)
         }
         return false
