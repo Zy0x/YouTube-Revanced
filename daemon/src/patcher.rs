@@ -305,6 +305,13 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
                 .unwrap_or(0)
         ));
     } else {
+        let download_dir = Path::new("/sdcard/Download");
+        if download_dir.exists() && download_dir.is_dir() {
+            let dest = download_dir.join(&final_name);
+            if let Ok(_) = tokio::fs::copy(&output_apk, &dest).await {
+                state.log(format!("📥 APK disalin ke folder Download: {}", dest.display()));
+            }
+        }
         state.log(format!(
             "OUTPUT_FILE|{}|{}",
             output_apk.display(),

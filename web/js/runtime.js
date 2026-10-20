@@ -36,10 +36,11 @@
   const distribution = explicitDistribution
     || (protocol === 'file:' ? 'standalone' : loopback ? 'root-webui' : 'hosted');
   const userAgent = navigator.userAgent || '';
+  const isAppEmbedded = /RVXPatcherApp/i.test(userAgent) || Boolean(window.RVXNativeBridge);
   const platform = /iPad|iPhone|iPod/.test(userAgent) ? 'ios'
     : /Android/.test(userAgent) ? 'android'
       : 'desktop';
-  const isStandalone = distribution === 'standalone' || distribution === 'single-html' || protocol === 'file:';
+  const isStandalone = (distribution === 'standalone' || distribution === 'single-html' || protocol === 'file:') && !isAppEmbedded;
   const isRootWebUI = distribution === 'root-webui';
 
   window.RVX_STORAGE = Object.freeze({
@@ -48,15 +49,16 @@
   });
 
   const runtime = {
-    distribution: isStandalone ? 'standalone' : distribution,
+    distribution: isAppEmbedded ? 'android-app' : (isStandalone ? 'standalone' : distribution),
     protocol,
     platform,
     isSingleFile: isStandalone,
     isStandalone,
+    isAppEmbedded,
     isRootWebUI,
     isHosted: distribution === 'hosted',
     isFileProtocol: protocol === 'file:',
-    allowsNativeBridge: isRootWebUI,
+    allowsNativeBridge: isRootWebUI || isAppEmbedded || loopback,
     supportsWasm: typeof WebAssembly === 'object',
     supportsWorker: typeof Worker === 'function',
     supportsIndexedDB: typeof indexedDB === 'object',

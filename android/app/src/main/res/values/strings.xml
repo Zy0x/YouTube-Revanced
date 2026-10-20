@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">RVX Patcher</string>
+    <string name="daemon_starting">Menyiapkan RVX Patcher Core…</string>
+    <string name="daemon_failed">Gagal memulai service daemon lokal. Silakan coba buka ulang aplikasi.</string>
+</resources>

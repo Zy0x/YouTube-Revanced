@@ -641,6 +641,11 @@ async function triggerLocalPatch(payload = createLocalPatchPayload()) {
         const size = Number(sizeRaw || 0);
         setLocalBuildProgress(99, `Hasil ${formatDownloadBytes(size)} disimpan ke ${path}`);
         appendTerminalLog(`Hasil akhir: ${path} (${formatDownloadBytes(size)})`, 'I');
+        if (window.RVXNativeBridge?.installApk && !STATE.isRoot) {
+          setTimeout(() => {
+            try { window.RVXNativeBridge.installApk(path); } catch (_) {}
+          }, 600);
+        }
         return;
       }
       const isOk = line.includes('completed successfully') || line.includes('succeeded');

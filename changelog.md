@@ -1,3 +1,19 @@
+## v2.1.25 (2026-10-20)
+
+### Arsitektur Terpadu Dual-Environment: Root Manager ZIP & Non-Root Standalone APK
+- **Aplikasi Android Standalone Non-Root (`com.rvx.patcher`)**:
+  - Implementasi wrapper Android modern berbasis AndroidX Webkit untuk menjalankan `rvx-daemon` 100% lokal di HP non-root tanpa memerlukan PC atau koneksi cloud.
+  - Siklus hidup daemon otomatis: binary diekstrak ke ruang privat aplikasi (`context.filesDir/bin`), diberi hak eksekusi `chmod 755`, dan dijalankan di latar belakang saat aplikasi dibuka.
+  - Integrasi native `AndroidBridge` untuk memicu instalasi APK secara instan (`Intent.ACTION_VIEW` dengan FileProvider) segera setelah patching selesai.
+- **Dukungan Root Tetap Penuh (KernelSU / Magisk / APatch)**:
+  - Modul flashable ZIP tetap beroperasi dengan `service.sh` menyalakan `rvx-daemon` saat boot sistem dan WebUI tampil di webroot KSU atau tombol Action Magisk.
+- **Kenyamanan Penyimpanan Pengguna**:
+  - Berkas APK hasil patch non-root otomatis disalin ke folder publik `/sdcard/Download/` agar pengguna dapat langsung mengelola dan mencadangkannya dengan mudah.
+- **Pipeline CI Terpadu di GitHub Actions**:
+  - Workflow `.github/workflows/build-daemon.yml` kini memproduksi dua artefak rilis sekaligus dalam satu kali jalan: `YouTube-RVX-Root-Module.zip` (Root) dan `RVX-Patcher-Manager.apk` (Non-Root).
+- **Kepatuhan Batasan Modularitas (< 1.000 Baris)**:
+  - Seluruh berkas source kode terverifikasi strictly di bawah 1.000 baris per berkas.
+
 ## v2.1.24 (2026-10-20)
 
 ### Arsitektur RVX Patcher Lokal Tiga Lingkungan & Kompatibilitas Terverifikasi

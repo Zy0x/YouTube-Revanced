@@ -7729,10 +7729,11 @@ window.__RVX_ENGINE_WORKER_SOURCE__ = "/* Executes only a verified RVX Portable 
   const distribution = explicitDistribution
     || (protocol === 'file:' ? 'standalone' : loopback ? 'root-webui' : 'hosted');
   const userAgent = navigator.userAgent || '';
+  const isAppEmbedded = /RVXPatcherApp/i.test(userAgent) || Boolean(window.RVXNativeBridge);
   const platform = /iPad|iPhone|iPod/.test(userAgent) ? 'ios'
     : /Android/.test(userAgent) ? 'android'
       : 'desktop';
-  const isStandalone = distribution === 'standalone' || distribution === 'single-html' || protocol === 'file:';
+  const isStandalone = (distribution === 'standalone' || distribution === 'single-html' || protocol === 'file:') && !isAppEmbedded;
   const isRootWebUI = distribution === 'root-webui';
 
   window.RVX_STORAGE = Object.freeze({
@@ -7741,15 +7742,16 @@ window.__RVX_ENGINE_WORKER_SOURCE__ = "/* Executes only a verified RVX Portable 
   });
 
   const runtime = {
-    distribution: isStandalone ? 'standalone' : distribution,
+    distribution: isAppEmbedded ? 'android-app' : (isStandalone ? 'standalone' : distribution),
     protocol,
     platform,
     isSingleFile: isStandalone,
     isStandalone,
+    isAppEmbedded,
     isRootWebUI,
     isHosted: distribution === 'hosted',
     isFileProtocol: protocol === 'file:',
-    allowsNativeBridge: isRootWebUI,
+    allowsNativeBridge: isRootWebUI || isAppEmbedded || loopback,
     supportsWasm: typeof WebAssembly === 'object',
     supportsWorker: typeof Worker === 'function',
     supportsIndexedDB: typeof indexedDB === 'object',
@@ -12079,6 +12081,11 @@ async function triggerLocalPatch(payload = createLocalPatchPayload()) {
         const size = Number(sizeRaw || 0);
         setLocalBuildProgress(99, `Hasil ${formatDownloadBytes(size)} disimpan ke ${path}`);
         appendTerminalLog(`Hasil akhir: ${path} (${formatDownloadBytes(size)})`, 'I');
+        if (window.RVXNativeBridge?.installApk && !STATE.isRoot) {
+          setTimeout(() => {
+            try { window.RVXNativeBridge.installApk(path); } catch (_) {}
+          }, 600);
+        }
         return;
       }
       const isOk = line.includes('completed successfully') || line.includes('succeeded');

@@ -1,0 +1,699 @@
+/* ==========================================================================
+   YouTube RVX — Setup Wizard & Returning Dashboard Styles
+   Version: 2.1.15
+   ========================================================================== */
+
+/* Wizard Screen & Stepper (App Shell) */
+.wizard-screen {
+  display: none;
+  width: 100%;
+  max-width: 640px;
+  height: 100%;
+  height: 100dvh;
+  margin: 0 auto;
+  padding: 12px 16px 0;
+  box-sizing: border-box;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.wizard-screen.active {
+  display: flex;
+}
+
+.wizard-top-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 12px;
+  border-bottom: 1px solid var(--morphe-border);
+  margin-bottom: 14px;
+}
+
+.wizard-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wizard-brand-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #E53935 0%, #B71C1C 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(229, 57, 53, 0.4);
+}
+
+.wizard-brand-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: -0.01em;
+}
+
+.wizard-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* M3 Minimalist Stepper & Progress Indicator */
+.m3-stepper-container {
+  flex-shrink: 0;
+  margin-bottom: 14px;
+}
+
+.m3-progress-track {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.m3-progress-indicator {
+  height: 100%;
+  background: #38BDF8;
+  border-radius: 2px;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.m3-step-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.m3-step-pill {
+  font-size: 11px;
+  font-weight: 700;
+  color: #38BDF8;
+  background: rgba(56, 189, 248, 0.12);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.02em;
+}
+
+.m3-step-name {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--morphe-muted, #94A3B8);
+}
+
+/* Stepper Progress Bar (Legacy hidden) */
+.wizard-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  margin-bottom: 24px;
+  padding: 4px 6px;
+}
+
+.wizard-step-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+}
+
+.step-node-bubble {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--morphe-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  transition: all 0.15s ease;
+}
+
+.wizard-step-node.active .step-node-bubble {
+  background: #2563EB;
+  border-color: #3B82F6;
+  color: #FFFFFF;
+  box-shadow: none;
+  transform: none;
+}
+
+.wizard-step-node.completed .step-node-bubble {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10B981;
+  color: #34D399;
+}
+
+.step-node-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--morphe-muted);
+  text-align: center;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  transition: color 0.15s ease;
+}
+
+.wizard-step-node.active .step-node-label {
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.wizard-step-node.completed .step-node-label {
+  color: #A7F3D0;
+}
+
+.wizard-stepper-track {
+  position: absolute;
+  top: 14px;
+  left: 24px;
+  right: 24px;
+  height: 1.5px;
+  background: rgba(255, 255, 255, 0.08);
+  z-index: 1;
+}
+
+.wizard-stepper-progress {
+  height: 100%;
+  background: #2563EB;
+  width: 0%;
+  transition: width 0.25s ease;
+}
+
+/* Wizard Step Panes (App Shell) */
+.wizard-step-pane {
+  display: none;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideFadeIn 0.25s ease-out;
+}
+
+.wizard-step-pane.active {
+  display: flex;
+}
+
+.wizard-pane-header {
+  flex-shrink: 0;
+  margin-bottom: 14px;
+}
+
+.wizard-pane-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+
+.wizard-pane-desc {
+  font-size: 13.5px;
+  color: var(--morphe-muted);
+  line-height: 1.45;
+}
+
+.wizard-pane-scrollable {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  padding-bottom: 12px;
+}
+
+.wizard-pane-scrollable::-webkit-scrollbar {
+  width: 4px;
+}
+
+.wizard-pane-scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wizard-pane-scrollable::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+/* Step 1: Sources Catalog & Release Studio (Modularized in css/wizard-sources.css) */
+
+
+/* Step 3: Recommended Version Card */
+.version-rec-hero {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.version-rec-hero:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(96, 165, 250, 0.6);
+}
+
+.version-rec-hero.selected {
+  border-color: #38BDF8;
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.version-rec-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.version-rec-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #38BDF8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.version-rec-num {
+  font-size: 20px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: #FFFFFF;
+}
+
+.version-rec-sub {
+  font-size: 12px;
+  color: #94A3B8;
+}
+
+.version-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Version Classification Badges */
+.badge-version {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge-stable {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.badge-beta {
+  background: rgba(245, 158, 11, 0.2);
+  color: #FBBF24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.badge-alpha {
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.badge-pre {
+  background: rgba(168, 85, 247, 0.2);
+  color: #C084FC;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+/* Step 4: Target Mode Switcher */
+.m3-mode-segmented-control {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+  width: 100%;
+}
+
+.m3-mode-segment-btn {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 10px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+  min-height: 58px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.m3-chip-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #E2E8F0;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  user-select: none;
+}
+
+.m3-chip-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+
+.m3-mode-segment-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.m3-mode-segment-btn.active {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: #38BDF8;
+}
+
+.m3-mode-segment-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.m3-mode-segment-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.m3-mode-segment-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.m3-mode-segment-sub {
+  font-size: 11px;
+  color: var(--morphe-muted, #94A3B8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m3-mode-segment-check {
+  font-size: 14px;
+  font-weight: 800;
+  color: #38BDF8;
+  width: 16px;
+  text-align: center;
+}
+
+.mode-switcher-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.mode-pill-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  min-height: 84px;
+}
+
+.mode-pill-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.mode-pill-card.active {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: #38BDF8;
+}
+
+.mode-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.mode-icon-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.mode-pill-card.active .mode-icon-circle {
+  background: #2563EB;
+  color: #FFFFFF;
+}
+
+.mode-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-top: 4px;
+}
+
+.mode-card-desc {
+  font-size: 11.5px;
+  color: var(--morphe-muted);
+  line-height: 1.4;
+}
+
+/* Step 5: Summary Card */
+.wizard-summary-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--morphe-border-strong);
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+
+.wizard-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.summary-item-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--morphe-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.summary-item-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+/* Navigation Action Buttons (Pinned Bottom Dock) */
+.wizard-nav-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 12px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--morphe-bg, #0B0C10);
+  z-index: 10;
+}
+
+.wizard-nav-actions .btn-back {
+  flex: 0 0 auto;
+  min-width: 110px;
+}
+
+.wizard-nav-actions .btn-next {
+  flex: 1;
+}
+
+/* Returning User Dashboard Elements */
+.dashboard-top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0 16px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--morphe-border);
+}
+
+.btn-setup-ulang {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--morphe-border-strong);
+  color: #E2E8F0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 44px;
+}
+
+.btn-setup-ulang:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: #60A5FA;
+  color: #60A5FA;
+}
+
+.badge-configured {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.2);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+
+.badge-needs-setup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-card-edit {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.btn-card-edit:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+}
+
+/* Smart MicroG Warning Modal */
+.warning-icon-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #F59E0B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin: 0 auto 14px;
+}
+
+.modal-warning-title {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 10px;
+}
+
+.modal-warning-text {
+  font-size: 13.5px;
+  color: #CBD5E1;
+  line-height: 1.5;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Animations */
+@keyframes slideFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

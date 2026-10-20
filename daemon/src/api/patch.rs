@@ -48,8 +48,12 @@ pub(crate) async fn get_status(State(state): State<AppState>) -> impl IntoRespon
     let root_available = runtime_has_root_access();
 
     let is_android = cfg!(target_os = "android");
+    let is_standalone_app = std::env::var("RVX_STANDALONE_APP").map(|v| v == "1").unwrap_or(false)
+        || state.modpath.to_string_lossy().contains("com.rvx.patcher");
     let access_mode = if is_android && root_available {
         "root-integrated"
+    } else if is_standalone_app {
+        "nonroot-app"
     } else if is_android {
         "local-companion"
     } else {
