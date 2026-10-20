@@ -16,7 +16,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.RVXPatcher"
         android:usesCleartextTraffic="true"
-        android:hardwareAccelerated="true">
+        android:hardwareAccelerated="true"
+        android:enableOnBackInvokedCallback="true">
 
         <activity
             android:name=".MainActivity"
