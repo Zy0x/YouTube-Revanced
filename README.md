@@ -73,6 +73,10 @@ After flashing the module in **KernelSU**, **APatch**, or **Magisk**:
   - 📦 **In-Memory ZIP Packaging**: Hyper-fast module compression using native Rust DEFLATE engine.
   - 💾 **Export Flashable ZIP**: Direct export to `/sdcard/Download/`.  
 
+### 🌐 Universal single-file WebUI
+
+Run `node tools/build-single-html.mjs` to generate `web/rvx-local.html`. The resulting file embeds the UI, styles, source registry, application catalog, and presets so it can be stored and opened as one local HTML file. Root patching continues through the module daemon. Browser-only APK patching requires the Morphe patch engine to be ported from Kotlin/JVM to WebAssembly; the single-file UI does not claim patch completion until that engine is available.
+
 ---
 
 <h3>🌈 Non-Root</h3>  

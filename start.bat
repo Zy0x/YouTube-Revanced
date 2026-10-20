@@ -42,34 +42,19 @@ if not defined DAEMON_EXE (
     )
 )
 
-:: Detect primary LAN IPv4 address safely without parentheses inside blocks
-set "LAN_IP="
-for /f "tokens=2 delims=:" %%a in ('ipconfig 2^>nul ^| findstr /i /c:"IPv4" 2^>nul') do (
-    if not defined LAN_IP (
-        for /f "tokens=1" %%b in ("%%a") do (
-            echo %%b | findstr /v /c:"127.0.0.1" /c:"169.254." >nul 2>&1
-            if not errorlevel 1 (
-                set "LAN_IP=%%b"
-            )
-        )
-    )
-)
-
 set "PORT=8088"
-set "BIND_ADDR=0.0.0.0"
+set "BIND_ADDR=127.0.0.1"
 set "MODPATH=%~dp0."
 
 echo [i] Daemon binary : !DAEMON_EXE!
-echo [i] Bind address  : %BIND_ADDR% - LAN and Localhost accessible
+echo [i] Bind address  : %BIND_ADDR% - local device only
 echo [i] Default port  : %PORT% - Dedicated RVX port
 echo [i] Live Reload   : AKTIF - Perubahan folder web langsung live saat refresh!
 echo.
 echo =====================================================================
 echo   Akses WebUI di Browser:
 echo     - Komputer / PC   : http://localhost:%PORT%  atau  http://127.0.0.1:%PORT%
-if defined LAN_IP (
-    echo     - HP / WiFi LAN   : http://!LAN_IP!:%PORT%
-)
+echo     - Perangkat lain  : salin web\rvx-local.html ke perangkat tersebut
 echo =====================================================================
 echo.
 echo [i] Membuka browser default dalam 2 detik...

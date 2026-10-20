@@ -50,7 +50,10 @@ pub async fn run_pack(modpath: PathBuf, output: Option<PathBuf>) -> anyhow::Resu
     zip.finish()?;
     let metadata = std::fs::metadata(&out_zip)?;
     let size_mb = metadata.len() as f64 / (1024.0 * 1024.0);
-    println!("✅ [Pack] Module ZIP created successfully! ({:.2} MB)", size_mb);
+    println!(
+        "✅ [Pack] Module ZIP created successfully! ({:.2} MB)",
+        size_mb
+    );
     Ok(())
 }
 
@@ -77,7 +80,10 @@ fn add_file_to_zip<W: Write + std::io::Seek>(
     }
     #[cfg(not(unix))]
     {
-        if clean_name.ends_with(".sh") || clean_name.contains("bin/") || clean_name.contains("update-binary") {
+        if clean_name.ends_with(".sh")
+            || clean_name.contains("bin/")
+            || clean_name.contains("update-binary")
+        {
             opts = opts.unix_permissions(0o755);
         } else {
             opts = opts.unix_permissions(0o644);

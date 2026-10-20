@@ -4,37 +4,49 @@
  */
 
 const STATE = {
-  uiMode: localStorage.getItem('rvx_ui_mode') || 'morphe',
+  uiMode: RVX_STORAGE.local.getItem('rvx_ui_mode') || 'morphe',
   activeScreen: 'home', // 'home' | 'version' | 'patches' | 'progress' | 'wizard'
   tuiScreen: 'main',
   tuiSelectedIndex: 0,
 
   // Setup Wizard & Returning User Dashboard State
-  setupCompleted: localStorage.getItem('rvx_setup_completed') === 'true',
+  setupCompleted: RVX_STORAGE.local.getItem('rvx_setup_completed') === 'true',
   wizardStep: 1, // 1: Source & Release, 2: App, 3: Version, 4: Mode & Patches, 5: Build
-  targetMode: localStorage.getItem('rvx_target_mode') || 'root', // 'root' | 'non-root'
+  targetMode: null, // user must explicitly choose 'root' or 'non-root'
   appConfigs: {},
 
   // Multi-Application MPP Support
   allManifestPatches: [],
   availableApps: [],
-  currentApp: {
-    packageName: 'com.google.android.youtube',
-    appName: 'YouTube',
-    patchCount: 0,
-    accentColor: '#FF0033',
-    gradient: 'linear-gradient(135deg, #7A121D 0%, #2B0B0E 100%)'
-  },
+  currentApp: null,
 
   sources: [],
-  currentSource: localStorage.getItem('rvx_active_source') || 'anddea',
-  patchTag: 'dev',
+  registryApps: [],
+  sourceManifestCache: {},
+  sourceManifestCacheKey: {},
+  sourceManifestLoadToken: {},
+  sourceManifestStatus: {},
+  sourceReleases: {},
+  currentSource: null,
+  patchTag: '',
   patchReleases: [],
-  currentVersion: '21.13.164',
-  showAllVersions: localStorage.getItem('rvx_experimental_app_versions') === 'true',
-  preReleasePatches: localStorage.getItem('rvx_pre_release_patches') !== 'false',
-  experimentalAppVersions: localStorage.getItem('rvx_experimental_app_versions') === 'true',
-  recommendedVersion: '21.13.164',
+  channelLoading: false,
+  channelLoadToken: 0,
+  currentVersion: '',
+  showAllVersions: false,
+  sourceVersions: [],
+  selectedExternalVersion: null,
+  otherVersions: [],
+  otherVersionsTotal: 0,
+  otherVersionsNextOffset: 0,
+  otherVersionsQuery: '',
+  otherVersionsChannel: 'all',
+  otherVersionsLoading: false,
+  otherVersionsRefreshedAt: 0,
+  stepRefreshState: {},
+  preReleasePatches: RVX_STORAGE.local.getItem('rvx_pre_release_patches') !== 'false',
+  experimentalAppVersions: RVX_STORAGE.local.getItem('rvx_experimental_app_versions') === 'true',
+  recommendedVersion: '',
   installedVersion: null,
   catalogVersions: [],
   availableVersions: [],
@@ -47,17 +59,43 @@ const STATE = {
   goldenPreset: null,
   filterEnabledOnly: false,
   patchSearchQuery: '',
+  patchListFilter: 'all',
   editingPatchName: null,
+  modeEditorExpanded: true,
+  patchOptionsDraft: {},
+  patchOptionFiles: {},
+  patchOptionsReturnFocusId: '',
+  optionPreviewCache: {},
+  forceOptionPreviewRefresh: false,
 
   // MicroG smart prompt tracking
   microgWarningDismissed: false,
 
-  authToken: localStorage.getItem('rvx_gh_pat') || '',
+  authToken: RVX_STORAGE.local.getItem('rvx_gh_pat') || '',
   authUser: null,
-  engineMode: 'local',
+  engineMode: window.RVX_RUNTIME?.isRootWebUI ? 'local' : 'browser',
+  runtimeCapabilities: null,
+  portableEngineManifest: null,
+  portableEngineStatus: null,
+  selectedRelease: null,
+  selectedApkFile: null,
+  browserDownloadPlan: null,
+  browserPatchAbortController: null,
+  registrySchemaVersion: 0,
+  registryGeneratedAt: '',
   daemonOnline: false,
   daemonUrl: '',
   daemonVersion: '2.1.15',
+  daemonStatus: null,
+  deviceAccessMode: 'browser-only',
+  pendingLocalPatchPayload: null,
+  storageLocations: [],
+  storageSelection: null,
+  storageBrowseKind: '',
+  storageBrowsePath: '',
+  storageBrowseParent: '',
+  storageBrowseReturnFocusId: '',
+  pendingDownloadPlan: null,
   eventSource: null,
   logHistory: [
     { type: 'I', text: 'Remove background playback restrictions succeeded' },
@@ -77,6 +115,7 @@ const DEFAULT_SOURCES = [
     name: 'Anddea Patches',
     repository: 'anddea/revanced-patches',
     manifestUrl: 'https://raw.githubusercontent.com/anddea/revanced-patches/refs/heads/main/patches-list.json',
+    bundleAssetPattern: '*.mpp',
     defaultReleaseType: 'dev',
     isDefault: true,
     isPreinstalled: true,
@@ -87,24 +126,11 @@ const DEFAULT_SOURCES = [
     description: 'Fitur kustomisasi terlengkap untuk YouTube RVX dengan update rutin paling aktif'
   },
   {
-    id: 'inotia00',
-    name: 'Inotia00 RVX',
-    repository: 'inotia00/revanced-patches',
-    manifestUrl: 'https://raw.githubusercontent.com/inotia00/revanced-patches/refs/heads/revanced-extended/patches.json',
-    defaultReleaseType: 'latest',
-    isDefault: false,
-    isPreinstalled: true,
-    badge: 'Classic RVX',
-    avatarText: 'I',
-    avatarColor: '#8B5CF6',
-    avatarGradient: 'linear-gradient(135deg, #8B5CF6 0%, #5B21B6 100%)',
-    description: 'Pondasi klasik ReVanced Extended orisinil oleh inotia00 dengan stabilitas tinggi'
-  },
-  {
     id: 'morphe',
     name: 'Morphe Official',
     repository: 'MorpheApp/morphe-patches',
     manifestUrl: 'https://raw.githubusercontent.com/MorpheApp/morphe-patches/refs/heads/main/patches-list.json',
+    bundleAssetPattern: '*.mpp',
     defaultReleaseType: 'latest',
     isDefault: false,
     isPreinstalled: true,
@@ -115,74 +141,19 @@ const DEFAULT_SOURCES = [
     description: 'Patches resmi terkurasi oleh tim ekosistem Morphe Manager'
   },
   {
-    id: 'revanced',
-    name: 'ReVanced Official',
-    repository: 'ReVanced/revanced-patches',
-    manifestUrl: 'https://raw.githubusercontent.com/ReVanced/revanced-patches/refs/heads/main/patches.json',
-    defaultReleaseType: 'latest',
-    isDefault: false,
-    isPreinstalled: true,
-    badge: 'Official Upstream',
-    avatarText: 'R',
-    avatarColor: '#10B981',
-    avatarGradient: 'linear-gradient(135deg, #10B981 0%, #047857 100%)',
-    description: 'Patches inti upstream resmi dari tim ReVanced Project global'
-  },
-  {
-    id: 'j-hc',
-    name: 'Rufous (j-hc)',
-    repository: 'j-hc/revanced-patches',
-    manifestUrl: 'https://raw.githubusercontent.com/j-hc/revanced-patches/refs/heads/main/patches.json',
-    defaultReleaseType: 'latest',
-    isDefault: false,
-    isPreinstalled: true,
-    badge: 'Daily Builds',
-    avatarText: 'J',
-    avatarColor: '#F59E0B',
-    avatarGradient: 'linear-gradient(135deg, #F59E0B 0%, #B45309 100%)',
-    description: 'Kompilasi harian otomatis dengan integrasi Magisk & Root Module siap pakai'
-  },
-  {
-    id: 'yt-advanced',
-    name: 'YT-Advanced',
-    repository: 'yt-advanced/revanced-patches',
-    manifestUrl: 'https://raw.githubusercontent.com/yt-advanced/revanced-patches/refs/heads/main/patches.json',
-    defaultReleaseType: 'latest',
-    isDefault: false,
-    isPreinstalled: true,
-    badge: 'Community',
-    avatarText: 'Y',
-    avatarColor: '#EC4899',
-    avatarGradient: 'linear-gradient(135deg, #EC4899 0%, #BE185D 100%)',
-    description: 'Varian patch fleksibel untuk optimasi YouTube dan YouTube Music feed'
-  },
-  {
-    id: 'cuynu',
-    name: 'Cuchri RVX',
-    repository: 'cuynu/yt-advanced',
-    manifestUrl: 'https://raw.githubusercontent.com/cuynu/yt-advanced/refs/heads/main/patches.json',
-    defaultReleaseType: 'latest',
-    isDefault: false,
-    isPreinstalled: true,
-    badge: 'Enhanced',
-    avatarText: 'C',
-    avatarColor: '#06B6D4',
-    avatarGradient: 'linear-gradient(135deg, #06B6D4 0%, #0E7490 100%)',
-    description: 'Patch modifikasi tingkat lanjut dengan tambahan tweak video playback'
-  },
-  {
     id: 'piko',
     name: 'Piko Patches',
-    repository: 'crimera/revanced-patches',
-    manifestUrl: 'https://raw.githubusercontent.com/crimera/revanced-patches/refs/heads/main/patches.json',
+    repository: 'crimera/piko',
+    manifestUrl: 'https://raw.githubusercontent.com/crimera/piko/refs/heads/main/patches-list.json',
+    bundleAssetPattern: '*.mpp',
     defaultReleaseType: 'latest',
     isDefault: false,
     isPreinstalled: true,
-    badge: 'Lightweight',
+    badge: 'X & Instagram',
     avatarText: 'P',
     avatarColor: '#6366F1',
     avatarGradient: 'linear-gradient(135deg, #6366F1 0%, #4338CA 100%)',
-    description: 'Varian patch ringan dan ramping dengan performa rendering responsif'
+    description: 'Patch komunitas untuk Twitter/X dan Instagram'
   }
 ];
 
@@ -263,8 +234,65 @@ const KNOWN_APP_METADATA = {
     accentColor: '#FC4C02',
     gradient: 'linear-gradient(135deg, #7A2400 0%, #260B00 100%)',
     iconSvg: `<svg viewBox="0 0 24 24" width="26" height="26" fill="#FFFFFF"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7.925 15.57h4.172"/></svg>`
+  },
+  'com.facebook.katana': {
+    name: 'Facebook',
+    alias: 'Facebook',
+    accentColor: '#1877F2',
+    gradient: 'linear-gradient(135deg, #174EA6 0%, #071B3E 100%)'
+  },
+  'com.instagram.barcelona': {
+    name: 'Threads',
+    alias: 'Threads',
+    accentColor: '#202124',
+    gradient: 'linear-gradient(135deg, #303134 0%, #111214 100%)'
+  },
+  'org.telegram.messenger': {
+    name: 'Telegram',
+    alias: 'Telegram',
+    accentColor: '#229ED9',
+    gradient: 'linear-gradient(135deg, #176A93 0%, #082A3B 100%)'
+  },
+  'com.google.android.inputmethod.latin': {
+    name: 'Gboard',
+    alias: 'Gboard',
+    accentColor: '#4285F4',
+    gradient: 'linear-gradient(135deg, #295AA8 0%, #0D2347 100%)'
+  },
+  'com.lemon.lvoverseas': {
+    name: 'CapCut',
+    alias: 'CapCut',
+    accentColor: '#202124',
+    gradient: 'linear-gradient(135deg, #303134 0%, #111214 100%)'
   }
 };
+
+const APP_PRIORITY_ORDER = [
+  'com.google.android.youtube',
+  'com.google.android.apps.youtube.music',
+  'com.zhiliaoapp.musically',
+  'com.instagram.android',
+  'com.twitter.android',
+  'com.reddit.frontpage',
+  'com.spotify.music',
+  'com.facebook.katana',
+  'com.instagram.barcelona',
+  'tv.twitch.android.app',
+  'org.telegram.messenger',
+  'com.google.android.inputmethod.latin',
+  'com.lemon.lvoverseas',
+  'com.strava',
+  'com.duolingo'
+];
+
+function compareAppsByPriority(a, b) {
+  const indexA = APP_PRIORITY_ORDER.indexOf(a.packageName);
+  const indexB = APP_PRIORITY_ORDER.indexOf(b.packageName);
+  if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+  if (indexA !== -1) return -1;
+  if (indexB !== -1) return 1;
+  return a.name.localeCompare(b.name);
+}
 
 const GENERIC_APP_SVG = `<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="1.5"/><line x1="9" y1="15" x2="15" y2="15"/></svg>`;
 
@@ -295,86 +323,107 @@ function resolveAppMeta(pkgId, fallbackName = null) {
   };
 }
 
-const SOURCE_CAPABILITIES = {
-  'anddea': ['com.google.android.youtube', 'com.google.android.apps.youtube.music'],
-  'inotia00': ['com.google.android.youtube', 'com.google.android.apps.youtube.music', 'com.reddit.frontpage'],
-  'morphe': ['com.google.android.youtube', 'com.google.android.apps.youtube.music', 'com.reddit.frontpage', 'com.twitter.android'],
-  'revanced': [
-    'com.google.android.youtube',
-    'com.google.android.apps.youtube.music',
-    'com.reddit.frontpage',
-    'com.twitter.android',
-    'com.zhiliaoapp.musically',
-    'com.instagram.android',
-    'tv.twitch.android.app',
-    'com.spotify.music',
-    'com.duolingo',
-    'com.strava'
-  ],
-  'j-hc': ['com.google.android.youtube', 'com.google.android.apps.youtube.music'],
-  'yt-advanced': ['com.google.android.youtube', 'com.google.android.apps.youtube.music'],
-  'cuynu': ['com.google.android.youtube', 'com.google.android.apps.youtube.music'],
-  'piko': ['com.google.android.youtube', 'com.google.android.apps.youtube.music', 'com.twitter.android']
-};
+function normalizePackageId(pkgId) {
+  const value = String(pkgId || '').trim();
+  if (!value || Object.prototype.hasOwnProperty.call(KNOWN_APP_METADATA, value)) return value;
+  const normalizedName = value.toLowerCase();
+  const known = Object.entries(KNOWN_APP_METADATA).find(([, meta]) =>
+    meta.name.toLowerCase() === normalizedName || meta.alias.toLowerCase() === normalizedName
+  );
+  return known ? known[0] : value;
+}
 
 function isSourceCompatibleWithApp(sourceId, pkgName) {
-  if (!pkgName) return true;
-  const caps = SOURCE_CAPABILITIES[sourceId];
-  if (caps && Array.isArray(caps)) {
-    return caps.includes(pkgName);
-  }
-  return true;
+  if (!pkgName) return false;
+  const sourceStatus = STATE.sourceManifestStatus[sourceId];
+  return sourceStatus?.status === 'ready' && sourceStatus.packageNames instanceof Set
+    ? sourceStatus.packageNames.has(pkgName)
+    : false;
 }
 
 function getCompatibleSourcesForApp(pkgName) {
-  if (!pkgName) return STATE.sources && STATE.sources.length ? STATE.sources : DEFAULT_SOURCES;
+  if (!pkgName) return [];
   const list = STATE.sources && STATE.sources.length ? STATE.sources : DEFAULT_SOURCES;
   return list.filter(s => isSourceCompatibleWithApp(s.id, pkgName));
 }
 
 function getAllSupportedApps() {
-  const pkgs = Object.keys(KNOWN_APP_METADATA);
-  return pkgs.map(pkg => {
-    const meta = resolveAppMeta(pkg);
-    const supportingSources = getCompatibleSourcesForApp(pkg);
-    const patchCountMap = {
-      'com.google.android.youtube': 77,
-      'com.google.android.apps.youtube.music': 46,
-      'com.reddit.frontpage': 28,
-      'com.twitter.android': 18,
-      'com.zhiliaoapp.musically': 14,
-      'com.instagram.android': 12,
-      'tv.twitch.android.app': 10,
-      'com.spotify.music': 8,
-      'com.duolingo': 6,
-      'com.strava': 5
-    };
-    const recVerMap = {
-      'com.google.android.youtube': '21.13.164',
-      'com.google.android.apps.youtube.music': '9.15.51',
-      'com.reddit.frontpage': '2024.45.0',
-      'com.twitter.android': '10.60.0',
-      'com.zhiliaoapp.musically': '36.5.4',
-      'com.instagram.android': '350.0.0',
-      'tv.twitch.android.app': '19.2.1',
-      'com.spotify.music': '8.9.74',
-      'com.duolingo': '5.150.4',
-      'com.strava': '380.11'
-    };
-    return {
-      ...meta,
-      packageName: pkg,
-      patchCount: patchCountMap[pkg] || 10,
-      availableVersionsCount: 4,
-      recommendedVersion: recVerMap[pkg] || 'latest',
-      sourcesCount: supportingSources.length,
-      supportingSources: supportingSources.map(s => s.name || s.id)
-    };
+  if (typeof extractSupportedApps !== 'function') return [];
+  const appsByPackage = new Map();
+
+  Object.entries(STATE.sourceManifestCache || {}).forEach(([sourceId, patches]) => {
+    const manifestStatus = STATE.sourceManifestStatus[sourceId];
+    if (manifestStatus?.status !== 'ready') return;
+    if (!Array.isArray(patches)) return;
+    extractSupportedApps(patches).forEach(app => {
+      const entry = appsByPackage.get(app.packageName) || {
+        ...app,
+        patchCount: 0,
+        patchNames: new Set(),
+        sourcesCount: 0,
+        supportingSources: [],
+        sourceIds: new Set()
+      };
+      (app.patchNames || []).forEach(name => entry.patchNames.add(name));
+      entry.patchCount = entry.patchNames.size;
+      const knownVersionsCount = entry.availableVersionsCount || 0;
+      if (app.recommendedVersion && (!entry.recommendedVersion || (app.availableVersionsCount || 0) > knownVersionsCount)) {
+        entry.recommendedVersion = app.recommendedVersion;
+      }
+      entry.availableVersionsCount = Math.max(knownVersionsCount, app.availableVersionsCount || 0);
+      if (!entry.sourceIds.has(sourceId)) {
+        entry.sourceIds.add(sourceId);
+        entry.sourcesCount += 1;
+        const source = STATE.sources.find(item => item.id === sourceId);
+        entry.supportingSources.push(source?.name || sourceId);
+      }
+      appsByPackage.set(app.packageName, entry);
+    });
   });
+
+  const registryMetadata = new Map((STATE.registryApps || []).map(app => [app.packageName, app]));
+  // Registry compatibility is already verified catalog data. Use it for every
+  // matched source so the app picker does not need to download every manifest.
+  (STATE.sources || []).filter(source => Array.isArray(source.registryPackages)).forEach(source => {
+    (source.registryPackages || []).forEach(packageName => {
+      const registryApp = registryMetadata.get(packageName) || {};
+      const meta = resolveAppMeta(packageName, registryApp.name || null);
+      const versions = Array.isArray(registryApp.versions) ? registryApp.versions.filter(Boolean) : [];
+      const entry = appsByPackage.get(packageName) || {
+        ...meta,
+        iconUrl: registryApp.iconUrl || null,
+        packageName,
+        patchCount: 0,
+        patchNames: new Set(),
+        sourcesCount: 0,
+        supportingSources: [],
+        sourceIds: new Set(),
+        recommendedVersion: versions.slice().sort((a, b) =>
+          String(b).localeCompare(String(a), undefined, { numeric: true, sensitivity: 'base' })
+        )[0] || '',
+        availableVersionsCount: versions.length,
+        catalogCoverageUnknown: true
+      };
+      if (!entry.iconUrl && registryApp.iconUrl) entry.iconUrl = registryApp.iconUrl;
+      if (!entry.sourceIds.has(source.id)) {
+        entry.sourceIds.add(source.id);
+        entry.sourcesCount += 1;
+        entry.supportingSources.push(source.name || source.id);
+      }
+      entry.catalogCoverageUnknown = true;
+      appsByPackage.set(packageName, entry);
+    });
+  });
+
+  return Array.from(appsByPackage.values()).map(app => ({
+    ...app,
+    patchNames: Array.from(app.patchNames),
+    sourceIds: Array.from(app.sourceIds)
+  })).sort(compareAppsByPriority);
 }
 
 // Master catalog of all supported apps
-STATE.availableApps = getAllSupportedApps();
+STATE.availableApps = [];
 
 function capitalize(str) {
   if (!str) return '';
@@ -397,7 +446,7 @@ function setText(id, text) {
 
 function loadPersistedSources() {
   try {
-    const raw = localStorage.getItem('rvx_sources_v2');
+    const raw = RVX_STORAGE.local.getItem('rvx_sources_v2');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -408,7 +457,7 @@ function loadPersistedSources() {
 
 function savePersistedSources(sources) {
   try {
-    localStorage.setItem('rvx_sources_v2', JSON.stringify(sources));
+    RVX_STORAGE.local.setItem('rvx_sources_v2', JSON.stringify(sources.filter(source => !source.isDiscovered)));
   } catch (_) {}
 }
 
@@ -430,6 +479,7 @@ function addCustomSource(source) {
     name,
     repository: isUrl ? '' : cleanRepo,
     manifestUrl,
+    bundleAssetPattern: '*.mpp',
     defaultReleaseType: source.defaultReleaseType || 'latest',
     isDefault: false,
     isPreinstalled: false,
@@ -446,6 +496,11 @@ function addCustomSource(source) {
   } else {
     STATE.sources.push(newSource);
   }
+  delete STATE.sourceManifestCache[id];
+  delete STATE.sourceManifestCacheKey[id];
+  delete STATE.sourceManifestLoadToken[id];
+  delete STATE.sourceManifestStatus[id];
+  delete STATE.sourceReleases[id];
 
   savePersistedSources(STATE.sources);
   return newSource;
@@ -456,28 +511,37 @@ function deleteCustomSource(sourceId) {
   if (idx === -1) return false;
 
   STATE.sources.splice(idx, 1);
+  delete STATE.sourceManifestCache[sourceId];
+  delete STATE.sourceManifestCacheKey[sourceId];
+  delete STATE.sourceManifestLoadToken[sourceId];
+  delete STATE.sourceManifestStatus[sourceId];
+  delete STATE.sourceReleases[sourceId];
   if (STATE.sources.length === 0) {
     STATE.sources = JSON.parse(JSON.stringify(DEFAULT_SOURCES));
   }
   savePersistedSources(STATE.sources);
 
   if (STATE.currentSource === sourceId) {
-    STATE.currentSource = STATE.sources[0].id;
-    localStorage.setItem('rvx_active_source', STATE.currentSource);
+    STATE.currentSource = null;
+    STATE.patchTag = '';
+    RVX_STORAGE.local.removeItem('rvx_active_source');
   }
+  STATE.availableApps = getAllSupportedApps();
   return true;
 }
 
 function resetSourcesToDefault() {
-  STATE.sources = JSON.parse(JSON.stringify(DEFAULT_SOURCES));
+  const installed = STATE.sources.filter(source => source.isPreinstalled || source.isDefault);
+  STATE.sources = installed.length ? installed : JSON.parse(JSON.stringify(DEFAULT_SOURCES));
   savePersistedSources(STATE.sources);
-  STATE.currentSource = 'anddea';
-  localStorage.setItem('rvx_active_source', 'anddea');
+  STATE.currentSource = null;
+  STATE.patchTag = '';
+  RVX_STORAGE.local.removeItem('rvx_active_source');
 }
 
 function loadAppConfigs() {
   try {
-    const raw = localStorage.getItem('rvx_app_configs');
+    const raw = RVX_STORAGE.local.getItem('rvx_app_configs');
     if (raw) return JSON.parse(raw);
   } catch (_) {}
   return {};
@@ -490,7 +554,7 @@ function saveAppConfig(pkgId, config) {
     configuredAt: new Date().toISOString()
   };
   try {
-    localStorage.setItem('rvx_app_configs', JSON.stringify(STATE.appConfigs));
+    RVX_STORAGE.local.setItem('rvx_app_configs', JSON.stringify(STATE.appConfigs));
   } catch (_) {}
 }
 
@@ -506,9 +570,23 @@ function isAppConfigured(pkgId) {
 
 function resetAllAppConfigs() {
   STATE.appConfigs = {};
-  localStorage.removeItem('rvx_app_configs');
-  localStorage.removeItem('rvx_setup_completed');
+  RVX_STORAGE.local.removeItem('rvx_app_configs');
+  RVX_STORAGE.local.removeItem('rvx_setup_completed');
   STATE.setupCompleted = false;
+}
+
+function resetBrowserPatchState() {
+  STATE.selectedApkFile = null;
+  STATE.browserDownloadPlan = null;
+  STATE.pendingDownloadPlan = null;
+  STATE.browserPatchAbortController?.abort();
+  STATE.browserPatchAbortController = null;
+  const input = document.getElementById('inputBrowserApk');
+  if (input) input.value = '';
+  const panel = document.getElementById('browserApkInputPanel');
+  panel?.classList.remove('is-ready');
+  const status = document.getElementById('browserApkInputStatus');
+  if (status) status.textContent = 'Pilih APK yang versinya sesuai dengan konfigurasi.';
 }
 
 // Initialize loaded app configs

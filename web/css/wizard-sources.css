@@ -4,6 +4,108 @@
    ========================================================================== */
 
 /* Step 2 Section Groups */
+.catalog-health-notice {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(251, 191, 36, 0.22);
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.07);
+}
+
+.catalog-health-notice[hidden] { display: none; }
+
+.catalog-health-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.catalog-health-copy strong {
+  color: #FCD34D;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.catalog-health-copy span {
+  color: #AAB4C4;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.catalog-health-retry {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  border: 1px solid rgba(251, 191, 36, 0.24);
+  border-radius: 7px;
+  background: rgba(245, 158, 11, 0.1);
+  color: #FDE68A;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.catalog-health-retry:disabled { opacity: 0.6; cursor: wait; }
+
+.wizard-app-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+.wizard-app-search-wrap {
+  min-width: 0;
+  flex: 1;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 11px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 10px;
+  background: rgba(15, 17, 23, 0.76);
+  color: #94A3B8;
+  transition: border-color .18s ease, background .18s ease;
+}
+
+.wizard-app-search-wrap:focus-within {
+  border-color: rgba(59, 130, 246, .72);
+  background: rgba(15, 17, 23, .96);
+}
+
+.wizard-app-search-wrap svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.wizard-app-search-wrap input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #E2E8F0;
+  font: inherit;
+  font-size: 12px;
+}
+
+.wizard-app-search-wrap input::placeholder { color: #788397; }
+
+.wizard-app-count {
+  flex: 0 0 auto;
+  color: #8290A4;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
 .step2-group {
   display: flex;
   flex-direction: column;
@@ -179,6 +281,9 @@
   flex-direction: column;
   border-radius: 18px;
   overflow: hidden;
+  background: #161820;
+  border: 1px solid var(--morphe-border-strong);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
 }
 
 .tag-picker-search-bar {
@@ -840,3 +945,4 @@
 }
 
 
+@import "wizard-selection.css?v=2.1.24";

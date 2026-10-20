@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use crate::utils::run_shell_command;
+use std::path::PathBuf;
 
 const PKG_NAME: &str = "com.google.android.youtube";
 
@@ -14,7 +14,9 @@ pub async fn run_uninstall(modpath: PathBuf) -> anyhow::Result<()> {
                 if parts.len() >= 2 {
                     let mount_point = parts[1];
                     println!("  Unmounting: {}", mount_point);
-                    let _ = run_shell_command(&format!("umount -l \"{}\" 2>/dev/null", mount_point)).await;
+                    let _ =
+                        run_shell_command(&format!("umount -l \"{}\" 2>/dev/null", mount_point))
+                            .await;
                 }
             }
         }

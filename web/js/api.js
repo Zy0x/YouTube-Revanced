@@ -1,121 +1,71 @@
-/**
- * YouTube RVX — API & Data Orchestration
- * Version: 2.1.15
- */
-
-function initSecurity() {
-  const statusText = document.getElementById('authStatusText');
-  if (STATE.authToken) {
-    verifyGithubToken(STATE.authToken);
-  } else if (statusText) {
-    statusText.textContent = 'Guest';
-  }
-}
-
-async function verifyGithubToken(token) {
-  const statusText = document.getElementById('authStatusText');
-  try {
-    const res = await fetch('https://api.github.com/user', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github.v3+json'
-      }
-    });
-    if (res.ok) {
-      const user = await res.json();
-      STATE.authUser = user.login;
-      if (statusText) statusText.textContent = `@${user.login}`;
-      return true;
-    }
-  } catch (_) {}
-  if (statusText) statusText.textContent = 'Invalid';
-  return false;
-}
-
-async function fetchManifestWithFallback(url) {
-  if (!url) throw new Error('Manifest URL is missing');
-  const urlsToTry = [url];
-
-  if (url.includes('raw.githubusercontent.com')) {
-    urlsToTry.unshift(
-      url
-        .replace('https://raw.githubusercontent.com/', 'https://cdn.jsdelivr.net/gh/')
-        .replace('/refs/heads/', '@')
-    );
-  }
-
-  // Fallback between patches-list.json and patches.json
-  if (url.includes('patches-list.json')) {
-    urlsToTry.push(url.replace('patches-list.json', 'patches.json'));
-    urlsToTry.push(
-      url.replace('patches-list.json', 'patches.json')
-        .replace('https://raw.githubusercontent.com/', 'https://cdn.jsdelivr.net/gh/')
-        .replace('/refs/heads/', '@')
-    );
-  } else if (url.includes('patches.json')) {
-    urlsToTry.push(url.replace('patches.json', 'patches-list.json'));
-    urlsToTry.push(
-      url.replace('patches.json', 'patches-list.json')
-        .replace('https://raw.githubusercontent.com/', 'https://cdn.jsdelivr.net/gh/')
-        .replace('/refs/heads/', '@')
-    );
-  }
-
-  for (const targetUrl of urlsToTry) {
-    try {
-      const res = await fetch(targetUrl);
-      if (res.ok) {
-        const json = await res.json();
-        if (json && (Array.isArray(json) || json.patches)) {
-          return json;
-        }
-      }
-    } catch (_) {}
-  }
-  throw new Error(`Failed to reach patch source (${url})`);
-}
-
-async function fetchJsonSafe(url) {
-  try {
-    const res = await fetch(url);
-    if (res.ok) return await res.json();
-  } catch (_) {}
-  return null;
-}
-
 async function loadSourcesAndPresets() {
-  const [sourcesData, presetData, versionsData] = await Promise.all([
+  if (!window.__rvxRegistrySyncBound) {
+    window.__rvxRegistrySyncBound = true;
+    window.addEventListener('rvx:registry-updated', event => {
+      applyRegistryCatalogUpdate(event.detail);
+    });
+  }
+
+  const [sourcesData, presetData, registryData] = await Promise.all([
     fetchJsonSafe('config/sources.json'),
     fetchJsonSafe('config/golden-preset.json'),
-    fetchJsonSafe('config/youtube-versions.json')
+    loadRegistryCatalogCached()
   ]);
 
   const persisted = loadPersistedSources();
-  if (Array.isArray(sourcesData) && sourcesData.length > 0) {
-    sourcesData.forEach(def => {
-      const idx = persisted.findIndex(s => s.id === def.id);
-      if (idx === -1) {
-        persisted.push(def);
-      } else {
-        persisted[idx] = { ...def, ...persisted[idx] };
-      }
+  const configuredIds = new Set((Array.isArray(sourcesData) ? sourcesData : DEFAULT_SOURCES).map(source => source.id));
+  const installedSources = (Array.isArray(sourcesData) && sourcesData.length ? sourcesData : DEFAULT_SOURCES)
+    .map(def => {
+      const saved = persisted.find(source => source.id === def.id);
+      const merged = { ...saved, ...def, isPreinstalled: true };
+      delete merged.fallbackTags;
+      return merged;
     });
+  // Built-in sources are defined by config; keep user-added sources from local storage.
+  const retiredBuiltinIds = new Set(['revanced', 'j-hc', 'cuynu', 'inotia00', 'yt-advanced']);
+  const customSources = persisted.filter(source =>
+    !source.isPreinstalled && !source.isDiscovered && !configuredIds.has(source.id) && !retiredBuiltinIds.has(source.id)
+  );
+  const baseSources = [...installedSources, ...customSources];
+  STATE.sources = mergeRegistryCatalogSources(baseSources, registryData);
+  STATE.registryApps = getCachedRegistryAppMetadata(registryData?.apps);
+  if (STATE.currentSource && !STATE.sources.some(source => source.id === STATE.currentSource)) {
+    STATE.currentSource = null;
   }
-
-  STATE.sources = persisted;
   savePersistedSources(STATE.sources);
 
   if (presetData) STATE.goldenPreset = presetData;
-  if (Array.isArray(versionsData) && versionsData.length > 0) {
-    STATE.catalogVersions = versionsData;
+  STATE.sourceManifestCache = {};
+  STATE.sourceManifestCacheKey = {};
+  STATE.sourceManifestLoadToken = {};
+  STATE.sourceManifestStatus = {};
+  STATE.sourceReleases = {};
+  STATE.sources.forEach(source => {
+    if (!Array.isArray(source.registryPackages)) return;
+    STATE.sourceManifestStatus[source.id] = {
+      status: 'ready',
+      packageNames: new Set(source.registryPackages)
+    };
+    if (source.catalogRelease) {
+      STATE.sourceReleases[source.id] = [source.catalogRelease];
+      source.releaseStatus = 'catalog';
+    }
+  });
+  // Manifests and release histories are loaded only when a source is selected.
+  // The verified registry package index is enough to build the initial catalog.
+  STATE.sources.forEach(source => refreshSourceBundleAvailability(source));
+  if (STATE.currentSource && !STATE.sources.some(source => source.id === STATE.currentSource && source.bundleStatus === 'ready')) {
+    STATE.currentSource = null;
   }
+  STATE.availableApps = getAllSupportedApps();
+  setTimeout(() => { refreshRegistryAppMetadata(); }, 0);
 
-  renderSourceCards();
-  const currentSrcConfig = STATE.sources.find(s => s.id === STATE.currentSource) || STATE.sources[0];
-  await loadPatchReleases(currentSrcConfig);
+  const currentSrcConfig = STATE.sources.find(s => s.id === STATE.currentSource);
+  if (currentSrcConfig) await loadPatchReleases(currentSrcConfig, false);
 }
 
 function getSourceDisplayName(srcId) {
+  if (!srcId) return 'Belum dipilih';
   const found = STATE.sources.find(s => s.id === srcId);
   if (!found) return capitalize(srcId);
   return (found.name || found.id)
@@ -127,17 +77,88 @@ function getSourceDisplayName(srcId) {
 }
 
 async function selectPatchSource(sourceId) {
+  const srcObj = STATE.sources.find(source => source.id === sourceId);
+  if (!srcObj) return false;
+
+  const token = ++STATE.channelLoadToken;
+  STATE.channelLoading = true;
   STATE.currentSource = sourceId;
-  localStorage.setItem('rvx_active_source', sourceId);
+  STATE.patchTag = '';
+  STATE.selectedRelease = null;
+  STATE.patchReleases = [];
+  STATE.allManifestPatches = [];
+  STATE.patches = [];
+  STATE.availableVersions = [];
+  STATE.sourceVersions = [];
+  STATE.recommendedVersion = '';
+  STATE.currentVersion = '';
+  resetBrowserPatchState();
+  STATE.showAllVersions = false;
+  resetOtherVersionCatalog();
+  STATE.selectedPatches.clear();
+  RVX_STORAGE.local.setItem('rvx_active_source', sourceId);
   renderSourceCards();
-  const srcObj = STATE.sources.find(s => s.id === sourceId) || STATE.sources[0];
-  await loadPatchReleases(srcObj);
-  await fetchAndRenderPatches(sourceId);
+  if (typeof renderWizardSourceStep === 'function') renderWizardSourceStep();
+
+  // Source selection loads only its release list. Exact patch metadata is
+  // requested after the user chooses a channel, matching the wizard data flow.
+  await loadPatchReleases(srcObj, false, token);
+  if (token !== STATE.channelLoadToken || STATE.currentSource !== sourceId) return false;
+  STATE.patchTag = '';
+  STATE.preReleasePatches = false;
+  STATE.channelLoading = false;
+  refreshSourceBundleAvailability(srcObj);
   syncAllSummaries();
+  if (typeof renderWizardSourceStep === 'function') renderWizardSourceStep();
   if (STATE.uiMode === 'tui') renderTuiView();
+  return true;
 }
 
-async function loadPatchReleases(sourceConfig) {
+async function selectPatchChannel(tagValue, preRelease = null) {
+  const sourceId = STATE.currentSource;
+  const sourceConfig = STATE.sources.find(source => source.id === sourceId);
+  const tag = String(tagValue || '').trim();
+  if (!sourceConfig || !tag) return false;
+
+  const token = ++STATE.channelLoadToken;
+  STATE.channelLoading = true;
+  STATE.patchTag = tag;
+  STATE.selectedRelease = getSelectedSourceRelease(sourceConfig, tag);
+  STATE.preReleasePatches = preRelease === null
+    ? tag === 'dev' || tag === 'prerelease'
+    : Boolean(preRelease);
+  STATE.allManifestPatches = [];
+  STATE.patches = [];
+  STATE.availableVersions = [];
+  STATE.sourceVersions = [];
+  STATE.recommendedVersion = '';
+  STATE.currentVersion = '';
+  resetBrowserPatchState();
+  STATE.showAllVersions = false;
+  resetOtherVersionCatalog();
+  STATE.selectedPatches.clear();
+  refreshSourceBundleAvailability(sourceConfig, tag);
+  syncAllSummaries();
+  if (typeof renderWizardSourceStep === 'function') renderWizardSourceStep();
+
+  // The cache key already includes the exact source bundle/tag. Reusing it
+  // makes returning to a release instant without mixing data across sources.
+  try {
+    const ready = await fetchAndRenderPatches(sourceId, false, { token, tag });
+    if (token !== STATE.channelLoadToken || STATE.currentSource !== sourceId || STATE.patchTag !== tag) {
+      return false;
+    }
+    return ready;
+  } finally {
+    if (token === STATE.channelLoadToken) {
+      STATE.channelLoading = false;
+      syncAllSummaries();
+      if (typeof renderWizardSourceStep === 'function') renderWizardSourceStep();
+    }
+  }
+}
+
+async function loadPatchReleases(sourceConfig, refreshAppUi = true, selectionToken = null) {
   if (!sourceConfig) return;
   const repo = sourceConfig.repository || '';
   const select = document.getElementById('selectPatchRelease');
@@ -145,86 +166,89 @@ async function loadPatchReleases(sourceConfig) {
   const versionEl = document.getElementById('sourceSheetVersion');
   if (!select) return;
 
-  if (repo && repo.includes('/')) {
+  if ((repo && repo.includes('/')) || sourceConfig.registryBundleId) {
     try {
-      const headers = { 'Accept': 'application/vnd.github.v3+json' };
-      if (STATE.authToken) headers['Authorization'] = `Bearer ${STATE.authToken}`;
-      const res = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=10`, { headers });
-      if (res.ok) {
-        const releases = await res.json();
-        STATE.patchReleases = releases;
-        const latestPre = releases.find(r => r.prerelease);
-        const latestStable = releases.find(r => !r.prerelease);
+      const releases = await loadSourceReleaseList(sourceConfig);
+      if (selectionToken !== null
+        && (selectionToken !== STATE.channelLoadToken || STATE.currentSource !== sourceConfig.id)) return false;
+      const bundleReleases = releases.filter(release => sourceReleaseBundleAsset(sourceConfig, release));
+      if (bundleReleases.length > 0) {
+        STATE.patchReleases = bundleReleases;
+        const latestPre = bundleReleases.find(r => r.prerelease && !r.draft);
+        const latestStable = bundleReleases.find(r => !r.prerelease && !r.draft);
 
-        select.innerHTML = '';
-        const optDev = document.createElement('option');
-        optDev.value = 'dev';
-        optDev.textContent = `Pre-release / Dev ${latestPre ? `(${latestPre.tag_name})` : ''}`;
-        if (STATE.preReleasePatches || sourceConfig.defaultReleaseType === 'dev' || !latestStable) {
-          optDev.selected = true;
+        select.innerHTML = '<option value="" selected disabled>Pilih saluran atau tag rilis</option>';
+        if (latestPre) {
+          const optDev = document.createElement('option');
+          optDev.value = 'dev';
+          optDev.textContent = `Pre-release / Dev (${latestPre.tag_name})`;
+          select.appendChild(optDev);
         }
-        select.appendChild(optDev);
 
-        const optStable = document.createElement('option');
-        optStable.value = 'latest';
-        optStable.textContent = `Stable / Official ${latestStable ? `(${latestStable.tag_name})` : ''}`;
-        if (!STATE.preReleasePatches && latestStable) {
-          optStable.selected = true;
+        if (latestStable) {
+          const optStable = document.createElement('option');
+          optStable.value = 'latest';
+          optStable.textContent = `Stable / Official (${latestStable.tag_name})`;
+          select.appendChild(optStable);
         }
-        select.appendChild(optStable);
 
         // Populate individual releases as well
-        releases.slice(0, 8).forEach(rel => {
+        bundleReleases.slice(0, 10).forEach(rel => {
           const opt = document.createElement('option');
           opt.value = rel.tag_name;
           opt.textContent = `${rel.name || rel.tag_name} (${rel.prerelease ? 'Pre' : 'Stable'})`;
           select.appendChild(opt);
         });
 
+        select.value = '';
+        STATE.patchTag = '';
+        STATE.preReleasePatches = false;
+
         // Mirror to wizard select if exists
         const wizSelect = document.getElementById('wizardPatchReleaseSelect');
         if (wizSelect) {
           wizSelect.innerHTML = select.innerHTML;
-          wizSelect.value = select.value;
+          wizSelect.value = '';
         }
 
-        const activeTag = select.value === 'dev' ? (latestPre?.tag_name || 'dev') : (latestStable?.tag_name || 'latest');
-        if (hint) hint.textContent = `${repo} • ${activeTag}`;
-        if (versionEl) versionEl.textContent = activeTag;
-        STATE.patchTag = select.value;
+        if (hint) hint.textContent = `${repo} • ${bundleReleases.length} rilis tersedia`;
+        if (versionEl) versionEl.textContent = 'Pilih rilis';
+        refreshSourceBundleAvailability(sourceConfig);
+        STATE.availableApps = getAllSupportedApps();
+        if (refreshAppUi && typeof renderWizardAppStep === 'function') renderWizardAppStep();
         if (typeof renderWizardReleaseStudio === 'function') renderWizardReleaseStudio();
-        return;
+        return true;
       }
     } catch (_) {}
   }
 
-  // Fallback to source pre-configured fallback tags if available
-  if (Array.isArray(sourceConfig.fallbackTags) && sourceConfig.fallbackTags.length > 0) {
-    STATE.patchReleases = sourceConfig.fallbackTags;
-  }
+  if (selectionToken !== null
+    && (selectionToken !== STATE.channelLoadToken || STATE.currentSource !== sourceConfig.id)) return false;
+  STATE.patchReleases = [];
 
-  select.innerHTML = `
-    <option value="dev" ${STATE.preReleasePatches ? 'selected' : ''}>Pre-release / Dev</option>
-    <option value="latest" ${!STATE.preReleasePatches ? 'selected' : ''}>Stable / Official</option>
-  `;
+  select.innerHTML = '<option value="">Tidak ada rilis yang tersedia</option>';
   const wizSelect = document.getElementById('wizardPatchReleaseSelect');
   if (wizSelect) {
     wizSelect.innerHTML = select.innerHTML;
   }
-  const defaultTag = STATE.preReleasePatches ? 'dev' : 'latest';
-  if (hint) hint.textContent = repo || 'Custom URL';
-  if (versionEl) versionEl.textContent = defaultTag;
-  STATE.patchTag = select.value;
+  if (hint) hint.textContent = 'Tidak ada data rilis dari sumber ini';
+  if (versionEl) versionEl.textContent = '—';
+  STATE.patchTag = '';
+  sourceConfig.bundleUrl = null;
+  sourceConfig.bundleStatus = 'missing';
+  STATE.availableApps = getAllSupportedApps();
+  if (refreshAppUi && typeof renderWizardAppStep === 'function') renderWizardAppStep();
   if (typeof renderWizardReleaseStudio === 'function') renderWizardReleaseStudio();
+  return false;
 }
 
 function classifyVersion(verStr) {
-  if (!verStr) return { label: 'Stable', badgeClass: 'badge-stable' };
+  if (!verStr) return { label: 'Stabil', badgeClass: 'badge-stable' };
   const v = String(verStr).toLowerCase();
   if (v.includes('alpha')) return { label: 'Alpha', badgeClass: 'badge-alpha' };
   if (v.includes('beta') || v.includes('-b') || v.includes('.b')) return { label: 'Beta', badgeClass: 'badge-beta' };
-  if (v.includes('rc') || v.includes('pre') || v.includes('dev')) return { label: 'Pre-release', badgeClass: 'badge-pre' };
-  return { label: 'Stable', badgeClass: 'badge-stable' };
+  if (v.includes('rc') || v.includes('pre') || v.includes('dev')) return { label: 'Pra-rilis', badgeClass: 'badge-pre' };
+  return { label: 'Stabil', badgeClass: 'badge-stable' };
 }
 
 async function triggerSilentDeveloperDispatch({ token, repo, branch, eventType, payload }) {
@@ -265,7 +289,7 @@ function extractSupportedApps(rawList) {
     if (Array.isArray(compat)) {
       compat.forEach(entry => {
         if (!entry) return;
-        const pkgId = typeof entry === 'string' ? entry : (entry.packageName || entry.name || '');
+        const pkgId = normalizePackageId(typeof entry === 'string' ? entry : (entry.packageName || entry.name || ''));
         const pkgName = typeof entry === 'object' ? (entry.name || entry.packageName) : entry;
         if (!pkgId) return;
 
@@ -275,11 +299,13 @@ function extractSupportedApps(rawList) {
             ...meta,
             packageName: pkgId,
             patchCount: 0,
+            patchNames: new Set(),
             versions: new Set()
           });
         }
         const appObj = appMap.get(pkgId);
         appObj.patchCount++;
+        if (patch.name) appObj.patchNames.add(String(patch.name));
 
         if (entry.targets && Array.isArray(entry.targets)) {
           entry.targets.forEach(t => {
@@ -290,7 +316,8 @@ function extractSupportedApps(rawList) {
         }
       });
     } else if (typeof compat === 'object') {
-      Object.entries(compat).forEach(([pkgId, versions]) => {
+      Object.entries(compat).forEach(([rawPkgId, versions]) => {
+        const pkgId = normalizePackageId(rawPkgId);
         if (!pkgId) return;
         if (!appMap.has(pkgId)) {
           const meta = resolveAppMeta(pkgId);
@@ -298,11 +325,13 @@ function extractSupportedApps(rawList) {
             ...meta,
             packageName: pkgId,
             patchCount: 0,
+            patchNames: new Set(),
             versions: new Set()
           });
         }
         const appObj = appMap.get(pkgId);
         appObj.patchCount++;
+        if (patch.name) appObj.patchNames.add(String(patch.name));
         if (Array.isArray(versions)) {
           versions.forEach(v => appObj.versions.add(String(v).trim()));
         }
@@ -316,38 +345,14 @@ function extractSupportedApps(rawList) {
     ).reverse();
     return {
       ...app,
+      patchCount: app.patchNames.size || app.patchCount,
+      patchNames: Array.from(app.patchNames),
       availableVersionsCount: sortedVersions.length,
-      recommendedVersion: sortedVersions[0] || (app.packageName === 'com.google.android.youtube' ? '21.13.164' : 'latest')
+      recommendedVersion: sortedVersions[0] || ''
     };
   });
 
-  const priorityOrder = [
-    'com.google.android.youtube',
-    'com.google.android.apps.youtube.music',
-    'com.reddit.frontpage',
-    'com.twitter.android',
-    'com.zhiliaoapp.musically'
-  ];
-
-  appList.sort((a, b) => {
-    const idxA = priorityOrder.indexOf(a.packageName);
-    const idxB = priorityOrder.indexOf(b.packageName);
-    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-    if (idxA !== -1) return -1;
-    if (idxB !== -1) return 1;
-    return a.name.localeCompare(b.name);
-  });
-
-  if (appList.length === 0) {
-    const defaultMeta = resolveAppMeta('com.google.android.youtube');
-    appList.push({
-      ...defaultMeta,
-      packageName: 'com.google.android.youtube',
-      patchCount: rawList.length,
-      availableVersionsCount: 4,
-      recommendedVersion: '21.13.164'
-    });
-  }
+  appList.sort(compareAppsByPriority);
 
   return appList;
 }
@@ -377,78 +382,117 @@ function filterPatchesForApp(patches, pkgName) {
   });
 }
 
+function getPatchVersionCompatibility(patch, pkgName) {
+  const compat = patch?.compatiblePackages;
+  const versions = new Set();
+
+  if (!compat || (Array.isArray(compat) && compat.length === 0)) {
+    return { matches: true, unrestricted: true, versions };
+  }
+
+  const collectVersions = value => {
+    if (Array.isArray(value)) {
+      value.forEach(entry => {
+        const version = typeof entry === 'string' ? entry : entry?.version;
+        if (version) versions.add(String(version).trim());
+      });
+      return value.length > 0;
+    }
+    if (value && typeof value === 'object') {
+      const targets = Array.isArray(value.targets) ? value.targets : [];
+      const listed = Array.isArray(value.versions) ? value.versions : [];
+      collectVersions([...targets, ...listed]);
+      return targets.length > 0 || listed.length > 0;
+    }
+    return false;
+  };
+
+  if (!Array.isArray(compat) && typeof compat === 'object') {
+    const keys = Object.keys(compat);
+    if (keys.length === 0) return { matches: true, unrestricted: true, versions };
+    if (!Object.prototype.hasOwnProperty.call(compat, pkgName)) {
+      return { matches: false, unrestricted: false, versions };
+    }
+    const restricted = collectVersions(compat[pkgName]);
+    return { matches: true, unrestricted: !restricted, versions };
+  }
+
+  let matches = false;
+  let unrestricted = false;
+  compat.forEach(entry => {
+    if (!entry) return;
+    if (typeof entry === 'string') {
+      const entryId = normalizePackageId(entry);
+      if (entryId === pkgName || KNOWN_APP_METADATA[pkgName]?.name.toLowerCase() === entry.toLowerCase()) {
+        matches = true;
+        unrestricted = true;
+      }
+      return;
+    }
+
+    const entryId = normalizePackageId(entry.packageName || entry.name || '');
+    const appNameMatches = KNOWN_APP_METADATA[pkgName]?.name.toLowerCase() === String(entry.name || '').toLowerCase();
+    if (entryId !== pkgName && !appNameMatches) return;
+
+    matches = true;
+    const restricted = collectVersions({ targets: entry.targets, versions: entry.versions });
+    if (!restricted) unrestricted = true;
+  });
+
+  return { matches, unrestricted, versions };
+}
+
+function patchSupportsAppVersion(patch, pkgName, version) {
+  const compatibility = getPatchVersionCompatibility(patch, pkgName);
+  return compatibility.matches && (compatibility.unrestricted || compatibility.versions.has(String(version).trim()));
+}
+
 function extractVersionsForApp(patches, pkgName) {
   const manifestVersions = new Set();
   patches.forEach(p => {
-    const compat = p.compatiblePackages;
-    if (!compat) return;
-    if (typeof compat === 'object' && !Array.isArray(compat)) {
-      if (Array.isArray(compat[pkgName])) {
-        compat[pkgName].forEach(v => manifestVersions.add(String(v).trim()));
-      }
-    } else if (Array.isArray(compat)) {
-      compat.forEach(entry => {
-        if (!entry) return;
-        const matches = typeof entry === 'string'
-          ? (entry === pkgName || KNOWN_APP_METADATA[pkgName]?.name.toLowerCase() === entry.toLowerCase())
-          : (entry.packageName === pkgName || entry.name === pkgName ||
-             KNOWN_APP_METADATA[pkgName]?.name.toLowerCase() === (entry.name || '').toLowerCase());
-
-        if (matches) {
-          if (Array.isArray(entry.targets)) {
-            entry.targets.forEach(t => t?.version && manifestVersions.add(String(t.version).trim()));
-          } else if (Array.isArray(entry.versions)) {
-            entry.versions.forEach(v => manifestVersions.add(String(v).trim()));
-          }
-        }
-      });
-    }
+    const compatibility = getPatchVersionCompatibility(p, pkgName);
+    compatibility.versions.forEach(version => manifestVersions.add(version));
   });
 
   const sortedManifest = Array.from(manifestVersions)
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
     .reverse();
 
-  const recommended = sortedManifest[0] || (pkgName === 'com.google.android.youtube' ? '21.13.164' : 'latest');
   const versionsMap = new Map();
 
   sortedManifest.forEach(ver => {
     versionsMap.set(ver, {
       version: ver,
-      isRecommended: ver === recommended,
       isManifest: true
     });
   });
 
-  if (pkgName === 'com.google.android.youtube') {
-    const catalog = (STATE.catalogVersions && STATE.catalogVersions.length > 0)
-      ? STATE.catalogVersions
-      : FALLBACK_YOUTUBE_VERSIONS;
-
-    catalog.forEach(item => {
-      const ver = typeof item === 'string' ? item : item.version;
-      if (!ver) return;
-      if (!versionsMap.has(ver)) {
-        versionsMap.set(ver, {
-          version: ver,
-          isRecommended: ver === recommended,
-          isManifest: manifestVersions.has(ver)
-        });
-      }
-    });
-  }
-
-  const allVersions = Array.from(versionsMap.values()).sort((a, b) => {
-    if (a.isRecommended !== b.isRecommended) return a.isRecommended ? -1 : 1;
+  const totalPatchCount = patches.length;
+  const allVersions = Array.from(versionsMap.values()).map(item => {
+    const supportedPatchCount = patches.reduce((count, patch) =>
+      count + (patchSupportsAppVersion(patch, pkgName, item.version) ? 1 : 0), 0);
+    return {
+      ...item,
+      supportedPatchCount,
+      totalPatchCount,
+      supportPercent: totalPatchCount > 0 ? Math.round((supportedPatchCount / totalPatchCount) * 100) : 0
+    };
+  }).sort((a, b) => {
+    if (a.supportedPatchCount !== b.supportedPatchCount) return b.supportedPatchCount - a.supportedPatchCount;
     if (a.isManifest !== b.isManifest) return a.isManifest ? -1 : 1;
     return b.version.localeCompare(a.version, undefined, { numeric: true, sensitivity: 'base' });
+  });
+
+  const recommended = allVersions[0]?.version || '';
+  allVersions.forEach(item => {
+    item.isRecommended = item.version === recommended && item.supportedPatchCount > 0;
   });
 
   return { allVersions, recommendedVersion: recommended };
 }
 
 function selectApp(pkgId) {
-  const foundApp = STATE.availableApps.find(a => a.packageName === pkgId) || STATE.availableApps[0];
+  const foundApp = STATE.availableApps.find(a => a.packageName === pkgId);
   if (!foundApp) return;
 
   STATE.currentApp = foundApp;
@@ -456,13 +500,19 @@ function selectApp(pkgId) {
   STATE.patches = appPatches;
 
   const { allVersions, recommendedVersion } = extractVersionsForApp(appPatches, foundApp.packageName);
-  STATE.availableVersions = allVersions;
+  STATE.sourceVersions = allVersions.filter(item => Number(item.supportedPatchCount || 0) > 0);
+  STATE.availableVersions = STATE.sourceVersions;
   STATE.recommendedVersion = recommendedVersion;
-  STATE.currentVersion = recommendedVersion;
+  STATE.currentVersion = '';
+  resetBrowserPatchState();
+  STATE.selectedExternalVersion = null;
+  resetOtherVersionCatalog();
+  STATE.showAllVersions = false;
+  STATE.patchSearchQuery = '';
+  STATE.patchListFilter = 'all';
 
   STATE.selectedPatches.clear();
   appPatches.forEach(p => {
-    if (p.use !== false && p.default !== false) STATE.selectedPatches.add(p.name);
     if (Array.isArray(p.options)) {
       p.options.forEach(opt => {
         if (opt.key && opt.default !== undefined && STATE.selectedOptions[opt.key] === undefined) {
@@ -472,10 +522,6 @@ function selectApp(pkgId) {
     }
   });
 
-  if (foundApp.packageName === 'com.google.android.youtube' && STATE.goldenPreset) {
-    applyGoldenPresetStateOnly();
-  }
-
   renderAppCards();
   renderVersionSelector();
   renderMorphePatchList();
@@ -484,40 +530,41 @@ function selectApp(pkgId) {
   if (STATE.uiMode === 'tui') renderTuiView();
 }
 
-async function fetchAndRenderPatches(sourceId) {
+async function fetchAndRenderPatches(sourceId, force = false, requestContext = null) {
   const patchContainer = document.getElementById('patchCategoriesContainer');
   if (patchContainer) {
     patchContainer.innerHTML = '<div class="morphe-spinner"></div>';
   }
 
-  const sourceConfig = STATE.sources.find(s => s.id === sourceId) || STATE.sources[0] || DEFAULT_SOURCES[0];
+  const sourceConfig = STATE.sources.find(s => s.id === sourceId);
+  if (!sourceConfig || STATE.currentSource !== sourceId) return false;
 
   try {
-    const data = await fetchManifestWithFallback(sourceConfig.manifestUrl);
-    const rawList = Array.isArray(data) ? data : (data.patches || []);
+    const rawList = await loadSourceManifest(sourceConfig, force);
+    if (requestContext && (
+      requestContext.token !== STATE.channelLoadToken
+      || STATE.currentSource !== sourceId
+      || STATE.patchTag !== requestContext.tag
+    )) return false;
+    if (!rawList) throw new Error(STATE.sourceManifestStatus[sourceId]?.error || 'Manifest sumber tidak dapat diverifikasi');
+    if (STATE.currentSource !== sourceId) return false;
     STATE.allManifestPatches = rawList;
 
     const manifestApps = extractSupportedApps(rawList);
-    const masterApps = typeof getAllSupportedApps === 'function' ? getAllSupportedApps() : (STATE.availableApps || []);
-    manifestApps.forEach(mApp => {
-      const idx = masterApps.findIndex(a => a.packageName === mApp.packageName);
-      if (idx !== -1) {
-        masterApps[idx] = { ...masterApps[idx], ...mApp };
-      } else {
-        masterApps.push(mApp);
-      }
-    });
-    STATE.availableApps = masterApps;
+    STATE.availableApps = getAllSupportedApps();
 
-    const curPkg = STATE.currentApp?.packageName || 'com.google.android.youtube';
-    const exists = STATE.availableApps.find(a => a.packageName === curPkg);
-    const initialPkg = exists ? exists.packageName : STATE.availableApps[0].packageName;
+    const curPkg = STATE.currentApp?.packageName || '';
+    const exists = manifestApps.find(a => a.packageName === curPkg);
+    const initialPkg = exists?.packageName;
+    if (!initialPkg) throw new Error('Sumber ini tidak kompatibel dengan aplikasi yang dipilih');
 
     selectApp(initialPkg);
+    return true;
   } catch (err) {
     if (patchContainer) {
       patchContainer.innerHTML = `<div class="morphe-alert text-danger">Failed to load patches: ${escapeHtml(err.message)}</div>`;
     }
+    return false;
   }
 }
 
@@ -568,7 +615,7 @@ function applyGoldenPreset() {
   if (STATE.uiMode === 'tui') renderTuiView();
 }
 
-function exportPreset() {
+async function exportPreset() {
   const allPatchNames = STATE.patches.map(p => p.name);
   const excludedPatches = allPatchNames.filter(name => !STATE.selectedPatches.has(name));
   const includedPatches = Array.from(STATE.selectedPatches);
@@ -589,14 +636,11 @@ function exportPreset() {
   };
 
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `rvx-preset-${appAlias}-${STATE.currentSource}-${STATE.currentVersion}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  await rvxSaveBlob(
+    blob,
+    `rvx-preset-${appAlias}-${STATE.currentSource}-${STATE.currentVersion}.json`,
+    'application/json'
+  );
 }
 
 function importPreset(file) {
@@ -643,38 +687,101 @@ function importPreset(file) {
 }
 
 async function checkDaemonStatus() {
-  const candidatePorts = [8088, 8089, 8090, 8280, 8080];
-  const urlsToTest = [''];
-  candidatePorts.forEach((p) => {
-    urlsToTest.push(`http://127.0.0.1:${p}`);
-    urlsToTest.push(`http://localhost:${p}`);
-  });
-
-  for (const url of urlsToTest) {
+  STATE.runtimeCapabilities = await rvxDetectCapabilities();
+  if (!window.RVX_RUNTIME?.allowsNativeBridge) {
+    STATE.daemonOnline = false;
+    STATE.daemonUrl = '';
+    STATE.daemonStatus = null;
+    STATE.deviceAccessMode = window.RVX_RUNTIME?.isStandalone ? 'standalone-browser' : 'hosted-browser';
+    setEngineMode('browser');
     try {
-      const res = await fetch(`${url}/api/v1/system/status`, { signal: AbortSignal.timeout(1200) });
-      if (res.ok) {
-        const data = await res.json();
-        // Ensure this is our RVX Daemon and not another server (e.g. Lynx Kernel Manager)
-        if (data && (data.jre_ready !== undefined || data.daemon_version !== undefined)) {
-          STATE.daemonOnline = true;
-          STATE.daemonUrl = url;
-          STATE.daemonVersion = data.daemon_version || '2.1.13';
-          setEngineMode('local');
-          return;
-        }
-      }
-    } catch (_) {}
+      STATE.portableEngineManifest = await RVX_LOCAL_ENGINE.loadManifest();
+    } catch (_) {
+      STATE.portableEngineManifest = null;
+    }
+    return false;
   }
-  STATE.daemonOnline = false;
-  STATE.daemonUrl = '';
-  setEngineMode('cloud');
+
+  try {
+    // Root WebUI talks only to its own origin. Hosted pages and file:// pages
+    // never scan loopback ports or request a native session.
+    const res = await fetch('/api/v1/system/status', { signal: rvxTimeoutSignal(1600) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data || data.web_runtime !== 'local-daemon') throw new Error('Bukan RVX Root WebUI');
+    STATE.daemonOnline = true;
+    STATE.daemonUrl = '';
+    STATE.daemonVersion = data.daemon_version || '2.1.30';
+    STATE.daemonStatus = data;
+    STATE.deviceAccessMode = data.access_mode || 'root-integrated';
+    await ensureDaemonSession('');
+    setEngineMode('local');
+    return true;
+  } catch (_) {
+    STATE.daemonOnline = false;
+    STATE.daemonUrl = '';
+    STATE.daemonStatus = null;
+    STATE.deviceAccessMode = 'root-helper-unavailable';
+    setEngineMode('browser');
+    return false;
+  }
+}
+
+async function loadDaemonSessionInfo() {
+  const codeEl = document.getElementById('infoPairingCode');
+  const hintEl = document.getElementById('infoPairingHint');
+  if (!codeEl) return;
+
+  if (!STATE.daemonOnline) {
+    const standalone = Boolean(window.RVX_RUNTIME?.isStandalone);
+    codeEl.textContent = standalone ? 'HTML lokal' : 'Browser lokal';
+    if (hintEl) hintEl.textContent = standalone
+      ? 'Tidak ada pairing. Metadata, APK, cache, dan konfigurasi tetap berada di browser perangkat ini.'
+      : 'Tidak ada pairing atau akses localhost. Patching berjalan lokal untuk release portable yang terverifikasi.';
+    return;
+  }
+
+  const connected = Boolean(RVX_STORAGE.session.getItem('rvx_daemon_token'));
+  codeEl.textContent = connected ? 'Root WebUI lokal' : 'Helper lokal tidak siap';
+  if (hintEl) hintEl.textContent = connected
+    ? 'Sesi dibuat otomatis pada origin lokal ini; tidak ada kode pairing.'
+    : 'Muat ulang Root WebUI atau periksa service modul.';
+}
+
+async function ensureDaemonSession(url = STATE.daemonUrl) {
+  if (!window.RVX_RUNTIME?.allowsNativeBridge || !STATE.daemonOnline) return false;
+  try {
+    const bootstrap = await fetch(`${url}/api/v1/session/bootstrap`, { signal: rvxTimeoutSignal(1600) });
+    if (bootstrap.ok) {
+      const data = await bootstrap.json();
+      if (data.token) {
+        RVX_STORAGE.session.setItem('rvx_daemon_token', data.token);
+        return true;
+      }
+    }
+  } catch (_) {
+    // A stale token must never trigger an opaque pairing prompt. The caller
+    // renders a local-runtime gate with an explicit route back to the daemon.
+  }
+  RVX_STORAGE.session.removeItem('rvx_daemon_token');
+  return false;
+}
+
+function localDaemonWebUrl() {
+  return window.RVX_RUNTIME?.isRootWebUI ? `${location.origin}/?build=2.3.0` : '';
+}
+
+function isLocalDaemonPage() {
+  if (!STATE.daemonOnline) return false;
+  if (!STATE.daemonUrl) return true;
+  try { return new URL(STATE.daemonUrl, location.href).origin === location.origin; }
+  catch (_) { return false; }
 }
 
 async function fetchInstalledAppInfo() {
   const text = document.getElementById('installedVerText');
   if (!STATE.daemonOnline) {
-    if (text) text.textContent = 'Cloud Mode';
+    if (text) text.textContent = 'Pilih APK secara lokal';
     return;
   }
   try {
@@ -698,18 +805,15 @@ async function fetchInstalledAppInfo() {
 }
 
 function setEngineMode(mode) {
-  STATE.engineMode = mode === 'cloud' ? 'cloud' : 'local';
-  const btnLocal = document.getElementById('btnEngineLocal');
-  const btnCloud = document.getElementById('btnEngineCloud');
+  STATE.engineMode = mode === 'local' ? 'local' : 'browser';
   const engineTag = document.getElementById('engineModeTag');
-
-  if (btnLocal && btnCloud) {
-    const isLocal = STATE.engineMode === 'local';
-    btnLocal.classList.toggle('active', isLocal);
-    btnLocal.setAttribute('aria-checked', isLocal ? 'true' : 'false');
-    btnCloud.classList.toggle('active', !isLocal);
-    btnCloud.setAttribute('aria-checked', !isLocal ? 'true' : 'false');
-    if (engineTag) engineTag.textContent = isLocal ? 'On-Device' : 'Cloud';
-  }
+  const title = document.getElementById('runtimeSummaryTitle');
+  const detail = document.getElementById('runtimeSummaryText');
+  const isLocal = STATE.engineMode === 'local';
+  if (engineTag) engineTag.textContent = isLocal ? 'Root/native' : 'Browser lokal';
+  if (title) title.textContent = isLocal ? 'Morphe/JVM pada Root WebUI' : 'Rust/WASM di browser';
+  if (detail) detail.textContent = isLocal
+    ? 'Bundle MPP diproses pada perangkat melalui helper modul lokal.'
+    : 'Build hanya aktif untuk release yang memiliki artefak portable terverifikasi.';
   syncAllSummaries();
 }

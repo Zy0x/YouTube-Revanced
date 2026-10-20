@@ -1,15 +1,15 @@
 [package]
 name = "rvx-daemon"
-version = "2.1.23"
+version = "2.1.24"
 edition = "2021"
 authors = ["ReVanced Team"]
 description = "High-performance on-device patcher daemon for YouTube RVX Magisk/KernelSU/APatch modules"
 
 [dependencies]
-axum = { version = "0.7", features = ["macros"] }
+axum = { version = "0.7", features = ["macros", "multipart"] }
 tokio = { version = "1", features = ["full"] }
 tower = { version = "0.5" }
-tower-http = { version = "0.5", features = ["cors", "trace"] }
+tower-http = { version = "0.5", features = ["cors", "trace", "compression-br", "compression-gzip"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 rust-embed = { version = "8.5", features = ["interpolate-folder-path"] }
@@ -24,6 +24,8 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tokio-stream = { version = "0.1", features = ["sync"] }
 anyhow = "1.0"
+fs2 = "0.4"
+sha2 = "0.10"
 
 [profile.release]
 opt-level = "z"

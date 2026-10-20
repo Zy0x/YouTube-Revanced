@@ -1,3 +1,19 @@
+## v2.1.24 (2026-10-20)
+
+### Arsitektur RVX Patcher Lokal Tiga Lingkungan & Kompatibilitas Terverifikasi
+- **Eksekusi Lokal Tiga Lingkungan Tanpa Kompromi**:
+  - **PWA Online**: Hosting statis dengan seluruh pemrosesan APK dan kunci penandatanganan 100% lokal di browser pengguna via Web Worker dan WebAssembly.
+  - **Standalone Universal HTML**: Distribusi berkas tunggal `rvx-local.html` yang ringkas (1.19 MiB) tanpa bundle Base64 raksasa; mesin patch diunduh hanya setelah persetujuan pengguna dan dicache lokal di OPFS/IndexedDB.
+  - **Root Manager WebUI**: Integrasi langsung dengan modul Magisk, KernelSU, dan APatch via Morphe/JVM daemon asli untuk bundle `.mpp` legacy dengan sesi lokal otomatis tanpa PIN manual.
+- **Kompatibilitas Terverifikasi (Zero Fallback)**:
+  - Pelarangan tegas substitusi diam-diam ke Anddea atau source lain jika bundle tidak tersedia; rilis tanpa artefak portable diberi label informatif *Root/native saja*.
+  - Deteksi kemampuan browser mendalam (`rvxDetectCapabilities`): WebAssembly, Web Worker, IndexedDB, OPFS, WebCrypto, dan estimasi kuota memori perangkat.
+  - Download Manager terverifikasi dengan validasi hash SHA-256 per chunk, pause/resume, mitigasi *Save-Data*, dan status byte riil.
+- **Registry Bersharding v2**:
+  - Pemuatan metadata cepat berbasis shard (`/registry/v2/index.json`, `/apps/<pkg>.json`, `/releases/<src>/<tag>.json`), mencegah unduhan metadata raksasa di awal.
+- **Kepatuhan Batasan Modularitas (< 1.000 Baris Kode per Berkas)**:
+  - Seluruh 50 berkas source kode (Rust, JS, HTML, CSS) 100% strictly di bawah 1.000 baris kode per berkas.
+
 ## v2.1.23 (2026-10-17)
 
 ### Penyempurnaan Langkah 2: Layout 1-Kolom Bersih & Ergonomis

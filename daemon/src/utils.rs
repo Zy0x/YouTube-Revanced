@@ -2,9 +2,23 @@ use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use tokio::process::Command;
 
-pub fn get_java_binary(modpath: &Path) -> Option<PathBuf> {
+pub fn get_java_binary_in(modpath: &Path, workspace: Option<&Path>) -> Option<PathBuf> {
+    if let Some(root) = workspace {
+        let workspace_java = root
+            .join("runtime")
+            .join("jre")
+            .join("bin")
+            .join(if cfg!(windows) { "java.exe" } else { "java" });
+        if workspace_java.exists() {
+            return Some(workspace_java);
+        }
+    }
     // 1. Check local module embedded/downloaded JRE
-    let local_java = modpath.join("jre").join("bin").join(if cfg!(windows) { "java.exe" } else { "java" });
+    let local_java =
+        modpath
+            .join("jre")
+            .join("bin")
+            .join(if cfg!(windows) { "java.exe" } else { "java" });
     if local_java.exists() {
         return Some(local_java);
     }
@@ -15,7 +29,12 @@ pub fn get_java_binary(modpath: &Path) -> Option<PathBuf> {
         .output()
     {
         if output.status.success() {
-            let path_str = String::from_utf8_lossy(&output.stdout).trim().lines().next().unwrap_or("").to_string();
+            let path_str = String::from_utf8_lossy(&output.stdout)
+                .trim()
+                .lines()
+                .next()
+                .unwrap_or("")
+                .to_string();
             if !path_str.is_empty() {
                 return Some(PathBuf::from(path_str));
             }
@@ -45,7 +64,11 @@ pub async fn run_shell_command(cmd_str: &str) -> Result<String, String> {
             if out.status.success() {
                 Ok(stdout)
             } else {
-                Err(format!("Exit code {}: {}", out.status.code().unwrap_or(-1), stderr))
+                Err(format!(
+                    "Exit code {}: {}",
+                    out.status.code().unwrap_or(-1),
+                    stderr
+                ))
             }
         }
         Err(e) => Err(format!("Failed to execute command: {}", e)),

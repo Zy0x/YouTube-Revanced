@@ -1,26 +1,32 @@
+use crate::state::AppState;
+use crate::utils::get_java_binary_in;
+use futures_util::StreamExt;
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
-use serde::{Deserialize, Serialize};
-use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
-use crate::state::AppState;
-use crate::utils::get_java_binary;
+
+pub const MORPHE_CLI_URL: &str = "https://github.com/MorpheApp/morphe-cli/releases/download/v1.18.0/morphe-desktop-1.18.0-all.jar";
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct PatchRequest {
-    #[serde(default = "default_package")]
     pub package_name: String,
-    #[serde(default = "default_version")]
     pub target_version: String,
-    #[serde(default = "default_source")]
     pub patch_source: String,
-    #[serde(default = "default_tag")]
     pub patch_tag: String,
     #[serde(default)]
     pub patch_bundle_url: Option<String>,
     #[serde(default)]
     pub manifest_url: Option<String>,
+    #[serde(default)]
+    pub patch_bundle_sha256: Option<String>,
+    #[serde(default)]
+    pub source_commit: Option<String>,
+    #[serde(default)]
+    pub manifest_sha256: Option<String>,
     #[serde(default)]
     pub is_root: bool,
     #[serde(default)]
@@ -29,17 +35,21 @@ pub struct PatchRequest {
     pub included_patches: Vec<String>,
     #[serde(default)]
     pub options: HashMap<String, serde_json::Value>,
+    #[serde(default)]
+    pub download_plan_id: Option<String>,
+    #[serde(default)]
+    pub workspace_location_id: Option<String>,
+    #[serde(default)]
+    pub output_location_id: Option<String>,
 }
-
-fn default_package() -> String { "com.google.android.youtube".to_string() }
-fn default_version() -> String { "recommended".to_string() }
-fn default_source() -> String { "anddea".to_string() }
-fn default_tag() -> String { "dev".to_string() }
 
 pub async fn execute_patch_job(state: AppState, req: PatchRequest) {
     state.set_patching(true);
     state.log("🚀 =================================================");
-    state.log(format!("🚀 Starting On-Device RVX Patching Process ({})", req.package_name));
+    state.log(format!(
+        "🚀 Starting On-Device RVX Patching Process ({})",
+        req.package_name
+    ));
     state.log(format!("  Target Package : {}", req.package_name));
     state.log(format!("  Target Version : {}", req.target_version));
     state.log(format!("  Patch Source   : {}", req.patch_source));
@@ -60,20 +70,27 @@ pub async fn execute_patch_job(state: AppState, req: PatchRequest) {
 }
 
 async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String> {
+    let (workspace_root, output_root) = resolve_request_locations(state, req).await?;
+    tokio::fs::create_dir_all(&workspace_root)
+        .await
+        .map_err(|e| format!("Failed to create workspace: {}", e))?;
+    tokio::fs::create_dir_all(&output_root)
+        .await
+        .map_err(|e| format!("Failed to create output directory: {}", e))?;
     // 1. Verify Java JRE
     state.log("🔍 Checking Java Runtime Environment (JRE)...");
-    let java_bin = match get_java_binary(&state.modpath) {
+    let java_bin = match get_java_binary_in(&state.modpath, Some(&workspace_root)) {
         Some(bin) => bin,
         None => {
             state.log("⚠️ Java not found. Attempting automatic micro-JRE setup...");
-            crate::jre::ensure_jre_installed(state, None).await?;
-            get_java_binary(&state.modpath)
+            crate::jre::ensure_jre_installed(state, None, Some(&workspace_root)).await?;
+            get_java_binary_in(&state.modpath, Some(&workspace_root))
                 .ok_or_else(|| "Failed to locate java binary after installation".to_string())?
         }
     };
     state.log(format!("  Using Java: {}", java_bin.display()));
 
-    let build_dir = state.modpath.join("build_out");
+    let build_dir = workspace_root.join("cache");
     tokio::fs::create_dir_all(&build_dir)
         .await
         .map_err(|e| format!("Failed to create build_out directory: {}", e))?;
@@ -82,30 +99,56 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
     let cli_jar = build_dir.join("morphe-cli.jar");
     if !cli_jar.exists() {
         state.log("📦 Downloading Morphe CLI jar...");
-        let cli_url = "https://github.com/MorpheApp/morphe-cli/releases/download/v1.18.0/morphe-desktop-1.18.0-all.jar";
-        download_file(&state.client, cli_url, &cli_jar).await?;
+        download_file(&state.client, MORPHE_CLI_URL, &cli_jar, state, "cli").await?;
     }
     state.log("  Morphe CLI is ready.");
 
-    // 3. Download Patch Bundle (.mpp) & Manifest
+    // 3. Download the exact Patch Bundle (.mpp) selected by the UI.
+    // The manifest is catalog metadata and is not consumed by Morphe CLI.
     let patch_mpp = build_dir.join("patches.mpp");
-    let manifest_json = build_dir.join("patches-list.json");
+    state.log(format!(
+        "📦 Resolving patch bundle for source '{}'...",
+        req.patch_source
+    ));
+    let explicit_bundle = req
+        .patch_bundle_url
+        .as_deref()
+        .map(str::trim)
+        .filter(|url| !url.is_empty());
 
-    state.log(format!("📦 Resolving patch bundle for source '{}'...", req.patch_source));
-    let (mpp_url, manifest_url) = if let (Some(b), Some(m)) = (&req.patch_bundle_url, &req.manifest_url) {
-        (b.clone(), m.clone())
+    let mpp_url = explicit_bundle
+        .ok_or_else(|| "The selected release did not provide an explicit .mpp bundle URL".to_string())?
+        .to_string();
+
+    validate_patch_bundle_url(&mpp_url)?;
+    state.log("  Source metadata was already verified during release selection.");
+
+    let bundle_marker = build_dir.join("patches.mpp.url");
+    let cached_url = tokio::fs::read_to_string(&bundle_marker)
+        .await
+        .unwrap_or_default();
+    let cached_hash_valid = verify_file_sha256(&patch_mpp, req.patch_bundle_sha256.as_deref())
+        .await
+        .is_ok();
+    let cache_valid = cached_url.trim() == mpp_url
+        && patch_mpp.exists()
+        && validate_downloaded_patch_bundle(&patch_mpp).await.is_ok()
+        && cached_hash_valid;
+    if cache_valid {
+        state.log("✅ Using cached patch bundle for the selected release.");
     } else {
-        resolve_source_urls(&req.patch_source, &req.patch_tag)
-    };
-
-    state.log(format!("  Fetching manifest from CDN: {}", manifest_url));
-    download_file(&state.client, &manifest_url, &manifest_json).await?;
-
-    state.log(format!("  Fetching patch bundle from: {}", mpp_url));
-    download_file(&state.client, &mpp_url, &patch_mpp).await?;
+        state.log(format!("  Fetching patch bundle from: {}", mpp_url));
+        download_file(&state.client, &mpp_url, &patch_mpp, state, "bundle").await?;
+        validate_downloaded_patch_bundle(&patch_mpp).await?;
+        verify_file_sha256(&patch_mpp, req.patch_bundle_sha256.as_deref()).await?;
+        tokio::fs::write(&bundle_marker, &mpp_url)
+            .await
+            .map_err(|e| format!("Failed to save patch bundle cache marker: {}", e))?;
+    }
 
     // 4. Resolve Stock APK
-    let stock_apk = locate_or_download_stock(state, &req.package_name, &req.target_version, &build_dir).await?;
+    let stock_apk =
+        locate_or_download_stock(state, &req.package_name, &req.target_version, &build_dir).await?;
     state.log(format!("  Stock APK: {}", stock_apk.display()));
 
     // 5. Build CLI arguments
@@ -127,10 +170,18 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
         _ => req.package_name.split('.').last().unwrap_or("App"),
     };
 
-    let output_apk = if req.is_root {
-        state.modpath.join("app").join(format!("{}Revanced.apk", app_alias))
+    let final_name = if req.is_root {
+        format!("{}Revanced.apk", app_alias)
     } else {
-        build_dir.join(format!("{}.RVX.v{}-NonRoot.apk", app_alias, req.target_version))
+        format!("{}.RVX.v{}-NonRoot.apk", app_alias, req.target_version)
+    };
+    let output_apk = if req.is_root {
+        state
+            .modpath
+            .join("app")
+            .join(format!("{}Revanced.apk", app_alias))
+    } else {
+        output_root.join(&final_name)
     };
 
     if let Some(parent) = output_apk.parent() {
@@ -143,7 +194,7 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
     // Excluded patches
     for exc in &req.excluded_patches {
         if !exc.trim().is_empty() {
-            args.push("-e".to_string());
+            args.push("-d".to_string());
             args.push(exc.clone());
         }
     }
@@ -151,15 +202,41 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
     // Included patches
     for inc in &req.included_patches {
         if !inc.trim().is_empty() {
-            args.push("-i".to_string());
+            args.push("-e".to_string());
             args.push(inc.clone());
         }
+    }
+
+    // Patch options are strongly typed by Morphe. Preserve JSON booleans,
+    // numbers and arrays instead of flattening everything into UI strings.
+    let mut option_entries: Vec<_> = req.options.iter().collect();
+    option_entries.sort_by(|(left, _), (right, _)| left.cmp(right));
+    for (key, value) in option_entries {
+        let option_arg = match value {
+            serde_json::Value::Null => format!("-O{}", key),
+            serde_json::Value::String(text) => format!("-O{}={}", key, text),
+            serde_json::Value::Bool(boolean) => format!("-O{}={}", key, boolean),
+            serde_json::Value::Number(number) => format!("-O{}={}", key, number),
+            serde_json::Value::Array(items) => {
+                let values = items
+                    .iter()
+                    .map(|item| match item {
+                        serde_json::Value::String(text) => text.clone(),
+                        other => other.to_string(),
+                    })
+                    .collect::<Vec<_>>()
+                    .join(",");
+                format!("-O{}=[{}]", key, values)
+            }
+            serde_json::Value::Object(_) => format!("-O{}={}", key, value),
+        };
+        args.push(option_arg);
     }
 
     // Root-specific adjustments
     if req.is_root {
         for r_name in ["GmsCore support", "MicroG support", "Spoof signature"] {
-            args.push("-e".to_string());
+            args.push("-d".to_string());
             args.push(r_name.to_string());
         }
     }
@@ -168,7 +245,11 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
 
     // 6. Execute Morphe CLI process with live log streaming
     state.log("⚡ Executing Morphe CLI patcher...");
-    state.log(format!("  Executing: {} with {} arguments", java_bin.display(), args.len()));
+    state.log(format!(
+        "  Executing: {} with {} arguments",
+        java_bin.display(),
+        args.len()
+    ));
 
     let mut child = Command::new(&java_bin)
         .args(&args)
@@ -196,66 +277,157 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
         }
     });
 
-    let status = child.wait().await.map_err(|e| format!("Process error: {}", e))?;
+    let status = child
+        .wait()
+        .await
+        .map_err(|e| format!("Process error: {}", e))?;
 
     if !status.success() {
         return Err(format!("Morphe CLI exited with code: {:?}", status.code()));
     }
 
     state.log(format!("✅ Output APK generated: {}", output_apk.display()));
+    if req.is_root {
+        let exported = output_root.join(&final_name);
+        tokio::fs::copy(&output_apk, &exported).await.map_err(|e| {
+            format!(
+                "Failed to copy root output to {}: {}",
+                exported.display(),
+                e
+            )
+        })?;
+        state.log(format!(
+            "OUTPUT_FILE|{}|{}",
+            exported.display(),
+            tokio::fs::metadata(&exported)
+                .await
+                .map(|m| m.len())
+                .unwrap_or(0)
+        ));
+    } else {
+        state.log(format!(
+            "OUTPUT_FILE|{}|{}",
+            output_apk.display(),
+            tokio::fs::metadata(&output_apk)
+                .await
+                .map(|m| m.len())
+                .unwrap_or(0)
+        ));
+    }
     Ok(())
 }
 
-fn resolve_source_urls(source: &str, tag: &str) -> (String, String) {
-    if source.contains('/') {
-        let clean = source.trim_start_matches("https://github.com/").trim_end_matches('/');
-        let manifest = format!("https://cdn.jsdelivr.net/gh/{clean}@main/patches-list.json");
-        let mpp = if tag == "dev" || tag == "prerelease" {
-            format!("https://github.com/{clean}/releases/download/{tag}/patches.mpp")
-        } else if tag.starts_with('v') {
-            format!("https://github.com/{clean}/releases/download/{tag}/patches.mpp")
-        } else {
-            format!("https://github.com/{clean}/releases/latest/download/patches.mpp")
-        };
-        return (mpp, manifest);
+async fn resolve_request_locations(
+    state: &AppState,
+    req: &PatchRequest,
+) -> Result<(PathBuf, PathBuf), String> {
+    let config_path = state.modpath.join("config").join("storage.json");
+    let value = tokio::fs::read(&config_path)
+        .await
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok())
+        .ok_or_else(|| "Storage locations have not been selected".to_string())?;
+    let workspace_id = req
+        .workspace_location_id
+        .as_deref()
+        .ok_or_else(|| "Missing workspace location".to_string())?;
+    let output_id = req
+        .output_location_id
+        .as_deref()
+        .ok_or_else(|| "Missing output location".to_string())?;
+    if value.get("workspaceId").and_then(|v| v.as_str()) != Some(workspace_id)
+        || value.get("outputId").and_then(|v| v.as_str()) != Some(output_id)
+    {
+        return Err("Storage selection changed; run download preflight again".to_string());
     }
-    match source {
-        "morphe" => (
-            "https://github.com/MorpheApp/morphe-patches/releases/download/v1.18.0/morphe-patches-1.18.0.mpp".to_string(),
-            "https://cdn.jsdelivr.net/gh/MorpheApp/morphe-patches@main/patches-list.json".to_string(),
-        ),
-        "inotia00" => (
-            "https://github.com/inotia00/revanced-patches/releases/download/v2.190.1/revanced-patches-2.190.1.jar".to_string(),
-            "https://cdn.jsdelivr.net/gh/inotia00/revanced-patches@revanced-extended/patches.json".to_string(),
-        ),
-        "revanced" => (
-            "https://github.com/ReVanced/revanced-patches/releases/download/v4.16.0/patches-4.16.0.rvp".to_string(),
-            "https://cdn.jsdelivr.net/gh/ReVanced/revanced-patches@main/patches.json".to_string(),
-        ),
-        _ => {
-            // Default to Anddea
-            let (mpp, manifest) = if tag == "dev" || tag == "prerelease" {
-                (
-                    "https://github.com/anddea/revanced-patches/releases/download/v4.3.1-dev.1/patches-4.3.1-dev.1.mpp".to_string(),
-                    "https://cdn.jsdelivr.net/gh/anddea/revanced-patches@main/patches-list.json".to_string(),
-                )
-            } else if tag.starts_with('v') {
-                (
-                    format!("https://github.com/anddea/revanced-patches/releases/download/{}/patches-{}.mpp", tag, tag.trim_start_matches('v')),
-                    "https://cdn.jsdelivr.net/gh/anddea/revanced-patches@main/patches-list.json".to_string(),
-                )
-            } else {
-                (
-                    "https://github.com/anddea/revanced-patches/releases/download/v4.3.0/patches-4.3.0.mpp".to_string(),
-                    "https://cdn.jsdelivr.net/gh/anddea/revanced-patches@main/patches-list.json".to_string(),
-                )
-            };
-            (mpp, manifest)
-        }
-    }
+    let workspace = value
+        .get("workspacePath")
+        .and_then(|v| v.as_str())
+        .map(PathBuf::from)
+        .ok_or_else(|| "Workspace path is unavailable".to_string())?;
+    let output = value
+        .get("outputPath")
+        .and_then(|v| v.as_str())
+        .map(PathBuf::from)
+        .ok_or_else(|| "Output path is unavailable".to_string())?;
+    Ok((workspace, output))
 }
 
-async fn locate_or_download_stock(state: &AppState, package_name: &str, version: &str, build_dir: &Path) -> Result<PathBuf, String> {
+fn validate_patch_bundle_url(url: &str) -> Result<(), String> {
+    let normalized = url.trim().to_ascii_lowercase();
+    let path = normalized.split(['?', '#']).next().unwrap_or_default();
+
+    if !(normalized.starts_with("https://") || normalized.starts_with("http://")) {
+        return Err("Patch bundle URL must use HTTP or HTTPS".to_string());
+    }
+    if !path.ends_with(".mpp") {
+        return Err(format!(
+            "Selected source did not provide a Morphe .mpp bundle: {}",
+            url
+        ));
+    }
+    Ok(())
+}
+
+async fn validate_downloaded_patch_bundle(path: &Path) -> Result<(), String> {
+    let metadata = tokio::fs::metadata(path)
+        .await
+        .map_err(|e| format!("Failed to inspect patch bundle: {}", e))?;
+    if metadata.len() == 0 {
+        return Err("Downloaded patch bundle is empty".to_string());
+    }
+
+    let mut file = tokio::fs::File::open(path)
+        .await
+        .map_err(|e| format!("Failed to validate patch bundle: {}", e))?;
+    let mut header = [0_u8; 4];
+    file.read_exact(&mut header)
+        .await
+        .map_err(|e| format!("Patch bundle is truncated: {}", e))?;
+    if header != *b"PK\x03\x04" && header != *b"PK\x05\x06" {
+        return Err("Downloaded .mpp is not a valid ZIP-based Morphe bundle".to_string());
+    }
+    Ok(())
+}
+
+async fn verify_file_sha256(path: &Path, expected: Option<&str>) -> Result<(), String> {
+    let Some(expected) = expected.map(str::trim).filter(|value| !value.is_empty()) else {
+        return Ok(());
+    };
+    if expected.len() != 64 || !expected.chars().all(|character| character.is_ascii_hexdigit()) {
+        return Err("Patch bundle SHA-256 is invalid".to_string());
+    }
+    let mut file = tokio::fs::File::open(path)
+        .await
+        .map_err(|e| format!("Failed to hash patch bundle: {}", e))?;
+    let mut hasher = Sha256::new();
+    let mut buffer = vec![0_u8; 1024 * 1024];
+    loop {
+        let read = file
+            .read(&mut buffer)
+            .await
+            .map_err(|e| format!("Failed to hash patch bundle: {}", e))?;
+        if read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..read]);
+    }
+    let actual = format!("{:x}", hasher.finalize());
+    if !actual.eq_ignore_ascii_case(expected) {
+        return Err(format!(
+            "Patch bundle SHA-256 mismatch (expected {}, got {})",
+            expected, actual
+        ));
+    }
+    Ok(())
+}
+
+async fn locate_or_download_stock(
+    state: &AppState,
+    package_name: &str,
+    version: &str,
+    build_dir: &Path,
+) -> Result<PathBuf, String> {
     let app_alias = match package_name {
         "com.google.android.youtube" => "youtube",
         "com.google.android.apps.youtube.music" => "ytmusic",
@@ -269,7 +441,6 @@ async fn locate_or_download_stock(state: &AppState, package_name: &str, version:
     let cands = [
         state.modpath.join(format!("stock-{}.apk", app_alias)),
         state.modpath.join(format!("stock-{}.apk", package_name)),
-        state.modpath.join("stock-youtube.apk"),
     ];
     for cand in cands {
         if cand.exists() {
@@ -286,11 +457,17 @@ async fn locate_or_download_stock(state: &AppState, package_name: &str, version:
     // 2. On Android: Check if installed package base APK can be extracted
     #[cfg(unix)]
     {
-        let query_cmd = format!("pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n1", package_name);
+        let query_cmd = format!(
+            "pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n1",
+            package_name
+        );
         if let Ok(output) = crate::utils::run_shell_command(&query_cmd).await {
             let path_str = output.trim();
             if !path_str.is_empty() && Path::new(path_str).exists() {
-                state.log(format!("📲 Extracted installed APK ({}) from device: {}", package_name, path_str));
+                state.log(format!(
+                    "📲 Extracted installed APK ({}) from device: {}",
+                    package_name, path_str
+                ));
                 let _ = tokio::fs::copy(path_str, &target_stock).await;
                 if target_stock.exists() {
                     return Ok(target_stock);
@@ -304,7 +481,12 @@ async fn locate_or_download_stock(state: &AppState, package_name: &str, version:
         state.log(format!("📥 Fetching Stock YouTube v{} APK...", version));
         let script_path = state.modpath.join("tools").join("download-stock.py");
         if script_path.exists() {
-            let cmd = format!("python3 \"{}\" \"{}\" \"{}\"", script_path.display(), version, target_stock.display());
+            let cmd = format!(
+                "python3 \"{}\" \"{}\" \"{}\"",
+                script_path.display(),
+                version,
+                target_stock.display()
+            );
             let _ = crate::utils::run_shell_command(&cmd).await;
             if target_stock.exists() {
                 return Ok(target_stock);
@@ -318,7 +500,13 @@ async fn locate_or_download_stock(state: &AppState, package_name: &str, version:
     ))
 }
 
-async fn download_file(client: &reqwest::Client, url: &str, target: &Path) -> Result<(), String> {
+pub(crate) async fn download_file(
+    client: &reqwest::Client,
+    url: &str,
+    target: &Path,
+    state: &AppState,
+    label: &str,
+) -> Result<(), String> {
     let res = client
         .get(url)
         .send()
@@ -326,13 +514,66 @@ async fn download_file(client: &reqwest::Client, url: &str, target: &Path) -> Re
         .map_err(|e| format!("Failed to download {}: {}", url, e))?;
 
     if !res.status().is_success() {
-        return Err(format!("Download failed with status {} for {}", res.status(), url));
+        return Err(format!(
+            "Download failed with status {} for {}",
+            res.status(),
+            url
+        ));
     }
 
-    let bytes = res.bytes().await.map_err(|e| format!("Failed to read stream: {}", e))?;
-    tokio::fs::write(target, &bytes)
+    let total = res.content_length().unwrap_or(0);
+    let part_name = target
+        .file_name()
+        .and_then(|name| name.to_str())
+        .map(|name| format!("{}.part", name))
+        .unwrap_or_else(|| "download.part".to_string());
+    let part_path = target.with_file_name(part_name);
+    let mut file = tokio::fs::File::create(&part_path)
         .await
-        .map_err(|e| format!("Failed to write {}: {}", target.display(), e))?;
+        .map_err(|e| format!("Failed to create {}: {}", part_path.display(), e))?;
+    let mut stream = res.bytes_stream();
+    let mut received = 0_u64;
+    let mut last_reported = 0_u64;
+    state.log(format!("DOWNLOAD_PROGRESS|{}|0|{}", label, total));
+
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk.map_err(|e| format!("Failed to read download stream: {}", e))?;
+        file.write_all(&chunk)
+            .await
+            .map_err(|e| format!("Failed to write {}: {}", part_path.display(), e))?;
+        received += chunk.len() as u64;
+        let report_step = if total > 0 {
+            (total / 100).max(256 * 1024)
+        } else {
+            1024 * 1024
+        };
+        if received.saturating_sub(last_reported) >= report_step || (total > 0 && received >= total)
+        {
+            state.log(format!(
+                "DOWNLOAD_PROGRESS|{}|{}|{}",
+                label, received, total
+            ));
+            last_reported = received;
+        }
+    }
+    file.flush()
+        .await
+        .map_err(|e| format!("Failed to flush {}: {}", part_path.display(), e))?;
+    drop(file);
+    if received != last_reported {
+        state.log(format!(
+            "DOWNLOAD_PROGRESS|{}|{}|{}",
+            label, received, total
+        ));
+    }
+    if target.exists() {
+        tokio::fs::remove_file(target)
+            .await
+            .map_err(|e| format!("Failed to replace {}: {}", target.display(), e))?;
+    }
+    tokio::fs::rename(&part_path, target)
+        .await
+        .map_err(|e| format!("Failed to finalize {}: {}", target.display(), e))?;
 
     Ok(())
 }

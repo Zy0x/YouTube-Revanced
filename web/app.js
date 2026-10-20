@@ -9,11 +9,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   initEventListeners();
   initKeyboardNavigation();
   setUiMode(STATE.uiMode);
+  document.getElementById('btnDownloadSingleHtml')?.classList.toggle('hidden', Boolean(window.RVX_RUNTIME?.isSingleFile));
 
-  await checkDaemonStatus();
-  await loadSourcesAndPresets();
-  await fetchAndRenderPatches(STATE.currentSource);
-  await fetchInstalledAppInfo();
+  // Runtime detection never probes localhost from hosted or standalone builds.
+  // Root WebUI verifies only its own origin.
+  await Promise.all([
+    checkDaemonStatus(),
+    loadSourcesAndPresets()
+  ]);
+  // A new setup starts blank. Saved values are restored only when the user
+  // explicitly opens an existing app configuration from the dashboard.
   syncAllSummaries();
 
   // Initialize Wizard or Dashboard based on setup status
@@ -22,11 +27,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   registerServiceWorker();
+  // Device inspection is useful but must never delay the first interactive UI.
+  setTimeout(() => { fetchInstalledAppInfo(); }, 0);
 });
 
 function setUiMode(mode) {
   STATE.uiMode = mode === 'tui' ? 'tui' : 'morphe';
-  localStorage.setItem('rvx_ui_mode', STATE.uiMode);
+  RVX_STORAGE.local.setItem('rvx_ui_mode', STATE.uiMode);
 
   const isTui = STATE.uiMode === 'tui';
   document.body.classList.toggle('mode-tui', isTui);
@@ -86,6 +93,10 @@ function initViewportTracker() {
 }
 
 function initEventListeners() {
+  const closePatchBulkMenu = () => {
+    document.getElementById('patchBulkMenu')?.classList.add('hidden');
+    document.getElementById('btnPatchBulkMenu')?.setAttribute('aria-expanded', 'false');
+  };
   // Dual-UI Mode Switcher
   document.getElementById('btnToggleUiMode')?.addEventListener('click', () => {
     setUiMode(STATE.uiMode === 'morphe' ? 'tui' : 'morphe');
@@ -97,6 +108,7 @@ function initEventListeners() {
   const openInfo = () => {
     syncAllSummaries();
     document.getElementById('infoModal')?.classList.remove('hidden');
+    loadDaemonSessionInfo();
   };
   document.getElementById('btnOpenInfoModal')?.addEventListener('click', openInfo);
   document.getElementById('btnVersionInfo')?.addEventListener('click', openInfo);
@@ -106,6 +118,10 @@ function initEventListeners() {
   });
   document.getElementById('btnDoneInfoModal')?.addEventListener('click', () => {
     document.getElementById('infoModal')?.classList.add('hidden');
+  });
+  document.getElementById('btnRetryLocalRuntime')?.addEventListener('click', async () => {
+    await checkDaemonStatus();
+    openDownloadConsentModal();
   });
   document.getElementById('btnInfoJumpPatches')?.addEventListener('click', () => {
     document.getElementById('infoModal')?.classList.add('hidden');
@@ -323,11 +339,13 @@ function initEventListeners() {
   });
 
   // Patch Options Modal
-  document.getElementById('btnClosePatchOptsModal')?.addEventListener('click', () => {
-    document.getElementById('patchOptionsModal')?.classList.add('hidden');
-  });
+  document.getElementById('btnClosePatchOptsModal')?.addEventListener('click', closePatchOptionsModal);
+  document.getElementById('btnCancelPatchOpts')?.addEventListener('click', closePatchOptionsModal);
   document.getElementById('btnSavePatchOpts')?.addEventListener('click', savePatchOptionsModal);
   document.getElementById('btnResetPatchOpts')?.addEventListener('click', resetPatchOptionsModal);
+  document.getElementById('patchOptionsModal')?.addEventListener('click', event => {
+    if (event.target.id === 'patchOptionsModal') closePatchOptionsModal();
+  });
 
   // Trigger Patch & Progress Controls
   document.getElementById('btnTriggerBuild')?.addEventListener('click', triggerBuildPipeline);
@@ -337,28 +355,22 @@ function initEventListeners() {
   });
 
   // Release Channel & Notes
-  document.getElementById('selectPatchRelease')?.addEventListener('change', (e) => {
-    STATE.patchTag = e.target.value;
+  document.getElementById('selectPatchRelease')?.addEventListener('change', async (e) => {
+    const tag = e.target.value;
+    const release = (STATE.patchReleases || []).find(item => (item.tag_name || item.name) === tag);
+    await selectPatchChannel(tag, release ? Boolean(release.prerelease) : null);
     syncAllSummaries();
   });
   document.getElementById('btnViewPatchNotes')?.addEventListener('click', showPatchNotesModal);
   document.getElementById('btnClosePatchNotesModal')?.addEventListener('click', () => {
     document.getElementById('patchNotesModal')?.classList.add('hidden');
   });
-  document.getElementById('btnClosePatchNotesBtn')?.addEventListener('click', () => {
-    document.getElementById('patchNotesModal')?.classList.add('hidden');
-  });
-
-  // Settings
-  document.getElementById('btnEngineLocal')?.addEventListener('click', () => setEngineMode('local'));
-  document.getElementById('btnEngineCloud')?.addEventListener('click', () => setEngineMode('cloud'));
-
   document.getElementById('btnSaveAuth')?.addEventListener('click', async () => {
     const input = document.getElementById('inputGithubToken');
     const alertBox = document.getElementById('authAlert');
     const token = input?.value.trim() || '';
     if (!token) return;
-    localStorage.setItem('rvx_gh_pat', token);
+    RVX_STORAGE.local.setItem('rvx_gh_pat', token);
     STATE.authToken = token;
     const valid = await verifyGithubToken(token);
     if (alertBox) {
@@ -368,7 +380,7 @@ function initEventListeners() {
   });
 
   document.getElementById('btnClearAuth')?.addEventListener('click', () => {
-    localStorage.removeItem('rvx_gh_pat');
+    RVX_STORAGE.local.removeItem('rvx_gh_pat');
     STATE.authToken = '';
     STATE.authUser = null;
     const input = document.getElementById('inputGithubToken');
@@ -413,7 +425,7 @@ function initEventListeners() {
       alertBox.classList.remove('hidden');
     }
     try {
-      const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/mount`, { method: 'POST' });
+      const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/mount`, { method: 'POST', headers: daemonAuthHeaders() });
       const data = await res.json();
       if (res.ok) {
         if (alertBox) {
@@ -439,7 +451,7 @@ function initEventListeners() {
       alertBox.classList.remove('hidden');
     }
     try {
-      const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/export-zip`, { method: 'POST' });
+      const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/export-zip`, { method: 'POST', headers: daemonAuthHeaders() });
       const data = await res.json();
       if (res.ok) {
         if (alertBox) {
@@ -466,54 +478,124 @@ function initEventListeners() {
   });
 
   document.getElementById('btnRestartWizard')?.addEventListener('click', () => {
+    resetWizardSelections();
     goToWizardStep(1);
     switchScreen('wizard');
   });
 
   document.getElementById('btnWizardToggleUi')?.addEventListener('click', () => {
+    document.getElementById('wizardHeaderMenu')?.classList.add('hidden');
     setUiMode(STATE.uiMode === 'morphe' ? 'tui' : 'morphe');
   });
 
+  document.getElementById('btnDownloadSingleHtml')?.addEventListener('click', () => {
+    document.getElementById('wizardHeaderMenu')?.classList.add('hidden');
+    const link = document.createElement('a');
+    link.href = 'rvx-local.html';
+    link.download = 'rvx-local.html';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  });
+
   document.getElementById('btnWizardInfo')?.addEventListener('click', () => {
+    document.getElementById('wizardHeaderMenu')?.classList.add('hidden');
     syncAllSummaries();
     document.getElementById('infoModal')?.classList.remove('hidden');
+    loadDaemonSessionInfo();
+  });
+  document.getElementById('btnWizardStepRefresh')?.addEventListener('click', refreshWizardStep);
+  document.getElementById('btnWizardHeaderMenu')?.addEventListener('click', event => {
+    event.stopPropagation();
+    const menu = document.getElementById('wizardHeaderMenu');
+    const opening = menu?.classList.contains('hidden');
+    menu?.classList.toggle('hidden', !opening);
+    event.currentTarget.setAttribute('aria-expanded', String(Boolean(opening)));
+  });
+  document.getElementById('wizardHeaderMenu')?.addEventListener('click', event => event.stopPropagation());
+  document.addEventListener('click', () => {
+    document.getElementById('wizardHeaderMenu')?.classList.add('hidden');
+    document.getElementById('btnWizardHeaderMenu')?.setAttribute('aria-expanded', 'false');
   });
 
   // Wizard Step 1 Handlers
-  document.getElementById('btnWizStep1Next')?.addEventListener('click', () => goToWizardStep(2));
+  document.getElementById('btnWizStep1Next')?.addEventListener('click', () => {
+    if (STATE.currentApp) goToWizardStep(2);
+  });
   document.getElementById('btnWizardReleaseNotes')?.addEventListener('click', showPatchNotesModal);
-  document.getElementById('wizardPatchReleaseSelect')?.addEventListener('change', (e) => {
-    STATE.patchTag = e.target.value;
-    const mainSelect = document.getElementById('selectPatchRelease');
-    if (mainSelect) mainSelect.value = e.target.value;
-    syncAllSummaries();
+  document.getElementById('wizardPatchReleaseSelect')?.addEventListener('change', async (e) => {
+    const tag = e.target.value;
+    const release = (STATE.patchReleases || []).find(item => (item.tag_name || item.name) === tag);
+    await syncReleaseChannelSelection(tag, release ? Boolean(release.prerelease) : null);
   });
 
   // Wizard Step 2 Handlers
   document.getElementById('btnWizStep2Back')?.addEventListener('click', () => goToWizardStep(1));
-  document.getElementById('btnWizStep2Next')?.addEventListener('click', () => goToWizardStep(3));
+  document.getElementById('btnWizStep2Next')?.addEventListener('click', async (event) => {
+    if (!STATE.currentSource || !STATE.patchTag) return;
+    if (STATE.patches.length > 0 && !STATE.channelLoading) {
+      goToWizardStep(3);
+      return;
+    }
+    const button = event.currentTarget;
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Menyiapkan patch…';
+    const ready = await fetchAndRenderPatches(STATE.currentSource);
+    button.textContent = originalText;
+    if (ready) goToWizardStep(3);
+    else renderWizardActiveSource();
+  });
 
   // Wizard Step 3 Handlers
   document.getElementById('btnWizStep3Back')?.addEventListener('click', () => goToWizardStep(2));
-  document.getElementById('btnWizStep3Next')?.addEventListener('click', () => goToWizardStep(4));
-  document.getElementById('btnWizardToggleAllVersions')?.addEventListener('click', () => {
-    STATE.showAllVersions = !STATE.showAllVersions;
-    renderWizardVersionStep();
+  document.getElementById('btnWizStep3Next')?.addEventListener('click', () => {
+    if (STATE.currentVersion) goToWizardStep(4);
   });
+  bindOtherVersionsEvents();
 
   // Wizard Step 4 Handlers
-  document.getElementById('modeCardRoot')?.addEventListener('click', () => setTargetMode('root'));
-  document.getElementById('modeCardNonRoot')?.addEventListener('click', () => setTargetMode('non-root'));
-  document.getElementById('btnWizPatchesSearch')?.addEventListener('click', () => {
-    const box = document.getElementById('wizardPatchesSearchBox');
-    box?.classList.toggle('hidden');
-    if (box && !box.classList.contains('hidden')) {
-      document.getElementById('inputWizPatchSearch')?.focus();
-    }
-  });
   document.getElementById('inputWizPatchSearch')?.addEventListener('input', (e) => {
     STATE.patchSearchQuery = e.target.value;
-    renderMorphePatchList();
+    renderMorphePatchList('wizardPatchCategoriesContainer');
+  });
+  document.querySelectorAll('[data-patch-filter]').forEach(button => {
+    button.addEventListener('click', () => {
+      STATE.patchListFilter = button.dataset.patchFilter || 'all';
+      renderMorphePatchList('wizardPatchCategoriesContainer');
+    });
+  });
+  document.getElementById('btnPatchBulkMenu')?.addEventListener('click', event => {
+    event.stopPropagation();
+    const menu = document.getElementById('patchBulkMenu');
+    const opening = menu?.classList.contains('hidden');
+    menu?.classList.toggle('hidden', !opening);
+    event.currentTarget.setAttribute('aria-expanded', String(Boolean(opening)));
+  });
+  document.getElementById('patchBulkMenu')?.addEventListener('click', event => event.stopPropagation());
+  document.addEventListener('click', closePatchBulkMenu);
+  document.addEventListener('keydown', event => {
+    const optionsModal = document.getElementById('patchOptionsModal');
+    const optionsOpen = optionsModal && !optionsModal.classList.contains('hidden');
+    if (event.key === 'Escape') {
+      closePatchBulkMenu();
+      if (optionsOpen) closePatchOptionsModal();
+      if (!document.getElementById('modalOtherVersions')?.classList.contains('hidden')) closeOtherVersionsModal();
+      return;
+    }
+    if (event.key !== 'Tab' || !optionsOpen) return;
+    const focusable = Array.from(optionsModal.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'))
+      .filter(element => element.offsetParent !== null);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   });
   document.getElementById('btnWizPatchesDefault')?.addEventListener('click', () => {
     STATE.selectedPatches.clear();
@@ -521,21 +603,82 @@ function initEventListeners() {
       if (p.use !== false) STATE.selectedPatches.add(p.name);
     });
     adjustMicrogForMode(STATE.targetMode);
-    renderMorphePatchList();
+    renderMorphePatchList('wizardPatchCategoriesContainer');
     syncAllSummaries();
+    closePatchBulkMenu();
   });
   document.getElementById('btnWizPatchesAll')?.addEventListener('click', () => {
     STATE.patches.forEach(p => STATE.selectedPatches.add(p.name));
-    renderMorphePatchList();
+    renderMorphePatchList('wizardPatchCategoriesContainer');
     syncAllSummaries();
+    closePatchBulkMenu();
+  });
+  document.getElementById('btnWizPatchesClear')?.addEventListener('click', () => {
+    STATE.selectedPatches.clear();
+    renderMorphePatchList('wizardPatchCategoriesContainer');
+    syncAllSummaries();
+    closePatchBulkMenu();
   });
   document.getElementById('btnWizStep4Back')?.addEventListener('click', () => goToWizardStep(3));
-  document.getElementById('btnWizStep4Next')?.addEventListener('click', () => goToWizardStep(5));
+  document.getElementById('btnWizStep4Next')?.addEventListener('click', () => {
+    if (STATE.targetMode && STATE.selectedPatches.size > 0) goToWizardStep(5);
+  });
 
   // Wizard Step 5 Handlers
   document.getElementById('btnWizardStartBuild')?.addEventListener('click', () => {
     triggerBuildPipeline();
-    switchScreen('progress');
+  });
+  document.getElementById('btnCloseDownloadConsent')?.addEventListener('click', closeDownloadConsentModal);
+  document.getElementById('btnCancelDownloadConsent')?.addEventListener('click', closeDownloadConsentModal);
+  document.getElementById('btnConfirmDownloadConsent')?.addEventListener('click', confirmLocalPatchBuild);
+  document.getElementById('inputBrowserApk')?.addEventListener('change', event => {
+    const file = event.target.files?.[0] || null;
+    STATE.selectedApkFile = file;
+    const panel = document.getElementById('browserApkInputPanel');
+    const status = document.getElementById('browserApkInputStatus');
+    panel?.classList.toggle('is-ready', Boolean(file));
+    if (status) {
+      status.textContent = file
+        ? `${file.name} · ${formatDownloadBytes(file.size)}`
+        : 'Pilih APK yang versinya sesuai dengan konfigurasi.';
+    }
+    if (STATE.engineMode === 'browser') openDownloadConsentModal();
+  });
+  document.getElementById('btnPrepareOnWifi')?.addEventListener('click', () => {
+    RVX_STORAGE.local.setItem('rvx_prepare_on_wifi', JSON.stringify({
+      packageName: STATE.currentApp?.packageName || '',
+      source: STATE.currentSource || '',
+      tag: STATE.patchTag || '',
+      savedAt: Date.now()
+    }));
+    const total = document.getElementById('downloadPlanTotal');
+    if (total) total.textContent = 'Disimpan; buka kembali saat terhubung ke Wi-Fi';
+  });
+  document.getElementById('btnChangeStorageLocations')?.addEventListener('click', () => {
+    STATE.pendingDownloadPlan = null;
+    document.getElementById('btnConfirmDownloadConsent').disabled = true;
+    renderStorageLocations({ edit: true });
+  });
+  document.getElementById('selectWorkspaceLocation')?.addEventListener('change', syncCustomStorageFields);
+  document.getElementById('selectOutputLocation')?.addEventListener('change', syncCustomStorageFields);
+  document.getElementById('btnBrowseWorkspace')?.addEventListener('click', () => openStorageBrowser('workspace'));
+  document.getElementById('btnBrowseOutput')?.addEventListener('click', () => openStorageBrowser('output'));
+  document.getElementById('btnStorageBrowserUp')?.addEventListener('click', () => {
+    if (STATE.storageBrowseParent) fetchStorageDirectory(STATE.storageBrowseParent);
+  });
+  document.getElementById('btnUseStorageFolder')?.addEventListener('click', useSelectedStorageFolder);
+  document.getElementById('btnCloseStorageBrowser')?.addEventListener('click', closeStorageBrowser);
+  document.getElementById('btnCancelStorageBrowser')?.addEventListener('click', closeStorageBrowser);
+  document.getElementById('storageBrowserModal')?.addEventListener('click', event => {
+    if (event.target.id === 'storageBrowserModal') closeStorageBrowser();
+  });
+  document.getElementById('btnSaveStorageLocations')?.addEventListener('click', saveStorageLocations);
+  document.getElementById('checkUnknownSizeConsent')?.addEventListener('change', event => {
+    const button = document.getElementById('btnConfirmDownloadConsent');
+    if (button && STATE.pendingDownloadPlan) button.disabled = !event.target.checked;
+  });
+  document.getElementById('downloadConsentModal')?.addEventListener('click', event => {
+    if (event.target.id === 'downloadConsentModal') closeDownloadConsentModal();
   });
   document.getElementById('btnWizardRootInstall')?.addEventListener('click', () => {
     document.getElementById('btnHeroHotMount')?.click();
@@ -605,12 +748,19 @@ function initEventListeners() {
 }
 
 function registerServiceWorker() {
+  if (window.RVX_RUNTIME?.isFileProtocol) return;
   if ('serviceWorker' in navigator) {
-    const isDevHost = window.location.hostname === 'localhost' ||
-                      window.location.hostname === '127.0.0.1' ||
-                      window.location.hostname === '0.0.0.0';
-    if (isDevHost) {
-      // In local launcher mode, unregister any stale SW & purge caches for instant live update!
+    const host = window.location.hostname;
+    const isPrivateIpv4 = /^10\./.test(host)
+      || /^192\.168\./.test(host)
+      || /^172\.(1[6-9]|2\d|3[01])\./.test(host);
+    const isLocalRuntime = host === 'localhost'
+      || host === '127.0.0.1'
+      || host === '0.0.0.0'
+      || isPrivateIpv4;
+    if (isLocalRuntime) {
+      // The local daemon always serves the newest workspace files. Persistent
+      // PWA caches on different LAN origins can otherwise run different builds.
       navigator.serviceWorker.getRegistrations().then((regs) => {
         for (const reg of regs) {
           reg.unregister();

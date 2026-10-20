@@ -32,7 +32,7 @@ function renderTuiView() {
           document.getElementById('morpheAppContainer')?.classList.remove('hidden');
         }
       },
-      { num: '9', label: 'Settings', sub: STATE.engineMode === 'local' ? 'Local' : 'Cloud', action: () => { document.getElementById('settingsModal')?.classList.remove('hidden'); } }
+      { num: '9', label: 'Settings', sub: STATE.engineMode === 'browser' ? 'Browser lokal' : STATE.engineMode === 'local' ? 'Local' : 'Cloud', action: () => { document.getElementById('settingsModal')?.classList.remove('hidden'); } }
     ];
 
     menuItems.forEach((item, idx) => {

@@ -1,14 +1,26 @@
-use std::path::PathBuf;
 use axum::{
     body::Body,
     http::{header, HeaderValue, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
 use rust_embed::RustEmbed;
+use std::path::PathBuf;
 
 #[derive(RustEmbed)]
 #[folder = "../web/"]
 pub struct WebAssets;
+
+fn cache_control(uri: &Uri, path: &str) -> &'static str {
+    let versioned = uri
+        .query()
+        .map(|query| query.split('&').any(|part| part.starts_with("v=")))
+        .unwrap_or(false);
+    if versioned && path != "index.html" {
+        "public, max-age=3600, must-revalidate"
+    } else {
+        "no-cache, must-revalidate"
+    }
+}
 
 fn find_file_on_disk(rel_path: &str) -> Option<PathBuf> {
     let clean = rel_path.trim_start_matches('/').trim_start_matches('\\');
@@ -56,6 +68,7 @@ pub async fn static_handler(uri: Uri) -> impl IntoResponse {
     if path.is_empty() {
         path = "index.html".to_string();
     }
+    let cache_header = cache_control(&uri, &path);
 
     // 1. Check disk first for instant live updates without recompilation
     if let Some(disk_path) = find_file_on_disk(&path) {
@@ -68,9 +81,7 @@ pub async fn static_handler(uri: Uri) -> impl IntoResponse {
                     HeaderValue::from_str(mime.as_ref())
                         .unwrap_or(HeaderValue::from_static("application/octet-stream")),
                 )
-                .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")
-                .header(header::PRAGMA, "no-cache")
-                .header(header::EXPIRES, "0")
+                .header(header::CACHE_CONTROL, cache_header)
                 .body(Body::from(bytes))
                 .unwrap_or_else(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response());
         }
@@ -87,9 +98,7 @@ pub async fn static_handler(uri: Uri) -> impl IntoResponse {
                     HeaderValue::from_str(mime.as_ref())
                         .unwrap_or(HeaderValue::from_static("application/octet-stream")),
                 )
-                .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")
-                .header(header::PRAGMA, "no-cache")
-                .header(header::EXPIRES, "0")
+                .header(header::CACHE_CONTROL, cache_header)
                 .body(Body::from(content.data))
                 .unwrap_or_else(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())
         }
@@ -103,7 +112,10 @@ pub async fn static_handler(uri: Uri) -> impl IntoResponse {
                     return Response::builder()
                         .status(StatusCode::OK)
                         .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
-                        .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")
+                        .header(
+                            header::CACHE_CONTROL,
+                            "no-cache, no-store, must-revalidate, max-age=0",
+                        )
                         .header(header::PRAGMA, "no-cache")
                         .header(header::EXPIRES, "0")
                         .body(Body::from(bytes))
@@ -115,7 +127,10 @@ pub async fn static_handler(uri: Uri) -> impl IntoResponse {
                 Response::builder()
                     .status(StatusCode::OK)
                     .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
-                    .header(header::CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")
+                    .header(
+                        header::CACHE_CONTROL,
+                        "no-cache, no-store, must-revalidate, max-age=0",
+                    )
                     .header(header::PRAGMA, "no-cache")
                     .header(header::EXPIRES, "0")
                     .body(Body::from(content.data))

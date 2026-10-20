@@ -28,14 +28,16 @@ function renderAppCards() {
     card.setAttribute('aria-checked', isSelected ? 'true' : 'false');
     card.setAttribute('tabindex', '0');
     card.style.setProperty('--app-bg-gradient', app.gradient);
+    const versionText = app.recommendedVersion ? `v${escapeHtml(app.recommendedVersion)} • ` : '';
+    const coverageText = app.catalogCoverageUnknown
+      ? `${app.sourcesCount || 1} patch sources available`
+      : `${app.patchCount} patches available`;
 
     card.innerHTML = `
-      <div class="yt-card-icon" style="background:${app.accentColor || '#B42323'};" aria-hidden="true">
-        ${app.iconSvg}
-      </div>
+      ${renderAppIcon(app)}
       <div class="yt-card-text">
         <h2 class="yt-card-title">${escapeHtml(app.name)}</h2>
-        <p class="yt-card-sub">v${escapeHtml(app.recommendedVersion)} • ${app.patchCount} patches available</p>
+        <p class="yt-card-sub">${versionText}${coverageText}</p>
       </div>
       <div class="app-card-arrow" aria-hidden="true">›</div>
     `;
@@ -54,6 +56,7 @@ function renderAppCards() {
     });
 
     container.appendChild(card);
+    hydrateAppIcons(card);
   });
 }
 
@@ -220,7 +223,7 @@ function renderActiveSourceDetails() {
 
   container.querySelector('#togglePreReleasePatches')?.addEventListener('change', async (e) => {
     STATE.preReleasePatches = e.target.checked;
-    localStorage.setItem('rvx_pre_release_patches', String(STATE.preReleasePatches));
+    RVX_STORAGE.local.setItem('rvx_pre_release_patches', String(STATE.preReleasePatches));
     await loadPatchReleases(activeSrc);
     renderActiveSourceDetails();
   });
@@ -228,7 +231,7 @@ function renderActiveSourceDetails() {
   container.querySelector('#toggleExperimentalAppVersions')?.addEventListener('change', (e) => {
     STATE.experimentalAppVersions = e.target.checked;
     STATE.showAllVersions = e.target.checked;
-    localStorage.setItem('rvx_experimental_app_versions', String(STATE.experimentalAppVersions));
+    RVX_STORAGE.local.setItem('rvx_experimental_app_versions', String(STATE.experimentalAppVersions));
     renderVersionSelector();
   });
 
@@ -300,17 +303,21 @@ function renderVersionSelector() {
   }
 }
 
-function renderMorphePatchList() {
-  const container = document.getElementById('patchCategoriesContainer');
+function renderMorphePatchList(containerId = 'patchCategoriesContainer') {
+  const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = '';
 
+  const isWizardList = containerId === 'wizardPatchCategoriesContainer';
   const query = (STATE.patchSearchQuery || '').toLowerCase().trim();
   const enabledOnly = STATE.filterEnabledOnly;
+  const viewFilter = isWizardList ? (STATE.patchListFilter || 'all') : 'all';
 
   const filtered = STATE.patches.filter(patch => {
     const isSelected = STATE.selectedPatches.has(patch.name);
     if (enabledOnly && !isSelected) return false;
+    if (viewFilter === 'selected' && !isSelected) return false;
+    if (viewFilter === 'options' && !(Array.isArray(patch.options) && patch.options.length > 0)) return false;
     if (query) {
       const n = (patch.name || '').toLowerCase();
       const d = (patch.description || '').toLowerCase();
@@ -320,7 +327,10 @@ function renderMorphePatchList() {
   });
 
   if (filtered.length === 0) {
-    container.innerHTML = '<div class="morphe-alert">No matching patches.</div>';
+    container.innerHTML = isWizardList
+      ? '<div class="wizard-patch-empty"><strong>Tidak ada patch yang cocok</strong><span>Ubah pencarian atau filter untuk melihat patch lainnya.</span></div>'
+      : '<div class="morphe-alert">No matching patches.</div>';
+    if (isWizardList && typeof updateWizardPatchStats === 'function') updateWizardPatchStats(0);
     return;
   }
 
@@ -329,10 +339,24 @@ function renderMorphePatchList() {
     const hasOptions = Array.isArray(patch.options) && patch.options.length > 0;
 
     const card = document.createElement('div');
-    card.className = `patch-item ${isSelected ? 'selected' : ''}`;
+    card.className = `${isWizardList ? 'wizard-patch-row' : 'patch-item'} ${isSelected ? 'selected' : ''}`;
     card.dataset.patchName = patch.name;
+    card.setAttribute('role', isWizardList ? 'checkbox' : 'button');
+    card.setAttribute('aria-checked', String(isSelected));
+    card.setAttribute('tabindex', '0');
 
-    card.innerHTML = `
+    card.innerHTML = isWizardList ? `
+      <span class="patch-toggle" aria-hidden="true"><span></span></span>
+      <span class="wizard-patch-copy">
+      <span class="wizard-patch-title-line">
+          <strong>${escapeHtml(patch.name)}</strong>
+          ${hasOptions ? '<span class="patch-options-badge">Beropsi</span>' : ''}
+        ${hasOptions && patchHasCustomizedOptions(patch) ? '<span class="patch-options-badge is-customized">Diatur</span>' : ''}
+        </span>
+        <span class="wizard-patch-description">${escapeHtml(patch.description || 'Tidak ada deskripsi dari sumber patch.')}</span>
+      </span>
+      ${hasOptions ? `<button type="button" id="patchOptBtn-${STATE.patches.indexOf(patch)}" class="morphe-patch-gear-btn wizard-patch-options" title="Atur ${escapeHtml(patch.name)}" aria-label="Atur ${escapeHtml(patch.name)}">${SVG_GEAR}<span>Atur</span></button>` : ''}
+    ` : `
       <div class="morphe-circle-check" aria-hidden="true">${SVG_CHECK}</div>
       <div class="patch-info">
         <div class="patch-title">${escapeHtml(patch.name)}</div>
@@ -341,7 +365,7 @@ function renderMorphePatchList() {
       ${hasOptions ? `<button type="button" class="morphe-patch-gear-btn" title="Configure ${escapeHtml(patch.name)}" aria-label="Configure ${escapeHtml(patch.name)}">${SVG_GEAR}</button>` : ''}
     `;
 
-    card.addEventListener('click', (e) => {
+    const togglePatch = e => {
       if (e.target.closest('.morphe-patch-gear-btn')) {
         e.stopPropagation();
         openPatchOptionsModal(patch);
@@ -358,103 +382,28 @@ function renderMorphePatchList() {
       if (typeof checkMicrogSmartWarning === 'function') {
         checkMicrogSmartWarning(patch.name, willBeChecked);
       }
+      if (isWizardList) renderMorphePatchList(containerId);
       syncAllSummaries();
+    };
+    card.addEventListener('click', togglePatch);
+    card.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      togglePatch(event);
     });
 
     container.appendChild(card);
   });
+  if (isWizardList && typeof updateWizardPatchStats === 'function') updateWizardPatchStats(filtered.length);
 }
 
-function openPatchOptionsModal(patch) {
-  const modal = document.getElementById('patchOptionsModal');
-  const titleEl = document.getElementById('modalPatchOptsTitle');
-  const descEl = document.getElementById('modalPatchOptsDesc');
-  const bodyEl = document.getElementById('modalPatchOptsBody');
-  if (!modal || !bodyEl) return;
-
-  STATE.editingPatchName = patch.name;
-  if (titleEl) titleEl.textContent = patch.name;
-  if (descEl) descEl.textContent = patch.description || '';
-  bodyEl.innerHTML = '';
-
-  const options = Array.isArray(patch.options) ? patch.options : [];
-  options.forEach(opt => {
-    const key = opt.key;
-    const title = opt.title || key;
-    const rawDef = opt.default;
-    const currentVal = STATE.selectedOptions[key] !== undefined ? STATE.selectedOptions[key] : rawDef;
-    const optType = (opt.type || '').toLowerCase();
-
-    const optCard = document.createElement('div');
-    optCard.className = 'morphe-opt-card';
-
-    let controlHtml = '';
-    if (optType === 'boolean' || typeof rawDef === 'boolean') {
-      const isChecked = currentVal === true || currentVal === 'true';
-      controlHtml = `
-        <select class="morphe-select modal-opt-input" data-opt-key="${escapeHtml(key)}" data-opt-type="boolean">
-          <option value="true" ${isChecked ? 'selected' : ''}>Enabled</option>
-          <option value="false" ${!isChecked ? 'selected' : ''}>Disabled</option>
-        </select>
-      `;
-    } else if (Array.isArray(opt.possibleValues) && opt.possibleValues.length > 0) {
-      controlHtml = `<select class="morphe-select modal-opt-input" data-opt-key="${escapeHtml(key)}">`;
-      opt.possibleValues.forEach(val => {
-        const sel = String(val) === String(currentVal ?? '') ? 'selected' : '';
-        controlHtml += `<option value="${escapeHtml(String(val))}" ${sel}>${escapeHtml(String(val))}</option>`;
-      });
-      controlHtml += `</select>`;
-    } else {
-      controlHtml = `<input type="text" class="morphe-input modal-opt-input" data-opt-key="${escapeHtml(key)}" value="${escapeHtml(String(currentVal ?? ''))}">`;
-    }
-
-    optCard.innerHTML = `
-      <div class="morphe-opt-header">
-        <span class="morphe-opt-title">${escapeHtml(title)}</span>
-        <span class="morphe-opt-key">${escapeHtml(key)}</span>
-      </div>
-      ${opt.description ? `<p class="morphe-muted-hint">${escapeHtml(opt.description)}</p>` : ''}
-      ${controlHtml}
-    `;
-
-    bodyEl.appendChild(optCard);
-  });
-
-  modal.classList.remove('hidden');
-}
-
-function savePatchOptionsModal() {
-  const bodyEl = document.getElementById('modalPatchOptsBody');
-  const modal = document.getElementById('patchOptionsModal');
-  if (bodyEl) {
-    bodyEl.querySelectorAll('.modal-opt-input').forEach(input => {
-      const key = input.dataset.optKey;
-      if (input.dataset.optType === 'boolean') {
-        STATE.selectedOptions[key] = input.value === 'true';
-      } else {
-        STATE.selectedOptions[key] = input.value;
-      }
-    });
-  }
-  if (modal) modal.classList.add('hidden');
-  if (STATE.uiMode === 'tui') renderTuiView();
-}
-
-function resetPatchOptionsModal() {
-  const patch = STATE.patches.find(p => p.name === STATE.editingPatchName);
-  if (!patch || !Array.isArray(patch.options)) return;
-  patch.options.forEach(opt => {
-    if (opt.key) STATE.selectedOptions[opt.key] = opt.default;
-  });
-  openPatchOptionsModal(patch);
-}
 
 function syncAllSummaries() {
   const total = STATE.patches.length || 0;
   const active = STATE.selectedPatches.size;
-  const ver = STATE.currentVersion || 'latest';
+  const ver = STATE.currentVersion || '—';
   const srcName = getSourceDisplayName(STATE.currentSource);
-  const appName = STATE.currentApp?.name || 'YouTube';
+  const appName = STATE.currentApp?.name || 'Belum dipilih';
   const statusSuffix = STATE.installedVersion ? 'Installed' : 'Ready to patch';
 
   setText('homeCardMeta', `v${ver} • ${statusSuffix}`);
@@ -477,28 +426,170 @@ function syncAllSummaries() {
     }
   }
 
-  setText('infoTargetVersion', `v${ver}`);
-  setText('infoActiveSource', `${srcName} (${STATE.patchTag})`);
-  setText('infoActivePatches', `${active} / ${total}`);
+  setText('infoTargetVersion', STATE.currentVersion ? `v${ver}` : 'Belum dipilih');
+  setText('infoActiveSource', STATE.currentSource ? `${srcName}${STATE.patchTag ? ` · ${STATE.patchTag}` : ''}` : 'Belum dipilih');
+  setText('infoActivePatches', total ? `${active} / ${total}` : 'Belum dipilih');
   setText(
     'infoEngineStatus',
     STATE.engineMode === 'local'
-      ? `On-Device Daemon (v${STATE.daemonVersion})`
-      : 'GitHub Actions Cloud'
+      ? `Root/native · Morphe ${STATE.daemonVersion}`
+      : STATE.engineMode === 'browser'
+        ? `Browser lokal · ${window.RVX_RUNTIME?.supportsThreads ? 'multithread' : 'single thread'}`
+        : 'Tidak tersedia'
   );
+  const accessModeLabels = {
+    'root-integrated': 'Root terintegrasi',
+    'local-companion': 'Companion non-root',
+    'desktop-local': 'Desktop lokal',
+    'browser-local': 'HTML lokal',
+    'browser-only': 'Browser saja',
+    'standalone-browser': 'HTML lokal',
+    'hosted-browser': 'PWA lokal',
+    'root-helper-unavailable': 'Helper root tidak tersedia'
+  };
+  setText('infoDeviceAccessMode', accessModeLabels[STATE.deviceAccessMode] || 'Browser lokal');
 
   setText('tuiDialogSubtitle', `${appName} v${ver} • ${srcName} (${active}/${total})`);
+  if (typeof updateWizardNavigationState === 'function') updateWizardNavigationState();
 }
 
 function triggerBuildPipeline() {
-  if (STATE.engineMode === 'local') {
-    triggerLocalPatch();
+  if (STATE.engineMode === 'local' || STATE.engineMode === 'browser') {
+    openDownloadConsentModal();
   } else {
     triggerCloudBuild();
   }
 }
 
-async function triggerLocalPatch() {
+function createLocalPatchPayload() {
+  const activeSourceObj = STATE.sources.find(s => s.id === STATE.currentSource);
+  const activeRelease = STATE.selectedRelease || getSelectedSourceRelease(activeSourceObj, STATE.patchTag);
+  const nativeMpp = activeRelease?.capabilities?.nativeMpp || activeSourceObj?.capabilities?.nativeMpp || {};
+  const selectedAsset = getSelectedBundleAsset();
+  const packageName = STATE.currentApp?.packageName;
+  const allPatchNames = STATE.patches.map(p => p.name);
+  return {
+    package_name: packageName,
+    target_version: STATE.currentVersion,
+    patch_source: activeSourceObj?.repository || STATE.currentSource,
+    patch_tag: STATE.patchTag,
+    patch_bundle_url: selectedAsset?.browser_download_url || nativeMpp.url || activeSourceObj?.bundleUrl || null,
+    patch_bundle_sha256: nativeMpp.sha256 || null,
+    source_commit: activeRelease?.sourceCommit || null,
+    manifest_sha256: activeRelease?.manifestSha256 || null,
+    // Compatibility metadata was already verified during release selection.
+    // Morphe CLI only consumes the .mpp, so do not download it again as JSON.
+    manifest_url: null,
+    is_root: STATE.targetMode === 'root',
+    included_patches: Array.from(STATE.selectedPatches),
+    excluded_patches: allPatchNames.filter(name => !STATE.selectedPatches.has(name)),
+    options: STATE.selectedOptions,
+    download_plan_id: STATE.pendingDownloadPlan?.planId || null,
+    workspace_location_id: STATE.storageSelection?.workspaceId || null,
+    output_location_id: STATE.storageSelection?.outputId || null
+  };
+}
+
+function formatDownloadBytes(bytes) {
+  const value = Number(bytes);
+  if (!Number.isFinite(value) || value < 0) return 'ukuran belum tersedia';
+  if (value === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const index = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
+  const amount = value / (1024 ** index);
+  return `${amount >= 10 || index === 0 ? amount.toFixed(0) : amount.toFixed(1)} ${units[index]}`;
+}
+
+function getSelectedBundleAsset() {
+  const source = STATE.sources.find(item => item.id === STATE.currentSource);
+  if (!source) return null;
+  const releases = STATE.sourceReleases[source.id] || STATE.patchReleases || [];
+  const release = STATE.patchTag === 'latest'
+    ? releases.find(item => !item.prerelease && !item.draft)
+    : STATE.patchTag === 'dev' || STATE.patchTag === 'prerelease'
+      ? releases.find(item => item.prerelease && !item.draft)
+      : releases.find(item => (item.tag_name || item.name) === STATE.patchTag);
+  return sourceReleaseBundleAsset(source, release);
+}
+
+function renderDownloadPlanItem(icon, title, detail, state, stateClass = '') {
+  return `<div class="download-plan-item">
+    <span class="download-plan-icon" aria-hidden="true">${icon}</span>
+    <span class="download-plan-copy"><strong>${escapeHtml(title)}</strong><small>${escapeHtml(detail)}</small></span>
+    <span class="download-plan-state ${stateClass}">${escapeHtml(state)}</span>
+  </div>`;
+}
+
+
+async function triggerBrowserPatchBuild(plan, apkFile) {
+  const controller = new AbortController();
+  STATE.browserPatchAbortController?.abort();
+  STATE.browserPatchAbortController = controller;
+  switchScreen('progress');
+  setLocalBuildProgress(1, 'Menyiapkan pemrosesan lokal');
+  appendTerminalLog('APK tetap berada di perangkat ini.', 'I');
+  try {
+    const output = await RVX_LOCAL_ENGINE.run({
+      plan,
+      apkFile,
+      signal: controller.signal,
+      job: createLocalPatchPayload(),
+      onProgress(detail) {
+        if (detail.artifact) {
+          const total = Number(detail.artifactTotal || detail.total || 0);
+          const received = Number(detail.artifactReceived || detail.received || 0);
+          const percentage = total > 0 ? Math.min(35, Math.round((received / total) * 35)) : 3;
+          setLocalBuildProgress(percentage, detail.artifact === 'engine' ? 'Menyiapkan mesin lokal' : 'Menyiapkan artefak source');
+          return;
+        }
+        const stageLabels = {
+          'validate-input': 'Memvalidasi APK',
+          prepare: 'Menyiapkan file lokal',
+          decode: 'Membaca DEX dan resource',
+          apply: 'Menerapkan patch',
+          rebuild: 'Membangun APK',
+          sign: 'Menandatangani APK',
+          verify: 'Memverifikasi hasil',
+          save: 'Menyiapkan hasil'
+        };
+        setLocalBuildProgress(Math.max(36, Math.round(Number(detail.progress || 0) * 100)), stageLabels[detail.stage] || 'Memproses secara lokal');
+      }
+    });
+    setLocalBuildProgress(100, 'APK selesai dan terverifikasi');
+    const appAlias = STATE.currentApp?.alias || 'app';
+    await rvxSaveBlob(output, `rvx-${appAlias}-${STATE.currentVersion}.apk`, 'application/vnd.android.package-archive');
+    appendTerminalLog('Hasil patch berhasil disimpan pada perangkat.', 'S');
+  } catch (error) {
+    if (error?.name !== 'AbortError') {
+      appendTerminalLog(`Build browser dihentikan: ${error.message}`, 'E');
+      setLocalBuildProgress(0, error.message);
+    }
+  } finally {
+    if (STATE.browserPatchAbortController === controller) STATE.browserPatchAbortController = null;
+  }
+}
+
+function setLocalBuildProgress(percent, label) {
+  const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
+  setText('progressStatusSub', label);
+  setText('progressPercentPill', `${safePercent}%`);
+  const barFill = document.getElementById('progressBarFill');
+  if (barFill) barFill.style.width = `${safePercent}%`;
+}
+
+function parseDownloadProgress(line) {
+  if (!line.startsWith('DOWNLOAD_PROGRESS|')) return null;
+  const [, label, receivedRaw, totalRaw] = line.split('|');
+  const received = Number(receivedRaw || 0);
+  const total = Number(totalRaw || 0);
+  return { label, received, total };
+}
+
+async function triggerLocalPatch(payload = createLocalPatchPayload()) {
+  const activeSourceObj = STATE.sources.find(s => s.id === STATE.currentSource);
+  const packageName = STATE.currentApp?.packageName;
+  if (!activeSourceObj?.bundleUrl || !packageName) return;
+
   if (STATE.uiMode === 'morphe') {
     switchScreen('progress');
   } else {
@@ -507,43 +598,19 @@ async function triggerLocalPatch() {
   }
 
   const heroCard = document.getElementById('postPatchHeroCard');
-  const subText = document.getElementById('progressStatusSub');
-  const pctPill = document.getElementById('progressPercentPill');
-  const barFill = document.getElementById('progressBarFill');
-
   if (heroCard) heroCard.classList.add('hidden');
-  if (subText) subText.textContent = 'Applying patches';
-  if (pctPill) pctPill.textContent = '15%';
-  if (barFill) barFill.style.width = '15%';
+  setLocalBuildProgress(3, 'Memulai proses lokal');
+  setText('telemetryCpuVal', '—');
+  setText('telemetryIoVal', '—');
+  setText('telemetryMemVal', '—');
 
-  setText('telemetryCpuVal', '41%');
-  setText('telemetryIoVal', '240 KB/s');
-
-  const appName = STATE.currentApp?.name || 'YouTube';
-  appendTerminalLog(`Starting patcher for ${appName} v${STATE.currentVersion}`, 'I');
-
-  const allPatchNames = STATE.patches.map(p => p.name);
-  const excludedPatches = allPatchNames.filter(name => !STATE.selectedPatches.has(name));
-  const includedPatches = Array.from(STATE.selectedPatches);
-
-  const activeSourceObj = STATE.sources.find(s => s.id === STATE.currentSource);
-  const payload = {
-    package_name: STATE.currentApp?.packageName || 'com.google.android.youtube',
-    target_version: STATE.currentVersion,
-    patch_source: activeSourceObj?.repository || STATE.currentSource,
-    patch_tag: STATE.patchTag,
-    patch_bundle_url: activeSourceObj?.bundleUrl || null,
-    manifest_url: activeSourceObj?.manifestUrl || null,
-    is_root: true,
-    included_patches: includedPatches,
-    excluded_patches: excludedPatches,
-    options: STATE.selectedOptions
-  };
+  const appName = STATE.currentApp?.name || 'Aplikasi';
+  appendTerminalLog(`Memulai patch ${appName} v${STATE.currentVersion}`, 'I');
 
   try {
     const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/start`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: daemonAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
 
@@ -553,40 +620,75 @@ async function triggerLocalPatch() {
     }
 
     if (STATE.eventSource) STATE.eventSource.close();
-    let stepPct = 22;
-
-    STATE.eventSource = new EventSource(`${STATE.daemonUrl}/api/v1/patch/stream`);
-    STATE.eventSource.onmessage = (event) => {
-      const line = event.data || '';
+    const controller = new AbortController();
+    STATE.eventSource = { close: () => controller.abort() };
+    const streamResponse = await fetch(`${STATE.daemonUrl}/api/v1/patch/stream`, {
+      headers: daemonAuthHeaders(), signal: controller.signal
+    });
+    if (!streamResponse.ok || !streamResponse.body) throw new Error(`Log stream HTTP ${streamResponse.status}`);
+    consumePatchEventStream(streamResponse.body, line => {
+      const download = parseDownloadProgress(line);
+      if (download) {
+        const ranges = { jre: [5, 18], cli: [18, 30], bundle: [30, 48] };
+        const [start, end] = ranges[download.label] || [10, 45];
+        const fraction = download.total > 0 ? download.received / download.total : 0;
+        setLocalBuildProgress(start + ((end - start) * fraction), `Mengunduh ${download.label} · ${formatDownloadBytes(download.received)}${download.total > 0 ? ` / ${formatDownloadBytes(download.total)}` : ''}`);
+        setText('telemetryIoVal', formatDownloadBytes(download.received));
+        return;
+      }
+      if (line.startsWith('OUTPUT_FILE|')) {
+        const [, path, sizeRaw] = line.split('|');
+        const size = Number(sizeRaw || 0);
+        setLocalBuildProgress(99, `Hasil ${formatDownloadBytes(size)} disimpan ke ${path}`);
+        appendTerminalLog(`Hasil akhir: ${path} (${formatDownloadBytes(size)})`, 'I');
+        return;
+      }
       const isOk = line.includes('completed successfully') || line.includes('succeeded');
       const isErr = line.toLowerCase().includes('error') || line.toLowerCase().includes('failed');
 
       appendTerminalLog(line, isErr ? '!' : (isOk ? 'I' : 'I'));
 
-      stepPct = Math.min(96, stepPct + 8);
-      if (pctPill) pctPill.textContent = `${stepPct}%`;
-      if (barFill) barFill.style.width = `${stepPct}%`;
+      if (line.includes('Checking Java')) setLocalBuildProgress(5, 'Memeriksa Java Runtime');
+      else if (line.includes('Morphe CLI is ready')) setLocalBuildProgress(30, 'Mesin Morphe siap');
+      else if (line.includes('Using cached patch bundle')) setLocalBuildProgress(48, 'Bundle patch diambil dari cache');
+      else if (line.includes('Resolving patch bundle')) setLocalBuildProgress(32, 'Menyiapkan bundle patch');
+      else if (line.includes('Stock APK')) setLocalBuildProgress(55, 'APK target siap');
+      else if (line.includes('Executing Morphe CLI')) setLocalBuildProgress(62, 'Menerapkan patch');
+      else if (line.includes('Output APK generated')) setLocalBuildProgress(96, 'Menyelesaikan APK hasil patch');
 
       if (line.includes('Patching process completed successfully')) {
         if (heroCard) heroCard.classList.remove('hidden');
-        if (subText) subText.textContent = 'All done!';
-        if (pctPill) pctPill.textContent = '100%';
-        if (barFill) barFill.style.width = '100%';
-        setText('telemetryCpuVal', '6%');
-        setText('telemetryIoVal', '0 KB/s');
+        setLocalBuildProgress(100, 'Selesai');
         if (STATE.eventSource) STATE.eventSource.close();
       } else if (line.includes('Patching failed')) {
-        if (subText) subText.textContent = 'Patching halted';
-        if (pctPill) pctPill.textContent = '100%';
-        if (barFill) barFill.style.width = '100%';
-        setText('telemetryCpuVal', '4%');
-        setText('telemetryIoVal', '0 KB/s');
+        setLocalBuildProgress(100, 'Proses dihentikan karena kesalahan');
         if (STATE.eventSource) STATE.eventSource.close();
       }
-    };
+    }).catch(error => {
+      if (error.name !== 'AbortError') appendTerminalLog(`Log stream terputus: ${error.message}`, '!');
+    });
   } catch (err) {
     appendTerminalLog(`Failed to start patching: ${err.message}`, '!');
-    if (subText) subText.textContent = 'Error';
+    setLocalBuildProgress(100, 'Gagal memulai proses');
+  }
+}
+
+function daemonAuthHeaders(extra = {}) {
+  const token = RVX_STORAGE.session.getItem('rvx_daemon_token') || '';
+  return token ? { ...extra, 'X-RVX-Token': token } : extra;
+}
+
+async function consumePatchEventStream(stream, onLine) {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+    const frames = buffer.split(/\r?\n\r?\n/);
+    buffer = frames.pop() || '';
+    frames.forEach(frame => frame.split(/\r?\n/).filter(line => line.startsWith('data:')).forEach(line => onLine(line.slice(5).trimStart())));
+    if (done) break;
   }
 }
 
@@ -675,6 +777,63 @@ function appendTerminalLog(line, type = 'I') {
   }
 }
 
+function renderReleaseNotesMarkdown(markdown) {
+  const renderInline = (value) => {
+    const tokens = [];
+    let text = escapeHtml(value);
+
+    // Keep links limited to absolute HTTP(S) URLs and escape their attributes.
+    text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (match, label, url) => {
+      const token = `\u0000${tokens.length}\u0000`;
+      tokens.push(`<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${label}</a>`);
+      return token;
+    });
+    text = text
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, '$1<em>$2</em>')
+      .replace(/\u0000(\d+)\u0000/g, (match, index) => tokens[Number(index)] || '');
+    return text;
+  };
+
+  const lines = String(markdown || '').replace(/\r\n?/g, '\n').split('\n');
+  const blocks = [];
+  let paragraph = [];
+  let list = [];
+  const flushParagraph = () => {
+    if (paragraph.length) blocks.push(`<p>${paragraph.map(renderInline).join('<br>')}</p>`);
+    paragraph = [];
+  };
+  const flushList = () => {
+    if (list.length) blocks.push(`<ul>${list.map(item => `<li>${renderInline(item)}</li>`).join('')}</ul>`);
+    list = [];
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    const heading = trimmed.match(/^(#{1,4})\s+(.+)$/);
+    const bullet = trimmed.match(/^(?:[-*+]|\d+\.)\s+(.+)$/);
+    if (!trimmed) {
+      flushParagraph();
+      flushList();
+    } else if (heading) {
+      flushParagraph();
+      flushList();
+      const level = Math.min(heading[1].length + 1, 5);
+      blocks.push(`<h${level}>${renderInline(heading[2])}</h${level}>`);
+    } else if (bullet) {
+      flushParagraph();
+      list.push(bullet[1]);
+    } else {
+      flushList();
+      paragraph.push(trimmed);
+    }
+  }
+  flushParagraph();
+  flushList();
+  return blocks.join('') || '<p class="notes-empty">Rilis ini tidak menyertakan catatan changelog.</p>';
+}
+
 function showPatchNotesModal(specificTag) {
   const modal = document.getElementById('patchNotesModal');
   const content = document.getElementById('patchNotesContent');
@@ -686,19 +845,19 @@ function showPatchNotesModal(specificTag) {
   let foundRelease = null;
 
   if (currentTag === 'dev') {
-    foundRelease = releases.find(r => r.prerelease) || releases[0];
+    foundRelease = releases.find(r => r.prerelease && !r.draft);
   } else if (currentTag === 'latest') {
-    foundRelease = releases.find(r => !r.prerelease) || releases[0];
+    foundRelease = releases.find(r => !r.prerelease && !r.draft);
   } else {
     foundRelease = releases.find(r => r.tag_name === currentTag);
   }
 
   if (foundRelease) {
     if (title) title.textContent = `Release Notes: ${foundRelease.name || foundRelease.tag_name}`;
-    content.textContent = `Tag: ${foundRelease.tag_name}\n\n${foundRelease.body || 'No release notes provided.'}`;
+    content.innerHTML = `<div class="notes-release-tag">${escapeHtml(foundRelease.tag_name)}</div>${renderReleaseNotesMarkdown(foundRelease.body)}`;
   } else {
     if (title) title.textContent = `Release Notes (${currentTag.toUpperCase()})`;
-    content.textContent = `Active Channel: ${currentTag.toUpperCase()}\nSource: ${getSourceDisplayName(STATE.currentSource)}`;
+    content.innerHTML = `<p><strong>Active channel:</strong> ${escapeHtml(currentTag.toUpperCase())}<br><strong>Source:</strong> ${escapeHtml(getSourceDisplayName(STATE.currentSource))}</p>`;
   }
 
   modal.classList.remove('hidden');

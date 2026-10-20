@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "engineVersion": "0.1.0-contract",
+  "apiVersion": "rvp-1",
+  "available": false,
+  "statusMessage": "Mesin portable masih dalam tahap implementasi dan belum dapat menghasilkan APK. Gunakan Root WebUI untuk bundle MPP.",
+  "registryPublicKey": "",
+  "variants": {
+    "singleThread": null,
+    "threaded": null
+  },
+  "releasePolicy": {
+    "requiresSignedArtifacts": true,
+    "allowsUnverifiedMpp": false,
+    "allowsNetworkInWorker": false
+  }
+}

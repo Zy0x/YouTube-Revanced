@@ -1,8 +1,9 @@
-use std::net::SocketAddr;
-use std::path::PathBuf;
 use axum::{routing::get, Router};
 use clap::{Parser, Subcommand};
-use tower_http::cors::{Any, CorsLayer};
+use std::net::SocketAddr;
+use std::path::PathBuf;
+use tower_http::compression::CompressionLayer;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -110,7 +111,10 @@ async fn main() -> anyhow::Result<()> {
         Some(Commands::Action { modpath: m }) => {
             cli::run_action(m.unwrap_or(modpath)).await?;
         }
-        Some(Commands::Install { modpath: m, bootmode }) => {
+        Some(Commands::Install {
+            modpath: m,
+            bootmode,
+        }) => {
             cli::run_install(m.unwrap_or(modpath), bootmode).await?;
         }
         Some(Commands::Uninstall { modpath: m }) => {
@@ -138,12 +142,18 @@ async fn run_server(bind_addr_str: &str, port: u16, modpath: PathBuf) -> anyhow:
             bind_addr_str.to_string()
         }
         other => {
-            tracing::warn!("Unknown bind address '{}'. Falling back to '127.0.0.1'.", other);
+            tracing::warn!(
+                "Unknown bind address '{}'. Falling back to '127.0.0.1'.",
+                other
+            );
             "127.0.0.1".to_string()
         }
     };
 
-    tracing::info!("Starting YouTube RVX Native Core & WebUI Daemon v{}", env!("CARGO_PKG_VERSION"));
+    tracing::info!(
+        "Starting YouTube RVX Native Core & WebUI Daemon v{}",
+        env!("CARGO_PKG_VERSION")
+    );
     tracing::info!("Module Path: {}", modpath.display());
 
     let token_file = modpath.join(".daemon_token");
@@ -155,17 +165,40 @@ async fn run_server(bind_addr_str: &str, port: u16, modpath: PathBuf) -> anyhow:
         new_token
     };
 
-    let state = AppState::new(modpath.clone(), token);
-
+    let state = AppState::new(modpath.clone(), token, Vec::new());
+    tracing::info!("Local WebUI uses an automatic same-origin device session.");
     let cors = CorsLayer::new()
-        .allow_origin(Any)
-        .allow_methods(Any)
-        .allow_headers(Any);
+        .allow_origin(AllowOrigin::predicate(
+            move |origin: &axum::http::HeaderValue, _| {
+                let value = origin.to_str().unwrap_or_default();
+                let local = reqwest::Url::parse(value)
+                    .ok()
+                    .and_then(|url| {
+                        url.host_str().map(|host| {
+                            host.eq_ignore_ascii_case("localhost")
+                                || host == "127.0.0.1"
+                                || host == "::1"
+                        })
+                    })
+                    .unwrap_or(false);
+                local
+            },
+        ))
+        .allow_methods([
+            axum::http::Method::GET,
+            axum::http::Method::POST,
+            axum::http::Method::PUT,
+        ])
+        .allow_headers([
+            axum::http::header::CONTENT_TYPE,
+            axum::http::HeaderName::from_static("x-rvx-token"),
+        ]);
 
     let app = Router::new()
         .nest("/api/v1", api::router(state.clone()))
         .fallback(get(static_handler))
         .layer(cors)
+        .layer(CompressionLayer::new())
         .layer(TraceLayer::new_for_http());
 
     let mut listener_opt = None;

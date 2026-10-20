@@ -7,6 +7,10 @@
 MODPATH=${0%/*}
 [ -d "$MODPATH/app" ] || MODPATH="/data/adb/modules/YouTube-RVX"
 
+# Trusted hosted UI. Custom deployments can append origins before starting the service.
+: "${RVX_ALLOWED_ORIGINS:=https://rvext.vercel.app,https://web-gamma-puce-43.vercel.app,https://web-zy0xs-projects.vercel.app}"
+export RVX_ALLOWED_ORIGINS
+
 # Execute Native Rust Core if compiled binary is present
 if [ -f "$MODPATH/bin/rvx-daemon" ]; then
 	chmod 755 "$MODPATH/bin/rvx-daemon" 2>/dev/null

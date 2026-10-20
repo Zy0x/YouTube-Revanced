@@ -1,11 +1,11 @@
 #[allow(unused_imports, dead_code)]
+use crate::utils::run_shell_command;
+#[allow(unused_imports, dead_code)]
 use std::path::{Path, PathBuf};
 #[allow(unused_imports, dead_code)]
 use std::time::Duration;
 #[allow(unused_imports, dead_code)]
 use tokio::time::sleep;
-#[allow(unused_imports, dead_code)]
-use crate::utils::run_shell_command;
 
 #[allow(dead_code)]
 const PKG_NAME: &str = "com.google.android.youtube";
@@ -87,7 +87,10 @@ fn resolve_pkg_for_apk(name: &str) -> String {
 async fn mount_all_patched_apps(modpath: &Path) -> anyhow::Result<()> {
     let app_dir = modpath.join("app");
     if !app_dir.exists() {
-        tracing::warn!("⚠️ [Service] No app directory found at {}", app_dir.display());
+        tracing::warn!(
+            "⚠️ [Service] No app directory found at {}",
+            app_dir.display()
+        );
         return Ok(());
     }
 
@@ -96,22 +99,40 @@ async fn mount_all_patched_apps(modpath: &Path) -> anyhow::Result<()> {
         while let Ok(Some(entry)) = entries.next_entry().await {
             let p = entry.path();
             if p.extension().map_or(false, |ext| ext == "apk") {
-                let file_name = p.file_name().unwrap_or_default().to_string_lossy().to_string();
+                let file_name = p
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string();
                 let pkg = resolve_pkg_for_apk(&file_name);
 
-                let stock_apk = run_shell_command(&format!("pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n1", pkg))
-                    .await
-                    .unwrap_or_default()
-                    .trim()
-                    .to_string();
+                let stock_apk = run_shell_command(&format!(
+                    "pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n1",
+                    pkg
+                ))
+                .await
+                .unwrap_or_default()
+                .trim()
+                .to_string();
 
                 if stock_apk.is_empty() {
-                    tracing::warn!("⚠️ [Service] Target app {} not installed on device, skipping mount.", pkg);
+                    tracing::warn!(
+                        "⚠️ [Service] Target app {} not installed on device, skipping mount.",
+                        pkg
+                    );
                     continue;
                 }
 
-                tracing::info!("🔗 [Service] Bind mounting RVX APK ({}) to {}", file_name, stock_apk);
-                let _ = run_shell_command(&format!("chcon u:object_r:apk_data_file:s0 \"{}\"", p.display())).await;
+                tracing::info!(
+                    "🔗 [Service] Bind mounting RVX APK ({}) to {}",
+                    file_name,
+                    stock_apk
+                );
+                let _ = run_shell_command(&format!(
+                    "chcon u:object_r:apk_data_file:s0 \"{}\"",
+                    p.display()
+                ))
+                .await;
                 let mount_cmd = format!("mount -o bind \"{}\" \"{}\"", p.display(), stock_apk);
                 let _ = run_shell_command(&mount_cmd).await;
                 let _ = run_shell_command(&format!("am force-stop {}", pkg)).await;
@@ -135,7 +156,10 @@ async fn start_background_daemon(modpath: &Path) {
                 .ok()
                 .and_then(|s| s.trim().parse().ok())
                 .unwrap_or(8088);
-            tracing::info!("🌐 [Service] Starting rvx-daemon background WebUI on port {}...", port);
+            tracing::info!(
+                "🌐 [Service] Starting rvx-daemon background WebUI on port {}...",
+                port
+            );
             let _ = run_shell_command(&format!("chmod 755 \"{}\"", daemon_bin.display())).await;
             let log_file = modpath.join("daemon.log");
             let cmd = format!(
