@@ -1,3 +1,21 @@
+## v2.1.27 (2026-10-21)
+
+### Navigasi Back Gesture Terurut Multi-Tingkat & Perlindungan Double-Back
+- **Navigasi Back Gesture Terurut Multi-Tingkat (Hierarchical Ordered Back Gesture)**:
+  - Menerapkan penanganan gesture kembali bertingkat di seluruh aplikasi Android native (`com.rvx.patcher`) dan web (PWA, mobile browser, & desktop).
+  - Mengeliminasi penutupan aplikasi secara mendadak saat pengguna melakukan swipe gesture back atau menekan tombol kembali pada perangkat.
+  - Alur kembali yang terurut dengan presisi tinggi:
+    1. **Tingkat 1**: Menutup popup dan menu melayang aktif (`#patchBulkMenu`, `#wizardHeaderMenu`).
+    2. **Tingkat 2**: Menutup sub-panel drawer bersarang (`#drawerManualTag`, `#wizAddSourceDrawer`, `#versionSearchDrawer`).
+    3. **Tingkat 3**: Menutup modal dialog aktif secara berurutan sesuai tumpukan (Storage Browser, Download Consent, Patch Options, Other Versions, Release Notes, Source Picker, Version Picker, Info Modal, Settings, dsb.).
+    4. **Tingkat 4**: Mengembalikan tampilan terminal TUI ke Morphe UI.
+    5. **Tingkat 5**: Mundur per langkah pada Wizard (`Langkah 5 -> 4 -> 3 -> 2 -> 1`) atau layar klasik (`Progress -> Patches -> Version -> Home`).
+    6. **Tingkat 6**: Pada Langkah 1 (kondisi awal), mengaktifkan perlindungan *Double-Back-to-Exit* dengan pesan toast informatif (*"Tekan sekali lagi untuk keluar"*) dalam ambang batas 2 detik.
+- **Penyelarasan Native Android Bridge & Browser History Stack**:
+  - `MainActivity.kt`: Memperbarui `onBackPressedDispatcher` untuk mengevaluasi `window.RVXHandleBackGesture()` sebelum menutup aktivitas, mencegah penutupan langsung pada Single-Page Application (SPA).
+  - Web & PWA: Sinkronisasi otomatis browser `popstate` dan floating toast modern berbasis CSS tokens (`.rvx-floating-toast`) yang mendukung safe-area layar perangkat mobile.
+  - Aksesibilitas Keyboard: Tombol `Escape` pada keyboard fisik kini memicu navigasi kembali secara runtut dan intuitif.
+
 ## v2.1.26 (2026-10-20)
 
 ### Perbaikan Visual Modal & Presisi Tampilan Mobile-First Seluruh Perangkat

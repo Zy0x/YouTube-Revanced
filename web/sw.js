@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'rvx-shell-v2.1.26';
+const SHELL_CACHE = 'rvx-shell-v2.1.27';
 const METADATA_CACHE = 'rvx-metadata-v2';
 const ARTIFACT_CACHE = 'rvx-immutable-v1';
 
@@ -30,6 +30,7 @@ const SHELL_ASSETS = [
   './js/ui-wizard.js',
   './js/ui-dashboard.js',
   './js/ui-tui.js',
+  './js/ui-navigation.js',
   './workers/rvx-engine-worker.js',
   './app.js',
   './manifest.json',

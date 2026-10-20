@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var daemonManager: DaemonManager
 
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
+    private var lastBackPressTime: Long = 0L
 
     private val filePickerLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -161,10 +162,28 @@ class MainActivity : AppCompatActivity() {
     private fun setupBackHandler() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (webView.canGoBack()) {
-                    webView.goBack()
-                } else {
-                    finish()
+                try {
+                    // Query JavaScript master back handler for hierarchical back navigation
+                    webView.evaluateJavascript("(function(){ return Boolean(window.RVXHandleBackGesture && window.RVXHandleBackGesture()); })()") { result ->
+                        val handled = result?.trim()?.equals("true", ignoreCase = true) == true
+                        if (!handled) {
+                            val currentTime = System.currentTimeMillis()
+                            if (currentTime - lastBackPressTime < 2000) {
+                                finish()
+                            } else {
+                                lastBackPressTime = currentTime
+                                Toast.makeText(this@MainActivity, "Tekan sekali lagi untuk keluar", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                } catch (_: Exception) {
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastBackPressTime < 2000) {
+                        finish()
+                    } else {
+                        lastBackPressTime = currentTime
+                        Toast.makeText(this@MainActivity, "Tekan sekali lagi untuk keluar", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         })
