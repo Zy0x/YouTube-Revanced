@@ -116,7 +116,7 @@ class MainActivity : AppCompatActivity() {
 
         // Append custom token for native app bridge detection
         val currentUa = settings.userAgentString
-        settings.userAgentString = "$currentUa RVXPatcherApp/2.1.25"
+        settings.userAgentString = "$currentUa RVXPatcherApp/2.1.26"
 
         webView.addJavascriptInterface(AndroidBridge(), "RVXNativeBridge")
 

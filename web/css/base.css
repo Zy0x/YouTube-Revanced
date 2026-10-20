@@ -34,6 +34,18 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .hidden {
   display: none !important;
 }

@@ -824,14 +824,14 @@
   background: #141822;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  padding: 10px 14px;
+  padding: 0;
   cursor: pointer;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: stretch;
   position: relative;
   transition: all 0.15s ease;
-  min-height: 52px;
+  min-height: 58px;
+  overflow: hidden;
 }
 
 .wizard-source-item:hover {
@@ -943,6 +943,3 @@
   opacity: 1;
   background: rgba(239, 68, 68, 0.12);
 }
-
-
-@import "wizard-selection.css?v=2.1.24";

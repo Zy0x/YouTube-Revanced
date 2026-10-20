@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'rvx-shell-v2.1.25';
+const SHELL_CACHE = 'rvx-shell-v2.1.26';
 const METADATA_CACHE = 'rvx-metadata-v2';
 const ARTIFACT_CACHE = 'rvx-immutable-v1';
 

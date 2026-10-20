@@ -1,3 +1,17 @@
+## v2.1.26 (2026-10-20)
+
+### Perbaikan Visual Modal & Presisi Tampilan Mobile-First Seluruh Perangkat
+- **Restrukturisasi CSS Modular & Reset Elemen Antarmuka**:
+  - Menghapus aturan `@import` ilegal yang terabaikan pada akhir berkas CSS dan menyatukan urutan pemuatan `wizard-selection.css` langsung di induk `style.css`.
+  - Menerapkan CSS reset menyeluruh untuk elemen `<button>`, `<input>`, `<select>`, dan `<textarea>` guna mencegah pewarnaan bawaan sistem/WebView (white background user-agent) yang merusak kontras.
+- **Penyelarasan Kartu Pemilihan Sumber Patch (Step 2 Modal)**:
+  - Mengubah tampilan baris sumber menjadi kartu modern rounded (`border-radius: 12px`, background gelap `#141720`) dengan kontras teks putih tajam, border aksen halus, dan indikator status/radio terpusat.
+  - Memperbaiki badge kompatibilitas (`Kompatibel`, `Rilis belum terverifikasi`, `Kustom`) dengan kontras warna yang nyaman di mata sesuai panduan aksesibilitas.
+- **Ekstraksi Aset Web Dinamis pada Aplikasi Android**:
+  - Memperbarui `DaemonManager` untuk menyinkronkan seluruh aset antarmuka web langsung ke penyimpanan aplikasi saat startup, memastikan tampilan selalu mutakhir secara instan tanpa inkonsistensi cache.
+- **Peningkatan Responsivitas Portrait & Landscape**:
+  - Memastikan dialog pemilihan (`selection-dialog` dan `modal-card-tags`) stabil pada rasio non-reguler hingga layar lebar tanpa distorsi atau tumpang tindih.
+
 ## v2.1.25 (2026-10-20)
 
 ### Arsitektur Terpadu Dual-Environment: Root Manager ZIP & Non-Root Standalone APK

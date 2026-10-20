@@ -1,12 +1,13 @@
 /* ==========================================================================
    YouTube RVX — Master Modular Stylesheet
-   Version: 2.1.24
+   Version: 2.1.25
    ========================================================================== */
 
-@import "css/base.css?v=2.1.24";
-@import "css/morphe.css?v=2.1.24";
-@import "css/wizard.css?v=2.1.24";
-@import "css/wizard-sources.css?v=2.1.24";
-@import "css/tui.css?v=2.1.24";
-@import "css/responsive.css?v=2.1.24";
-@import "css/editorial.css?v=2.1.24";
+@import "css/base.css?v=2.1.25";
+@import "css/morphe.css?v=2.1.25";
+@import "css/wizard.css?v=2.1.25";
+@import "css/wizard-sources.css?v=2.1.25";
+@import "css/wizard-selection.css?v=2.1.25";
+@import "css/tui.css?v=2.1.25";
+@import "css/responsive.css?v=2.1.25";
+@import "css/editorial.css?v=2.1.25";

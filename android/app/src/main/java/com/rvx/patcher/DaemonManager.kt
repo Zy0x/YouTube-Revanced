@@ -35,6 +35,8 @@ class DaemonManager(private val context: Context) {
                 return@withContext true
             }
 
+            extractWebAssets()
+
             val daemonFile = getDaemonExecutable()
             if (!daemonFile.exists() || !daemonFile.canExecute()) {
                 Log.e(TAG, "Daemon binary not executable at ${daemonFile.absolutePath}")
@@ -140,6 +142,36 @@ class DaemonManager(private val context: Context) {
         src.inputStream().use { input ->
             dst.outputStream().use { output ->
                 input.copyTo(output)
+            }
+        }
+    }
+
+    private fun extractWebAssets() {
+        try {
+            val webDir = File(context.filesDir, "web")
+            if (!webDir.exists()) webDir.mkdirs()
+            copyAssetTree("web", webDir)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed extracting web assets: ${e.message}")
+        }
+    }
+
+    private fun copyAssetTree(assetPath: String, targetDir: File) {
+        val list = context.assets.list(assetPath) ?: return
+        if (list.isEmpty()) {
+            val file = File(targetDir, File(assetPath).name)
+            try {
+                context.assets.open(assetPath).use { input ->
+                    FileOutputStream(file).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            } catch (_: Exception) {}
+        } else {
+            val destSubDir = if (assetPath == "web") targetDir else File(targetDir, File(assetPath).name)
+            if (!destSubDir.exists()) destSubDir.mkdirs()
+            for (item in list) {
+                copyAssetTree("$assetPath/$item", destSubDir)
             }
         }
     }
