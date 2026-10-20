@@ -9,7 +9,7 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23E53935'><path d='M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z'/></svg>">
-  <link rel="stylesheet" href="style.css?v=2.1.27">
+  <link rel="stylesheet" href="style.css?v=2.1.28">
 </head>
 <body class="mode-morphe theme-editorial">
 
@@ -169,35 +169,44 @@
           </section>
 
           <section class="curation-section patch-curation-section" aria-labelledby="patchCurationHeading">
-            <div class="curation-section-heading patch-curation-heading"><div><span class="curation-step-label">02 · Kurasi patch</span><h3 id="patchCurationHeading">Tentukan fitur</h3></div><div class="patch-selection-count" aria-live="polite">
-                <strong id="wizardSelectedPatchCount">0</strong>
-                <span>dari <span id="wizardTotalPatchCount">0</span> aktif</span></div>
+            <div class="wizard-curation-tabs" role="tablist" aria-label="Kategori Konfigurasi">
+              <button type="button" id="tabCuratePatches" class="curation-tab-btn active" role="tab" aria-selected="true" aria-controls="viewCuratePatches"><span class="tab-label">🎯 Patch Fitur (Source)</span><span id="tabBadgePatchCount" class="tab-badge">0</span></button>
+              <button type="button" id="tabCurateEngine" class="curation-tab-btn" role="tab" aria-selected="false" aria-controls="viewCurateEngine"><span class="tab-label">⚙️ Mesin Morphe CLI</span><span class="tab-badge-dot"></span></button>
             </div>
 
-            <div class="patch-curation-tools">
-              <label class="patch-search-field" for="inputWizPatchSearch">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
-                <input type="search" id="inputWizPatchSearch" placeholder="Cari nama atau fungsi patch…" autocomplete="off">
-              </label>
-              <div class="patch-filter-row">
-                <div class="patch-view-filters" role="group" aria-label="Filter patch">
-                  <button type="button" class="patch-filter-btn active" data-patch-filter="all" aria-pressed="true">Semua</button>
-                  <button type="button" class="patch-filter-btn" data-patch-filter="selected" aria-pressed="false">Aktif</button>
-                  <button type="button" class="patch-filter-btn" data-patch-filter="options" aria-pressed="false">Beropsi</button>
-                </div>
-                <div class="patch-tools-tail">
-                  <span id="wizardVisiblePatchCount" class="patch-visible-count"></span>
-                  <button type="button" id="btnPatchBulkMenu" class="patch-bulk-trigger" aria-expanded="false" aria-controls="patchBulkMenu">Pilihan <span aria-hidden="true">•••</span></button>
-                  <div id="patchBulkMenu" class="patch-bulk-menu hidden" role="menu">
-                    <button type="button" id="btnWizPatchesDefault" role="menuitem"><strong>Gunakan rekomendasi</strong><small>Pilihan aman dari sumber patch</small></button>
-                    <button type="button" id="btnWizPatchesAll" role="menuitem"><strong>Pilih semua</strong><small>Aktifkan seluruh patch yang tersedia</small></button>
-                    <button type="button" id="btnWizPatchesClear" role="menuitem"><strong>Kosongkan</strong><small>Nonaktifkan seluruh pilihan</small></button>
+            <div id="viewCuratePatches" class="curation-tab-view">
+              <div class="curation-section-heading patch-curation-heading"><div><span class="curation-step-label">02 · Kurasi patch</span><h3 id="patchCurationHeading">Tentukan fitur</h3></div><div class="patch-selection-count" aria-live="polite">
+                  <strong id="wizardSelectedPatchCount">0</strong>
+                  <span>dari <span id="wizardTotalPatchCount">0</span> aktif</span></div>
+              </div>
+
+              <div class="patch-curation-tools">
+                <label class="patch-search-field" for="inputWizPatchSearch">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+                  <input type="search" id="inputWizPatchSearch" placeholder="Cari nama atau fungsi patch…" autocomplete="off">
+                </label>
+                <div class="patch-filter-row">
+                  <div class="patch-view-filters" role="group" aria-label="Filter patch">
+                    <button type="button" class="patch-filter-btn active" data-patch-filter="all" aria-pressed="true">Semua</button>
+                    <button type="button" class="patch-filter-btn" data-patch-filter="selected" aria-pressed="false">Aktif</button>
+                    <button type="button" class="patch-filter-btn" data-patch-filter="options" aria-pressed="false">Beropsi</button>
+                  </div>
+                  <div class="patch-tools-tail">
+                    <span id="wizardVisiblePatchCount" class="patch-visible-count"></span>
+                    <button type="button" id="btnPatchBulkMenu" class="patch-bulk-trigger" aria-expanded="false" aria-controls="patchBulkMenu">Pilihan <span aria-hidden="true">•••</span></button>
+                    <div id="patchBulkMenu" class="patch-bulk-menu hidden" role="menu">
+                      <button type="button" id="btnWizPatchesDefault" role="menuitem"><strong>Gunakan rekomendasi</strong><small>Pilihan aman dari sumber patch</small></button>
+                      <button type="button" id="btnWizPatchesAll" role="menuitem"><strong>Pilih semua</strong><small>Aktifkan seluruh patch yang tersedia</small></button>
+                      <button type="button" id="btnWizPatchesClear" role="menuitem"><strong>Kosongkan</strong><small>Nonaktifkan seluruh pilihan</small></button>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              <div id="wizardPatchCategoriesContainer" class="wizard-patch-list" role="group" aria-label="Daftar patch"></div>
             </div>
 
-            <div id="wizardPatchCategoriesContainer" class="wizard-patch-list" role="group" aria-label="Daftar patch"></div>
+            <div id="viewCurateEngine" class="curation-tab-view hidden"></div>
           </section>
         </div>
         <div class="wizard-nav-actions"><button type="button" id="btnWizStep4Back" class="morphe-pill-btn morphe-pill-outline btn-back">‹ Kembali</button><button type="button" id="btnWizStep4Next" class="morphe-pill-btn morphe-pill-sky btn-next">Pilih mode &amp; patch</button></div>
@@ -217,7 +226,8 @@
               <div class="summary-item"><span class="summary-item-label">Versi APK</span><span id="summaryVersion" class="summary-item-value">v21.13.164</span></div>
               <div class="summary-item"><span class="summary-item-label">Sumber Patch</span><span id="summarySource" class="summary-item-value">Anddea RVX</span></div>
               <div class="summary-item"><span class="summary-item-label">Mode Target</span><span id="summaryMode" class="summary-item-value">Mode Root</span></div>
-              <div class="summary-item" style="grid-column: span 2;"><span class="summary-item-label">Jumlah Patch Terpilih</span><span id="summaryPatchesCount" class="summary-item-value">68 aktif</span></div>
+              <div class="summary-item"><span class="summary-item-label">Jumlah Patch Terpilih</span><span id="summaryPatchesCount" class="summary-item-value">68 aktif</span></div>
+              <div class="summary-item"><span class="summary-item-label">Mesin Morphe</span><span id="summaryEngineConfig" class="summary-item-value">Keystore Persisten • arm64-v8a</span></div>
             </div>
           </div>
           <div class="morphe-version-actions">
@@ -953,20 +963,21 @@
       </div>
     </div>
   </div>
-  <script src="js/runtime.js?v=2.1.27"></script>
-  <script src="js/state.js?v=2.1.27"></script>
-  <script src="js/artifact-store.js?v=2.1.27"></script>
-  <script src="js/local-engine.js?v=2.1.27"></script>
-  <script src="js/api-registry.js?v=2.1.27"></script>
-  <script src="js/api.js?v=2.1.27"></script>
-  <script src="js/ui-patch-options.js?v=2.1.27"></script>
-  <script src="js/ui-storage-consent.js?v=2.1.27"></script>
-  <script src="js/ui-morphe.js?v=2.1.27"></script>
-  <script src="js/ui-wizard-sources.js?v=2.1.27"></script>
-  <script src="js/ui-wizard.js?v=2.1.27"></script>
-  <script src="js/ui-dashboard.js?v=2.1.27"></script>
-  <script src="js/ui-tui.js?v=2.1.27"></script>
-  <script src="js/ui-navigation.js?v=2.1.27"></script>
-  <script src="app.js?v=2.1.27"></script>
+  <script src="js/runtime.js?v=2.1.28"></script>
+  <script src="js/state.js?v=2.1.28"></script>
+  <script src="js/artifact-store.js?v=2.1.28"></script>
+  <script src="js/local-engine.js?v=2.1.28"></script>
+  <script src="js/api-registry.js?v=2.1.28"></script>
+  <script src="js/api.js?v=2.1.28"></script>
+  <script src="js/ui-patch-options.js?v=2.1.28"></script>
+  <script src="js/ui-storage-consent.js?v=2.1.28"></script>
+  <script src="js/ui-morphe.js?v=2.1.28"></script>
+  <script src="js/ui-wizard-sources.js?v=2.1.28"></script>
+  <script src="js/ui-wizard.js?v=2.1.28"></script>
+  <script src="js/ui-morphe-engine.js?v=2.1.28"></script>
+  <script src="js/ui-dashboard.js?v=2.1.28"></script>
+  <script src="js/ui-tui.js?v=2.1.28"></script>
+  <script src="js/ui-navigation.js?v=2.1.28"></script>
+  <script src="app.js?v=2.1.28"></script>
 </body>
 </html>

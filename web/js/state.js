@@ -62,6 +62,41 @@ const STATE = {
   patchListFilter: 'all',
   editingPatchName: null,
   modeEditorExpanded: true,
+  wizardStep4ActiveTab: 'patches', // 'patches' | 'engine'
+  morpheEngineOptions: (() => {
+    try {
+      const saved = JSON.parse(RVX_STORAGE.local.getItem('rvx_morphe_engine_config') || '{}');
+      return {
+        keystoreMode: saved.keystoreMode || 'persistent',
+        customKeystorePath: saved.customKeystorePath || '',
+        keystorePassword: saved.keystorePassword || '',
+        keystoreAlias: saved.keystoreAlias || '',
+        keystoreEntryPassword: saved.keystoreEntryPassword || '',
+        signerName: saved.signerName || 'Morphe',
+        stripLibs: saved.stripLibs !== false,
+        selectedArchs: Array.isArray(saved.selectedArchs) && saved.selectedArchs.length > 0 ? saved.selectedArchs : ['arm64-v8a'],
+        bytecodeMode: saved.bytecodeMode || 'STRIP_FAST',
+        continueOnError: saved.continueOnError !== false,
+        force: saved.force !== false,
+        disablePurge: saved.disablePurge === true,
+      };
+    } catch (_) {
+      return {
+        keystoreMode: 'persistent',
+        customKeystorePath: '',
+        keystorePassword: '',
+        keystoreAlias: '',
+        keystoreEntryPassword: '',
+        signerName: 'Morphe',
+        stripLibs: true,
+        selectedArchs: ['arm64-v8a'],
+        bytecodeMode: 'STRIP_FAST',
+        continueOnError: true,
+        force: true,
+        disablePurge: false,
+      };
+    }
+  })(),
   patchOptionsDraft: {},
   patchOptionFiles: {},
   patchOptionsReturnFocusId: '',

@@ -602,6 +602,16 @@ function renderWizardModeAndPatchesStep() {
   updateModeSwitcherUI();
   renderModeWorkspaceState();
   bindModeSwitcherEvents();
+
+  // Tab switching between Patch Fitur (Source) and Mesin Morphe CLI
+  const tabPatches = document.getElementById('tabCuratePatches');
+  const tabEngine = document.getElementById('tabCurateEngine');
+  if (tabPatches && tabEngine) {
+    tabPatches.onclick = () => { if (typeof switchCurateTab === 'function') switchCurateTab('patches'); };
+    tabEngine.onclick = () => { if (typeof switchCurateTab === 'function') switchCurateTab('engine'); };
+    if (typeof switchCurateTab === 'function') switchCurateTab(STATE.wizardStep4ActiveTab || 'patches');
+  }
+
   renderMorphePatchList('wizardPatchCategoriesContainer');
   updateWizardPatchStats();
   updateWizardNavigationState();
@@ -684,9 +694,11 @@ function updateWizardPatchStats(visibleCount = null) {
   const selectedCount = [...STATE.selectedPatches].filter(name => patchNames.has(name)).length;
   const totalCount = STATE.patches.length;
   const selectedEl = document.getElementById('wizardSelectedPatchCount');
+  const tabBadgeEl = document.getElementById('tabBadgePatchCount');
   const totalEl = document.getElementById('wizardTotalPatchCount');
   const visibleEl = document.getElementById('wizardVisiblePatchCount');
   if (selectedEl) selectedEl.textContent = String(selectedCount);
+  if (tabBadgeEl) tabBadgeEl.textContent = String(selectedCount);
   if (totalEl) totalEl.textContent = String(totalCount);
   if (visibleEl) {
     const shown = visibleCount === null
@@ -780,6 +792,9 @@ function renderWizardBuildStep() {
     ? 'Mode Root (Magisk/KSU/APatch)'
     : STATE.targetMode === 'non-root' ? 'Mode Non-Root (Standalone APK)' : '—');
   setText('summaryPatchesCount', `${STATE.selectedPatches.size} aktif`);
+  if (typeof getMorpheEngineSummaryText === 'function') {
+    setText('summaryEngineConfig', getMorpheEngineSummaryText());
+  }
 
   // Adapt completion buttons
   const btnRoot = document.getElementById('btnWizardRootInstall');

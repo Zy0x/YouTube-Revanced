@@ -11,7 +11,7 @@
   <style>
 /* ==========================================================================
    YouTube RVX — Master Modular Stylesheet
-   Version: 2.1.27
+   Version: 2.1.28
    ========================================================================== */
 
 /* ==========================================================================
@@ -3238,6 +3238,296 @@ select option {
     font-size: 10.5px;
   }
 }
+
+/* ==========================================================================
+   Step 4: Curation Category Tabs & Morphe Engine Panel
+   ========================================================================== */
+.wizard-curation-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  margin-bottom: 14px;
+}
+
+.curation-tab-btn {
+  flex: 1;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-family: var(--font-sans, inherit);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--morphe-text-sub, #9EA4B0);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.curation-tab-btn:hover {
+  color: #F2F4F8;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.curation-tab-btn.active {
+  color: #A4C9FF;
+  background: #191E29;
+  border-color: rgba(164, 201, 255, 0.32);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.curation-tab-btn .tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 9999px;
+  background: #2563EB;
+  color: #FFFFFF;
+}
+
+.curation-tab-btn .tab-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #38BDF8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+}
+
+/* Morphe Engine Options Layout */
+.morphe-engine-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.engine-card {
+  background: #141720;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.18s ease;
+}
+
+.engine-card:focus-within {
+  border-color: rgba(96, 165, 250, 0.45);
+}
+
+.engine-step-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #7DD3FC;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.engine-card-header h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #F2F4F8;
+  margin: 0 0 3px 0;
+}
+
+.engine-subtext {
+  font-size: 12.5px;
+  color: #9EA4B0;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.engine-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.engine-radio-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.engine-radio-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.engine-radio-item.active {
+  background: rgba(56, 107, 176, 0.14);
+  border-color: rgba(96, 165, 250, 0.45);
+}
+
+.engine-radio-item input[type="radio"] {
+  margin-top: 3px;
+  width: 17px;
+  height: 17px;
+  accent-color: #3B82F6;
+  cursor: pointer;
+}
+
+.engine-radio-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.engine-radio-content strong {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #F2F4F8;
+}
+
+.engine-radio-content small {
+  font-size: 12px;
+  color: #9EA4B0;
+  line-height: 1.35;
+}
+
+.engine-subpanel {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.engine-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.engine-field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.engine-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #CBD5E1;
+}
+
+.engine-toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.engine-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 11px;
+}
+
+.engine-toggle-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.engine-toggle-label span {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #F2F4F8;
+}
+
+.engine-toggle-label small {
+  font-size: 12px;
+  color: #9EA4B0;
+  line-height: 1.35;
+}
+
+.engine-switch {
+  width: 44px;
+  height: 24px;
+  min-width: 44px;
+  cursor: pointer;
+  accent-color: #3B82F6;
+}
+
+.engine-chips-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  transition: opacity 0.18s ease;
+}
+
+.engine-chips-wrapper.disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.engine-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #F2F4F8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.engine-chip-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.engine-chip-btn.active {
+  background: rgba(56, 107, 176, 0.28);
+  border-color: #60A5FA;
+  color: #93C5FD;
+}
+
+.engine-chip-btn .chip-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(56, 189, 248, 0.2);
+  color: #38BDF8;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
 
 
 
@@ -7012,35 +7302,44 @@ window.__RVX_ENGINE_WORKER_SOURCE__ = "/* Executes only a verified RVX Portable 
           </section>
 
           <section class="curation-section patch-curation-section" aria-labelledby="patchCurationHeading">
-            <div class="curation-section-heading patch-curation-heading"><div><span class="curation-step-label">02 · Kurasi patch</span><h3 id="patchCurationHeading">Tentukan fitur</h3></div><div class="patch-selection-count" aria-live="polite">
-                <strong id="wizardSelectedPatchCount">0</strong>
-                <span>dari <span id="wizardTotalPatchCount">0</span> aktif</span></div>
+            <div class="wizard-curation-tabs" role="tablist" aria-label="Kategori Konfigurasi">
+              <button type="button" id="tabCuratePatches" class="curation-tab-btn active" role="tab" aria-selected="true" aria-controls="viewCuratePatches"><span class="tab-label">🎯 Patch Fitur (Source)</span><span id="tabBadgePatchCount" class="tab-badge">0</span></button>
+              <button type="button" id="tabCurateEngine" class="curation-tab-btn" role="tab" aria-selected="false" aria-controls="viewCurateEngine"><span class="tab-label">⚙️ Mesin Morphe CLI</span><span class="tab-badge-dot"></span></button>
             </div>
 
-            <div class="patch-curation-tools">
-              <label class="patch-search-field" for="inputWizPatchSearch">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
-                <input type="search" id="inputWizPatchSearch" placeholder="Cari nama atau fungsi patch…" autocomplete="off">
-              </label>
-              <div class="patch-filter-row">
-                <div class="patch-view-filters" role="group" aria-label="Filter patch">
-                  <button type="button" class="patch-filter-btn active" data-patch-filter="all" aria-pressed="true">Semua</button>
-                  <button type="button" class="patch-filter-btn" data-patch-filter="selected" aria-pressed="false">Aktif</button>
-                  <button type="button" class="patch-filter-btn" data-patch-filter="options" aria-pressed="false">Beropsi</button>
-                </div>
-                <div class="patch-tools-tail">
-                  <span id="wizardVisiblePatchCount" class="patch-visible-count"></span>
-                  <button type="button" id="btnPatchBulkMenu" class="patch-bulk-trigger" aria-expanded="false" aria-controls="patchBulkMenu">Pilihan <span aria-hidden="true">•••</span></button>
-                  <div id="patchBulkMenu" class="patch-bulk-menu hidden" role="menu">
-                    <button type="button" id="btnWizPatchesDefault" role="menuitem"><strong>Gunakan rekomendasi</strong><small>Pilihan aman dari sumber patch</small></button>
-                    <button type="button" id="btnWizPatchesAll" role="menuitem"><strong>Pilih semua</strong><small>Aktifkan seluruh patch yang tersedia</small></button>
-                    <button type="button" id="btnWizPatchesClear" role="menuitem"><strong>Kosongkan</strong><small>Nonaktifkan seluruh pilihan</small></button>
+            <div id="viewCuratePatches" class="curation-tab-view">
+              <div class="curation-section-heading patch-curation-heading"><div><span class="curation-step-label">02 · Kurasi patch</span><h3 id="patchCurationHeading">Tentukan fitur</h3></div><div class="patch-selection-count" aria-live="polite">
+                  <strong id="wizardSelectedPatchCount">0</strong>
+                  <span>dari <span id="wizardTotalPatchCount">0</span> aktif</span></div>
+              </div>
+
+              <div class="patch-curation-tools">
+                <label class="patch-search-field" for="inputWizPatchSearch">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+                  <input type="search" id="inputWizPatchSearch" placeholder="Cari nama atau fungsi patch…" autocomplete="off">
+                </label>
+                <div class="patch-filter-row">
+                  <div class="patch-view-filters" role="group" aria-label="Filter patch">
+                    <button type="button" class="patch-filter-btn active" data-patch-filter="all" aria-pressed="true">Semua</button>
+                    <button type="button" class="patch-filter-btn" data-patch-filter="selected" aria-pressed="false">Aktif</button>
+                    <button type="button" class="patch-filter-btn" data-patch-filter="options" aria-pressed="false">Beropsi</button>
+                  </div>
+                  <div class="patch-tools-tail">
+                    <span id="wizardVisiblePatchCount" class="patch-visible-count"></span>
+                    <button type="button" id="btnPatchBulkMenu" class="patch-bulk-trigger" aria-expanded="false" aria-controls="patchBulkMenu">Pilihan <span aria-hidden="true">•••</span></button>
+                    <div id="patchBulkMenu" class="patch-bulk-menu hidden" role="menu">
+                      <button type="button" id="btnWizPatchesDefault" role="menuitem"><strong>Gunakan rekomendasi</strong><small>Pilihan aman dari sumber patch</small></button>
+                      <button type="button" id="btnWizPatchesAll" role="menuitem"><strong>Pilih semua</strong><small>Aktifkan seluruh patch yang tersedia</small></button>
+                      <button type="button" id="btnWizPatchesClear" role="menuitem"><strong>Kosongkan</strong><small>Nonaktifkan seluruh pilihan</small></button>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              <div id="wizardPatchCategoriesContainer" class="wizard-patch-list" role="group" aria-label="Daftar patch"></div>
             </div>
 
-            <div id="wizardPatchCategoriesContainer" class="wizard-patch-list" role="group" aria-label="Daftar patch"></div>
+            <div id="viewCurateEngine" class="curation-tab-view hidden"></div>
           </section>
         </div>
         <div class="wizard-nav-actions"><button type="button" id="btnWizStep4Back" class="morphe-pill-btn morphe-pill-outline btn-back">‹ Kembali</button><button type="button" id="btnWizStep4Next" class="morphe-pill-btn morphe-pill-sky btn-next">Pilih mode &amp; patch</button></div>
@@ -7060,7 +7359,8 @@ window.__RVX_ENGINE_WORKER_SOURCE__ = "/* Executes only a verified RVX Portable 
               <div class="summary-item"><span class="summary-item-label">Versi APK</span><span id="summaryVersion" class="summary-item-value">v21.13.164</span></div>
               <div class="summary-item"><span class="summary-item-label">Sumber Patch</span><span id="summarySource" class="summary-item-value">Anddea RVX</span></div>
               <div class="summary-item"><span class="summary-item-label">Mode Target</span><span id="summaryMode" class="summary-item-value">Mode Root</span></div>
-              <div class="summary-item" style="grid-column: span 2;"><span class="summary-item-label">Jumlah Patch Terpilih</span><span id="summaryPatchesCount" class="summary-item-value">68 aktif</span></div>
+              <div class="summary-item"><span class="summary-item-label">Jumlah Patch Terpilih</span><span id="summaryPatchesCount" class="summary-item-value">68 aktif</span></div>
+              <div class="summary-item"><span class="summary-item-label">Mesin Morphe</span><span id="summaryEngineConfig" class="summary-item-value">Keystore Persisten • arm64-v8a</span></div>
             </div>
           </div>
           <div class="morphe-version-actions">
@@ -8016,6 +8316,41 @@ const STATE = {
   patchListFilter: 'all',
   editingPatchName: null,
   modeEditorExpanded: true,
+  wizardStep4ActiveTab: 'patches', // 'patches' | 'engine'
+  morpheEngineOptions: (() => {
+    try {
+      const saved = JSON.parse(RVX_STORAGE.local.getItem('rvx_morphe_engine_config') || '{}');
+      return {
+        keystoreMode: saved.keystoreMode || 'persistent',
+        customKeystorePath: saved.customKeystorePath || '',
+        keystorePassword: saved.keystorePassword || '',
+        keystoreAlias: saved.keystoreAlias || '',
+        keystoreEntryPassword: saved.keystoreEntryPassword || '',
+        signerName: saved.signerName || 'Morphe',
+        stripLibs: saved.stripLibs !== false,
+        selectedArchs: Array.isArray(saved.selectedArchs) && saved.selectedArchs.length > 0 ? saved.selectedArchs : ['arm64-v8a'],
+        bytecodeMode: saved.bytecodeMode || 'STRIP_FAST',
+        continueOnError: saved.continueOnError !== false,
+        force: saved.force !== false,
+        disablePurge: saved.disablePurge === true,
+      };
+    } catch (_) {
+      return {
+        keystoreMode: 'persistent',
+        customKeystorePath: '',
+        keystorePassword: '',
+        keystoreAlias: '',
+        keystoreEntryPassword: '',
+        signerName: 'Morphe',
+        stripLibs: true,
+        selectedArchs: ['arm64-v8a'],
+        bytecodeMode: 'STRIP_FAST',
+        continueOnError: true,
+        force: true,
+        disablePurge: false,
+      };
+    }
+  })(),
   patchOptionsDraft: {},
   patchOptionFiles: {},
   patchOptionsReturnFocusId: '',
@@ -12032,7 +12367,21 @@ function createLocalPatchPayload() {
     options: STATE.selectedOptions,
     download_plan_id: STATE.pendingDownloadPlan?.planId || null,
     workspace_location_id: STATE.storageSelection?.workspaceId || null,
-    output_location_id: STATE.storageSelection?.outputId || null
+    output_location_id: STATE.storageSelection?.outputId || null,
+    morphe_engine_options: {
+      keystore_mode: STATE.morpheEngineOptions?.keystoreMode || 'persistent',
+      custom_keystore_path: STATE.morpheEngineOptions?.customKeystorePath || null,
+      keystore_password: STATE.morpheEngineOptions?.keystorePassword || null,
+      keystore_alias: STATE.morpheEngineOptions?.keystoreAlias || null,
+      keystore_entry_password: STATE.morpheEngineOptions?.keystoreEntryPassword || null,
+      signer_name: STATE.morpheEngineOptions?.signerName || 'Morphe',
+      unsigned: STATE.morpheEngineOptions?.keystoreMode === 'unsigned',
+      strip_libs: STATE.morpheEngineOptions?.stripLibs ? (STATE.morpheEngineOptions.selectedArchs || ['arm64-v8a']) : [],
+      bytecode_mode: STATE.morpheEngineOptions?.bytecodeMode || 'STRIP_FAST',
+      continue_on_error: STATE.morpheEngineOptions?.continueOnError !== false,
+      force: STATE.morpheEngineOptions?.force !== false,
+      disable_purge: STATE.morpheEngineOptions?.disablePurge === true
+    }
   };
 }
 
@@ -13828,6 +14177,16 @@ function renderWizardModeAndPatchesStep() {
   updateModeSwitcherUI();
   renderModeWorkspaceState();
   bindModeSwitcherEvents();
+
+  // Tab switching between Patch Fitur (Source) and Mesin Morphe CLI
+  const tabPatches = document.getElementById('tabCuratePatches');
+  const tabEngine = document.getElementById('tabCurateEngine');
+  if (tabPatches && tabEngine) {
+    tabPatches.onclick = () => { if (typeof switchCurateTab === 'function') switchCurateTab('patches'); };
+    tabEngine.onclick = () => { if (typeof switchCurateTab === 'function') switchCurateTab('engine'); };
+    if (typeof switchCurateTab === 'function') switchCurateTab(STATE.wizardStep4ActiveTab || 'patches');
+  }
+
   renderMorphePatchList('wizardPatchCategoriesContainer');
   updateWizardPatchStats();
   updateWizardNavigationState();
@@ -13910,9 +14269,11 @@ function updateWizardPatchStats(visibleCount = null) {
   const selectedCount = [...STATE.selectedPatches].filter(name => patchNames.has(name)).length;
   const totalCount = STATE.patches.length;
   const selectedEl = document.getElementById('wizardSelectedPatchCount');
+  const tabBadgeEl = document.getElementById('tabBadgePatchCount');
   const totalEl = document.getElementById('wizardTotalPatchCount');
   const visibleEl = document.getElementById('wizardVisiblePatchCount');
   if (selectedEl) selectedEl.textContent = String(selectedCount);
+  if (tabBadgeEl) tabBadgeEl.textContent = String(selectedCount);
   if (totalEl) totalEl.textContent = String(totalCount);
   if (visibleEl) {
     const shown = visibleCount === null
@@ -14006,6 +14367,9 @@ function renderWizardBuildStep() {
     ? 'Mode Root (Magisk/KSU/APatch)'
     : STATE.targetMode === 'non-root' ? 'Mode Non-Root (Standalone APK)' : '—');
   setText('summaryPatchesCount', `${STATE.selectedPatches.size} aktif`);
+  if (typeof getMorpheEngineSummaryText === 'function') {
+    setText('summaryEngineConfig', getMorpheEngineSummaryText());
+  }
 
   // Adapt completion buttons
   const btnRoot = document.getElementById('btnWizardRootInstall');
@@ -14053,6 +14417,342 @@ function completeWizardAndEnterDashboard() {
   RVX_STORAGE.local.setItem('rvx_setup_completed', 'true');
 
   initWizardOrDashboard();
+}
+
+</script>
+  <script>
+/* ==========================================================================
+   YouTube RVX — Morphe Engine & CLI Options Manager
+   Version: 2.1.28
+   Categorized engine configuration separated from application source patches:
+     1. Keystore & Digital Signature (Persistent, Custom, Unsigned)
+     2. CPU Architecture & Native Library Stripping (--striplibs)
+     3. Bytecode Compilation Mode (--bytecode-mode)
+     4. Build Tolerance & Flow Control (--continue-on-error, -f, --disable-purge)
+   ========================================================================== */
+
+function saveMorpheEngineOptions() {
+  try {
+    RVX_STORAGE.local.setItem('rvx_morphe_engine_config', JSON.stringify(STATE.morpheEngineOptions));
+  } catch (_) {}
+  syncAllSummaries();
+}
+
+function getMorpheEngineSummaryText() {
+  const opts = STATE.morpheEngineOptions || {};
+  const parts = [];
+
+  // 1. Keystore
+  if (opts.keystoreMode === 'unsigned') {
+    parts.push('Unsigned');
+  } else if (opts.keystoreMode === 'custom') {
+    parts.push('Keystore Kustom');
+  } else {
+    parts.push('Keystore Persisten');
+  }
+
+  // 2. Arch stripping
+  if (opts.stripLibs && Array.isArray(opts.selectedArchs) && opts.selectedArchs.length > 0) {
+    parts.push(opts.selectedArchs.join(', '));
+  } else {
+    parts.push('Universal (Semua Arch)');
+  }
+
+  // 3. Bytecode Mode
+  parts.push(opts.bytecodeMode || 'STRIP_FAST');
+
+  return parts.join(' • ');
+}
+
+function switchCurateTab(tab) {
+  STATE.wizardStep4ActiveTab = tab;
+  const tabPatches = document.getElementById('tabCuratePatches');
+  const tabEngine = document.getElementById('tabCurateEngine');
+  const viewPatches = document.getElementById('viewCuratePatches');
+  const viewEngine = document.getElementById('viewCurateEngine');
+
+  const isPatches = tab === 'patches';
+  tabPatches?.classList.toggle('active', isPatches);
+  tabPatches?.setAttribute('aria-selected', String(isPatches));
+  tabEngine?.classList.toggle('active', !isPatches);
+  tabEngine?.setAttribute('aria-selected', String(!isPatches));
+
+  viewPatches?.classList.toggle('hidden', !isPatches);
+  viewEngine?.classList.toggle('hidden', isPatches);
+
+  if (!isPatches && viewEngine) {
+    renderMorpheEnginePanel(viewEngine);
+  }
+}
+
+function renderMorpheEnginePanel(container) {
+  if (!container) return;
+  const opts = STATE.morpheEngineOptions;
+
+  const archs = ['arm64-v8a', 'armeabi-v7a', 'x86_64', 'x86'];
+  const selectedArchs = new Set(opts.selectedArchs || ['arm64-v8a']);
+
+  container.innerHTML = `
+    <div class="morphe-engine-layout">
+      <!-- 01: KEYSTORE & SIGNING -->
+      <section class="engine-card" aria-labelledby="headingEngineKeystore">
+        <div class="engine-card-header">
+          <span class="engine-step-badge">01 · Penandatanganan Digital</span>
+          <h4 id="headingEngineKeystore">Keystore &amp; Signature</h4>
+          <p class="engine-subtext">Menentukan kunci kriptografis untuk menandatangani APK hasil patch.</p>
+        </div>
+        <div class="engine-radio-group" role="radiogroup" aria-label="Mode Keystore">
+          <label class="engine-radio-item ${opts.keystoreMode === 'persistent' ? 'active' : ''}">
+            <input type="radio" name="optKeystoreMode" value="persistent" ${opts.keystoreMode === 'persistent' ? 'checked' : ''}>
+            <div class="engine-radio-content">
+              <strong>Keystore Persisten (Rekomendasi)</strong>
+              <small>Membuat &amp; memakai kunci lokal yang sama agar update berikutnya dapat langsung ditimpa tanpa uninstall.</small>
+            </div>
+          </label>
+          <label class="engine-radio-item ${opts.keystoreMode === 'custom' ? 'active' : ''}">
+            <input type="radio" name="optKeystoreMode" value="custom" ${opts.keystoreMode === 'custom' ? 'checked' : ''}>
+            <div class="engine-radio-content">
+              <strong>Keystore Kustom</strong>
+              <small>Gunakan berkas kunci Anda sendiri (.keystore / .jks / .p12).</small>
+            </div>
+          </label>
+          <label class="engine-radio-item ${opts.keystoreMode === 'unsigned' ? 'active' : ''}">
+            <input type="radio" name="optKeystoreMode" value="unsigned" ${opts.keystoreMode === 'unsigned' ? 'checked' : ''}>
+            <div class="engine-radio-content">
+              <strong>Unsigned APK (--unsigned)</strong>
+              <small>Menghasilkan APK mentah tanpa tanda tangan (untuk root mount atau ditandatangani manual).</small>
+            </div>
+          </label>
+        </div>
+
+        <div id="engineCustomKeystorePanel" class="engine-subpanel ${opts.keystoreMode === 'custom' ? '' : 'hidden'}">
+          <div class="engine-field-row">
+            <label class="engine-label" for="inputEngineKeystorePath">Lokasi Berkas Keystore</label>
+            <input type="text" id="inputEngineKeystorePath" class="morphe-input" placeholder="/sdcard/.../kunci.keystore" value="${escapeHtml(opts.customKeystorePath || '')}">
+          </div>
+          <div class="engine-fields-grid">
+            <div class="engine-field-row">
+              <label class="engine-label" for="inputEngineKeystoreAlias">Key Alias</label>
+              <input type="text" id="inputEngineKeystoreAlias" class="morphe-input" placeholder="Morphe Key" value="${escapeHtml(opts.keystoreAlias || '')}">
+            </div>
+            <div class="engine-field-row">
+              <label class="engine-label" for="inputEngineKeystorePass">Keystore Password</label>
+              <input type="password" id="inputEngineKeystorePass" class="morphe-input" placeholder="Opsional jika kosong" value="${escapeHtml(opts.keystorePassword || '')}">
+            </div>
+          </div>
+        </div>
+
+        <div class="engine-field-row" style="margin-top: 12px;">
+          <label class="engine-label" for="inputEngineSignerName">Nama Signer APK (--signer)</label>
+          <input type="text" id="inputEngineSignerName" class="morphe-input" placeholder="Morphe" value="${escapeHtml(opts.signerName || 'Morphe')}">
+        </div>
+      </section>
+
+      <!-- 02: CPU ARCHITECTURE & STRIP LIBS -->
+      <section class="engine-card" aria-labelledby="headingEngineArch">
+        <div class="engine-card-header">
+          <span class="engine-step-badge">02 · Pustaka Native</span>
+          <h4 id="headingEngineArch">Optimalisasi Arsitektur CPU (--striplibs)</h4>
+          <p class="engine-subtext">Pangkas pustaka .so yang tidak sesuai dengan arsitektur ponsel untuk menghemat ruang memori (~50-60 MB).</p>
+        </div>
+        <div class="engine-toggle-row">
+          <label class="engine-toggle-label" for="toggleEngineStripLibs">
+            <span>Aktifkan pemangkasan arsitektur (--striplibs)</span>
+            <small>Menghapus pustaka CPU lain yang tidak terpilih dari APK akhir.</small>
+          </label>
+          <input type="checkbox" id="toggleEngineStripLibs" class="engine-switch" ${opts.stripLibs ? 'checked' : ''}>
+        </div>
+        <div id="engineArchChipsContainer" class="engine-chips-wrapper ${opts.stripLibs ? '' : 'disabled'}">
+          ${archs.map(arch => `
+            <button type="button" class="engine-chip-btn ${selectedArchs.has(arch) ? 'active' : ''}" data-arch="${arch}">
+              <span class="chip-check">${selectedArchs.has(arch) ? '✓' : '+'}</span>
+              <span>${arch}</span>
+              ${arch === 'arm64-v8a' ? '<span class="chip-badge">Umum</span>' : ''}
+            </button>
+          `).join('')}
+        </div>
+      </section>
+
+      <!-- 03: BYTECODE COMPILER MODE -->
+      <section class="engine-card" aria-labelledby="headingEngineBytecode">
+        <div class="engine-card-header">
+          <span class="engine-step-badge">03 · Kompiler DEX</span>
+          <h4 id="headingEngineBytecode">Mode Kompilasi Bytecode (--bytecode-mode)</h4>
+          <p class="engine-subtext">Algoritma rekompilasi berkas DEX oleh mesin Morphe CLI.</p>
+        </div>
+        <div class="engine-radio-group" role="radiogroup" aria-label="Bytecode Mode">
+          <label class="engine-radio-item ${opts.bytecodeMode === 'STRIP_FAST' ? 'active' : ''}">
+            <input type="radio" name="optBytecodeMode" value="STRIP_FAST" ${opts.bytecodeMode === 'STRIP_FAST' ? 'checked' : ''}>
+            <div class="engine-radio-content">
+              <strong>STRIP_FAST (Bawaan &amp; Direkomendasikan)</strong>
+              <small>Kompilasi paralel berkecepatan tinggi dengan stripping kelas termodifikasi.</small>
+            </div>
+          </label>
+          <label class="engine-radio-item ${opts.bytecodeMode === 'STRIP_SAFE' ? 'active' : ''}">
+            <input type="radio" name="optBytecodeMode" value="STRIP_SAFE" ${opts.bytecodeMode === 'STRIP_SAFE' ? 'checked' : ''}>
+            <div class="engine-radio-content">
+              <strong>STRIP_SAFE (Aman / Bertahap)</strong>
+              <small>Metode bertahap untuk APK yang memiliki proteksi kode rumit.</small>
+            </div>
+          </label>
+          <label class="engine-radio-item ${opts.bytecodeMode === 'FULL' ? 'active' : ''}">
+            <input type="radio" name="optBytecodeMode" value="FULL" ${opts.bytecodeMode === 'FULL' ? 'checked' : ''}>
+            <div class="engine-radio-content">
+              <strong>FULL (Rekompresi Penuh)</strong>
+              <small>Membangun ulang seluruh kelas bytecode dari awal (lebih lambat).</small>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <!-- 04: BUILD RESILIENCE & DEBUG -->
+      <section class="engine-card" aria-labelledby="headingEngineResilience">
+        <div class="engine-card-header">
+          <span class="engine-step-badge">04 · Alur Eksekusi &amp; Toleransi</span>
+          <h4 id="headingEngineResilience">Ketahanan Build &amp; Debug</h4>
+          <p class="engine-subtext">Perilaku saat menangani peringatan dan berkas sementara.</p>
+        </div>
+        <div class="engine-toggle-list">
+          <div class="engine-toggle-row">
+            <label class="engine-toggle-label" for="toggleEngineContinueOnError">
+              <span>Lanjutkan jika ada patch gagal (--continue-on-error)</span>
+              <small>Proses patching tidak langsung dibatalkan jika hanya 1 patch non-kritis yang bermasalah (standar Revancify Termux).</small>
+            </label>
+            <input type="checkbox" id="toggleEngineContinueOnError" class="engine-switch" ${opts.continueOnError ? 'checked' : ''}>
+          </div>
+          <div class="engine-toggle-row">
+            <label class="engine-toggle-label" for="toggleEngineForce">
+              <span>Abaikan pengecekan versi APK (-f / --force)</span>
+              <small>Memaksa patching pada versi APK meskipun tidak tercantum resmi dalam rekomendasi sumber.</small>
+            </label>
+            <input type="checkbox" id="toggleEngineForce" class="engine-switch" ${opts.force ? 'checked' : ''}>
+          </div>
+          <div class="engine-toggle-row">
+            <label class="engine-toggle-label" for="toggleEngineDisablePurge">
+              <span>Simpan berkas kerja sementara (--disable-purge)</span>
+              <small>Menyimpan berkas DEX dan XML hasil dekompilasi untuk keperluan analitik atau debug.</small>
+            </label>
+            <input type="checkbox" id="toggleEngineDisablePurge" class="engine-switch" ${opts.disablePurge ? 'checked' : ''}>
+          </div>
+        </div>
+      </section>
+    </div>
+  `;
+
+  bindMorpheEngineEvents(container);
+}
+
+function bindMorpheEngineEvents(container) {
+  if (!container) return;
+
+  // Keystore mode radio
+  container.querySelectorAll('input[name="optKeystoreMode"]').forEach(radio => {
+    radio.onchange = () => {
+      STATE.morpheEngineOptions.keystoreMode = radio.value;
+      container.querySelectorAll('.engine-radio-item').forEach(el => {
+        const input = el.querySelector('input[name="optKeystoreMode"]');
+        if (input) el.classList.toggle('active', input.value === radio.value);
+      });
+      const subpanel = document.getElementById('engineCustomKeystorePanel');
+      if (subpanel) subpanel.classList.toggle('hidden', radio.value !== 'custom');
+      saveMorpheEngineOptions();
+    };
+  });
+
+  // Custom keystore inputs
+  const inputPath = document.getElementById('inputEngineKeystorePath');
+  if (inputPath) {
+    inputPath.oninput = (e) => {
+      STATE.morpheEngineOptions.customKeystorePath = e.target.value.trim();
+      saveMorpheEngineOptions();
+    };
+  }
+  const inputAlias = document.getElementById('inputEngineKeystoreAlias');
+  if (inputAlias) {
+    inputAlias.oninput = (e) => {
+      STATE.morpheEngineOptions.keystoreAlias = e.target.value.trim();
+      saveMorpheEngineOptions();
+    };
+  }
+  const inputPass = document.getElementById('inputEngineKeystorePass');
+  if (inputPass) {
+    inputPass.oninput = (e) => {
+      STATE.morpheEngineOptions.keystorePassword = e.target.value;
+      saveMorpheEngineOptions();
+    };
+  }
+  const inputSigner = document.getElementById('inputEngineSignerName');
+  if (inputSigner) {
+    inputSigner.oninput = (e) => {
+      STATE.morpheEngineOptions.signerName = e.target.value.trim() || 'Morphe';
+      saveMorpheEngineOptions();
+    };
+  }
+
+  // Strip Libs switch
+  const toggleStripLibs = document.getElementById('toggleEngineStripLibs');
+  const chipsWrapper = document.getElementById('engineArchChipsContainer');
+  if (toggleStripLibs) {
+    toggleStripLibs.onchange = () => {
+      STATE.morpheEngineOptions.stripLibs = toggleStripLibs.checked;
+      chipsWrapper?.classList.toggle('disabled', !toggleStripLibs.checked);
+      saveMorpheEngineOptions();
+    };
+  }
+
+  // Arch chips
+  container.querySelectorAll('.engine-chip-btn').forEach(btn => {
+    btn.onclick = () => {
+      if (!STATE.morpheEngineOptions.stripLibs) return;
+      const arch = btn.dataset.arch;
+      let set = new Set(STATE.morpheEngineOptions.selectedArchs || []);
+      if (set.has(arch)) {
+        if (set.size > 1) set.delete(arch);
+      } else {
+        set.add(arch);
+      }
+      STATE.morpheEngineOptions.selectedArchs = Array.from(set);
+      btn.classList.toggle('active', set.has(arch));
+      const checkEl = btn.querySelector('.chip-check');
+      if (checkEl) checkEl.textContent = set.has(arch) ? '✓' : '+';
+      saveMorpheEngineOptions();
+    };
+  });
+
+  // Bytecode mode radio
+  container.querySelectorAll('input[name="optBytecodeMode"]').forEach(radio => {
+    radio.onchange = () => {
+      STATE.morpheEngineOptions.bytecodeMode = radio.value;
+      container.querySelectorAll('.engine-radio-item').forEach(el => {
+        const input = el.querySelector('input[name="optBytecodeMode"]');
+        if (input) el.classList.toggle('active', input.value === radio.value);
+      });
+      saveMorpheEngineOptions();
+    };
+  });
+
+  // Resilience switches
+  const toggleContinue = document.getElementById('toggleEngineContinueOnError');
+  if (toggleContinue) {
+    toggleContinue.onchange = () => {
+      STATE.morpheEngineOptions.continueOnError = toggleContinue.checked;
+      saveMorpheEngineOptions();
+    };
+  }
+  const toggleForce = document.getElementById('toggleEngineForce');
+  if (toggleForce) {
+    toggleForce.onchange = () => {
+      STATE.morpheEngineOptions.force = toggleForce.checked;
+      saveMorpheEngineOptions();
+    };
+  }
+  const togglePurge = document.getElementById('toggleEngineDisablePurge');
+  if (togglePurge) {
+    togglePurge.onchange = () => {
+      STATE.morpheEngineOptions.disablePurge = togglePurge.checked;
+      saveMorpheEngineOptions();
+    };
+  }
 }
 
 </script>

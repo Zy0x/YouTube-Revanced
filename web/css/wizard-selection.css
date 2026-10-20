@@ -476,4 +476,294 @@
   }
 }
 
+/* ==========================================================================
+   Step 4: Curation Category Tabs & Morphe Engine Panel
+   ========================================================================== */
+.wizard-curation-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  margin-bottom: 14px;
+}
+
+.curation-tab-btn {
+  flex: 1;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-family: var(--font-sans, inherit);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--morphe-text-sub, #9EA4B0);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.curation-tab-btn:hover {
+  color: #F2F4F8;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.curation-tab-btn.active {
+  color: #A4C9FF;
+  background: #191E29;
+  border-color: rgba(164, 201, 255, 0.32);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.curation-tab-btn .tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 9999px;
+  background: #2563EB;
+  color: #FFFFFF;
+}
+
+.curation-tab-btn .tab-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #38BDF8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+}
+
+/* Morphe Engine Options Layout */
+.morphe-engine-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.engine-card {
+  background: #141720;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.18s ease;
+}
+
+.engine-card:focus-within {
+  border-color: rgba(96, 165, 250, 0.45);
+}
+
+.engine-step-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #7DD3FC;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.engine-card-header h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #F2F4F8;
+  margin: 0 0 3px 0;
+}
+
+.engine-subtext {
+  font-size: 12.5px;
+  color: #9EA4B0;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.engine-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.engine-radio-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.engine-radio-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.engine-radio-item.active {
+  background: rgba(56, 107, 176, 0.14);
+  border-color: rgba(96, 165, 250, 0.45);
+}
+
+.engine-radio-item input[type="radio"] {
+  margin-top: 3px;
+  width: 17px;
+  height: 17px;
+  accent-color: #3B82F6;
+  cursor: pointer;
+}
+
+.engine-radio-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.engine-radio-content strong {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #F2F4F8;
+}
+
+.engine-radio-content small {
+  font-size: 12px;
+  color: #9EA4B0;
+  line-height: 1.35;
+}
+
+.engine-subpanel {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.engine-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.engine-field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.engine-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #CBD5E1;
+}
+
+.engine-toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.engine-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 11px;
+}
+
+.engine-toggle-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.engine-toggle-label span {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #F2F4F8;
+}
+
+.engine-toggle-label small {
+  font-size: 12px;
+  color: #9EA4B0;
+  line-height: 1.35;
+}
+
+.engine-switch {
+  width: 44px;
+  height: 24px;
+  min-width: 44px;
+  cursor: pointer;
+  accent-color: #3B82F6;
+}
+
+.engine-chips-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  transition: opacity 0.18s ease;
+}
+
+.engine-chips-wrapper.disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.engine-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #F2F4F8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.engine-chip-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.engine-chip-btn.active {
+  background: rgba(56, 107, 176, 0.28);
+  border-color: #60A5FA;
+  color: #93C5FD;
+}
+
+.engine-chip-btn .chip-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(56, 189, 248, 0.2);
+  color: #38BDF8;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+
 

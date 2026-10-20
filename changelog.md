@@ -1,3 +1,25 @@
+## v2.1.28 (2026-10-21)
+
+### Integrasi Opsi & Konfigurasi Mesin Morphe CLI Terkategori
+- **Kategorisasi Tegas Antarmuka Langkah 4 (Mode, Fitur & Mesin)**:
+  - Memisahkan secara modular antara kurasi fitur aplikasi (`[🎯 Patch Fitur (Source)]`) dan parameter mesin pembangun (`[⚙️ Mesin Morphe CLI]`) melalui Segmented Switcher Tab modern.
+  - Menghindari percampuran antara patch kode aplikasi bawaan bundle `.mpp` dengan flag tingkat rendah mesin patcher.
+- **Manajemen Keystore & Penandatanganan Digital Kustom**:
+  - Mengintegrasikan mode **Keystore Persisten Otomatis** (standar Termux Revancify-Xisr) yang menjaga konsistensi sertifikat tanda tangan antar-sesi sehingga pembaruan APK berikutnya tidak ditolak sistem Android.
+  - Mendukung penandatanganan dengan **Keystore Kustom** (`.keystore`, `.jks`, `.p12`) lengkap dengan konfigurasi alias, password, dan nama signer (`--signer`).
+  - Mendukung pembuatan APK **Unsigned** (`--unsigned`) untuk kebutuhan instalasi root mount atau penandatanganan eksternal.
+- **Optimalisasi Ukuran APK via Pemangkasan Arsitektur CPU (`--striplibs`)**:
+  - Menghadirkan kontrol pemangkasan pustaka native `.so` untuk arsitektur target (`arm64-v8a`, `armeabi-v7a`, `x86_64`, `x86`), memangkas ukuran berkas APK hasil patch hingga lebih dari 50 MB.
+- **Fleksibilitas Kompiler Bytecode DEX (`--bytecode-mode`)**:
+  - Pilihan mode kompilasi: `STRIP_FAST` (paralel multithreaded berkecepatan tinggi), `STRIP_SAFE` (kompilasi bertahap untuk proteksi kompleks), dan `FULL` (rekompilasi menyeluruh).
+- **Toleransi Build & Alur Eksekusi**:
+  - Flag `--continue-on-error` untuk mencegah pembatalan build ketika terjadi kegagalan minor pada satu patch independen.
+  - Flag `-f` (`--force`) untuk fleksibilitas instalasi pada versi target di luar rekomendasi katalog resmi.
+  - Flag `--disable-purge` untuk mempertahankan berkas dekompilasi sementara guna kebutuhan analitik atau debugging.
+- **Penyelarasan Backend Daemon Rust & Kartu Ringkasan Langkah 5**:
+  - Menambahkan deserialisasi dan konstruksi argumen CLI dinamis pada `daemon/src/patcher.rs`.
+  - Menampilkan ringkasan konfigurasi mesin terpilih pada kartu verifikasi Langkah 5 sebelum patching dimulai.
+
 ## v2.1.27 (2026-10-21)
 
 ### Navigasi Back Gesture Terurut Multi-Tingkat & Perlindungan Double-Back

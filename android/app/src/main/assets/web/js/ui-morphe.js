@@ -486,7 +486,21 @@ function createLocalPatchPayload() {
     options: STATE.selectedOptions,
     download_plan_id: STATE.pendingDownloadPlan?.planId || null,
     workspace_location_id: STATE.storageSelection?.workspaceId || null,
-    output_location_id: STATE.storageSelection?.outputId || null
+    output_location_id: STATE.storageSelection?.outputId || null,
+    morphe_engine_options: {
+      keystore_mode: STATE.morpheEngineOptions?.keystoreMode || 'persistent',
+      custom_keystore_path: STATE.morpheEngineOptions?.customKeystorePath || null,
+      keystore_password: STATE.morpheEngineOptions?.keystorePassword || null,
+      keystore_alias: STATE.morpheEngineOptions?.keystoreAlias || null,
+      keystore_entry_password: STATE.morpheEngineOptions?.keystoreEntryPassword || null,
+      signer_name: STATE.morpheEngineOptions?.signerName || 'Morphe',
+      unsigned: STATE.morpheEngineOptions?.keystoreMode === 'unsigned',
+      strip_libs: STATE.morpheEngineOptions?.stripLibs ? (STATE.morpheEngineOptions.selectedArchs || ['arm64-v8a']) : [],
+      bytecode_mode: STATE.morpheEngineOptions?.bytecodeMode || 'STRIP_FAST',
+      continue_on_error: STATE.morpheEngineOptions?.continueOnError !== false,
+      force: STATE.morpheEngineOptions?.force !== false,
+      disable_purge: STATE.morpheEngineOptions?.disablePurge === true
+    }
   };
 }
 

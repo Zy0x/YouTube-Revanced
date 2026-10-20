@@ -11,8 +11,8 @@ android {
         applicationId "com.rvx.patcher"
         minSdk 26
         targetSdk 34
-        versionCode 20261021
-        versionName "2.1.27"
+        versionCode 20261022
+        versionName "2.1.28"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         ndk {

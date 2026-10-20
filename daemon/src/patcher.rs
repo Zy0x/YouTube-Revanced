@@ -11,6 +11,34 @@ use tokio::process::Command;
 
 pub const MORPHE_CLI_URL: &str = "https://github.com/MorpheApp/morphe-cli/releases/download/v1.18.0/morphe-desktop-1.18.0-all.jar";
 
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+pub struct MorpheEngineOptions {
+    #[serde(default)]
+    pub keystore_mode: Option<String>,
+    #[serde(default)]
+    pub custom_keystore_path: Option<String>,
+    #[serde(default)]
+    pub keystore_password: Option<String>,
+    #[serde(default)]
+    pub keystore_alias: Option<String>,
+    #[serde(default)]
+    pub keystore_entry_password: Option<String>,
+    #[serde(default)]
+    pub signer_name: Option<String>,
+    #[serde(default)]
+    pub unsigned: bool,
+    #[serde(default)]
+    pub strip_libs: Vec<String>,
+    #[serde(default)]
+    pub bytecode_mode: Option<String>,
+    #[serde(default)]
+    pub continue_on_error: Option<bool>,
+    #[serde(default)]
+    pub force: Option<bool>,
+    #[serde(default)]
+    pub disable_purge: Option<bool>,
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct PatchRequest {
     pub package_name: String,
@@ -41,6 +69,8 @@ pub struct PatchRequest {
     pub workspace_location_id: Option<String>,
     #[serde(default)]
     pub output_location_id: Option<String>,
+    #[serde(default)]
+    pub morphe_engine_options: Option<MorpheEngineOptions>,
 }
 
 pub async fn execute_patch_job(state: AppState, req: PatchRequest) {
@@ -151,15 +181,96 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
         locate_or_download_stock(state, &req.package_name, &req.target_version, &build_dir).await?;
     state.log(format!("  Stock APK: {}", stock_apk.display()));
 
+    let engine_opts = req.morphe_engine_options.clone().unwrap_or_default();
+
     // 5. Build CLI arguments
     let mut args: Vec<String> = vec![
         "-jar".to_string(),
         cli_jar.to_string_lossy().to_string(),
         "patch".to_string(),
-        "-f".to_string(),
-        "-p".to_string(),
-        patch_mpp.to_string_lossy().to_string(),
     ];
+
+    // Force version compatibility check
+    if engine_opts.force.unwrap_or(true) {
+        args.push("-f".to_string());
+    }
+
+    // Continue patching on individual patch error
+    if engine_opts.continue_on_error.unwrap_or(true) {
+        args.push("--continue-on-error".to_string());
+    }
+
+    // Keep scratch temporary files for debugging
+    if engine_opts.disable_purge.unwrap_or(false) {
+        args.push("--disable-purge".to_string());
+    }
+
+    // Bytecode compilation mode (STRIP_FAST | STRIP_SAFE | FULL)
+    if let Some(mode) = &engine_opts.bytecode_mode {
+        let trimmed = mode.trim();
+        if !trimmed.is_empty() {
+            args.push(format!("--bytecode-mode={}", trimmed));
+        }
+    }
+
+    // Native library CPU architecture stripping (--striplibs)
+    if !engine_opts.strip_libs.is_empty() {
+        let archs = engine_opts
+            .strip_libs
+            .iter()
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>()
+            .join(",");
+        if !archs.is_empty() {
+            args.push(format!("--striplibs={}", archs));
+        }
+    }
+
+    // Patch bundle MPP
+    args.push("-p".to_string());
+    args.push(patch_mpp.to_string_lossy().to_string());
+
+    // Keystore & signing options
+    if engine_opts.unsigned {
+        args.push("--unsigned".to_string());
+    } else {
+        let keystore_mode = engine_opts.keystore_mode.as_deref().unwrap_or("persistent");
+        if keystore_mode == "custom" {
+            if let Some(custom_path) = &engine_opts.custom_keystore_path {
+                let p = custom_path.trim();
+                if !p.is_empty() {
+                    args.push(format!("--keystore={}", p));
+                    if let Some(pass) = &engine_opts.keystore_password {
+                        if !pass.is_empty() {
+                            args.push(format!("--keystore-password={}", pass));
+                        }
+                    }
+                    if let Some(alias) = &engine_opts.keystore_alias {
+                        if !alias.is_empty() {
+                            args.push(format!("--keystore-entry-alias={}", alias));
+                        }
+                    }
+                    if let Some(epass) = &engine_opts.keystore_entry_password {
+                        if !epass.is_empty() {
+                            args.push(format!("--keystore-entry-password={}", epass));
+                        }
+                    }
+                }
+            }
+        } else {
+            // Persistent keystore in build cache (Revancify Termux default pattern)
+            let persistent_keystore = build_dir.join("morphe.keystore");
+            args.push(format!("--keystore={}", persistent_keystore.display()));
+        }
+
+        if let Some(signer) = &engine_opts.signer_name {
+            let s = signer.trim();
+            if !s.is_empty() {
+                args.push(format!("--signer={}", s));
+            }
+        }
+    }
 
     let app_alias = match req.package_name.as_str() {
         "com.google.android.youtube" => "YouTube",
