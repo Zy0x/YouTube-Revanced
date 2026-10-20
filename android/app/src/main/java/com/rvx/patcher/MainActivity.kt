@@ -13,6 +13,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -27,7 +28,7 @@ import java.io.File
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
-    private lateinit var loadingContainer: View
+    private lateinit var loadingContainer: LinearLayout
     private lateinit var loadingText: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var daemonManager: DaemonManager
