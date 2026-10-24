@@ -3,17 +3,7 @@ use std::process::Stdio;
 use tokio::process::Command;
 
 pub fn get_java_binary_in(modpath: &Path, workspace: Option<&Path>) -> Option<PathBuf> {
-    if let Some(root) = workspace {
-        let workspace_java = root
-            .join("runtime")
-            .join("jre")
-            .join("bin")
-            .join(if cfg!(windows) { "java.exe" } else { "java" });
-        if workspace_java.exists() {
-            return Some(workspace_java);
-        }
-    }
-    // 1. Check local module embedded/downloaded JRE
+    // 1. Check local module embedded/downloaded JRE (always in internal app storage, exec-safe)
     let local_java =
         modpath
             .join("jre")
@@ -23,7 +13,7 @@ pub fn get_java_binary_in(modpath: &Path, workspace: Option<&Path>) -> Option<Pa
         return Some(local_java);
     }
 
-    // 2. Check Android Termux JRE paths
+    // 2. Check Android Termux JRE paths (on internal ext4, exec-safe)
     #[cfg(unix)]
     {
         let termux_candidates = [
@@ -38,6 +28,25 @@ pub fn get_java_binary_in(modpath: &Path, workspace: Option<&Path>) -> Option<Pa
             let p = Path::new(candidate);
             if p.exists() {
                 return Some(p.to_path_buf());
+            }
+        }
+    }
+
+    // 3. Check workspace runtime ONLY IF NOT on sdcard/storage (sdcard is mounted noexec on Android)
+    if let Some(root) = workspace {
+        #[cfg(unix)]
+        let is_noexec = root.starts_with("/sdcard") || root.starts_with("/storage");
+        #[cfg(not(unix))]
+        let is_noexec = false;
+
+        if !is_noexec {
+            let workspace_java = root
+                .join("runtime")
+                .join("jre")
+                .join("bin")
+                .join(if cfg!(windows) { "java.exe" } else { "java" });
+            if workspace_java.exists() {
+                return Some(workspace_java);
             }
         }
     }

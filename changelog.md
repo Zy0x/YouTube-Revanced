@@ -1,3 +1,8 @@
+## v2.1.33 (2026-10-25)
+- **Fix Morphe Spawn Permission Denied**: Prioritaskan OpenJDK dari internal app storage (`modpath/jre/bin/java`) dan filter direktori yang memiliki flag `noexec` (`/sdcard` dan `/storage`) pada Android.
+- **Java IO Temp Directory Isolation**: Tambahkan `-Djava.io.tmpdir` dan `TMPDIR` mengarah ke folder internal modul untuk mencegah kegagalan ekstraksi smali / aapt2 di storage eksternal.
+- **Enhanced Process Working Directory**: Set working directory proses CLI langsung ke path internal modul (`modpath`).
+
 ## v2.1.32 (2026-10-25)
 
 ### Native APKMirror Crawler & Multi-Source Stock APK Resolver

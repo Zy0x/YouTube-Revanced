@@ -185,8 +185,12 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
 
     let engine_opts = req.morphe_engine_options.clone().unwrap_or_default();
 
+    let tmp_dir = state.modpath.join("tmp");
+    let _ = tokio::fs::create_dir_all(&tmp_dir).await;
+
     // 5. Build CLI arguments
     let mut args: Vec<String> = vec![
+        format!("-Djava.io.tmpdir={}", tmp_dir.display()),
         "-jar".to_string(),
         cli_jar.to_string_lossy().to_string(),
         "patch".to_string(),
@@ -381,6 +385,8 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
 
     let mut child_cmd = Command::new(&java_bin);
     child_cmd.args(&args)
+        .current_dir(&state.modpath)
+        .env("TMPDIR", &tmp_dir)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
