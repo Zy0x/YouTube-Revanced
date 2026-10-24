@@ -628,10 +628,10 @@ async fn locate_or_download_stock(
         ];
         for cand in &revancify_candidates {
             let cp_cmd = format!(
-                "su -c 'cp "{}" "{}" 2>/dev/null; chmod 666 "{}" 2>/dev/null'",
+                "cp \"{}\" \"{}\" 2>/dev/null; chmod 666 \"{}\" 2>/dev/null",
                 cand, target_stock.display(), target_stock.display()
             );
-            let _ = std::process::Command::new("/system/bin/sh")
+            let _ = std::process::Command::new("su")
                 .arg("-c")
                 .arg(&cp_cmd)
                 .status();
@@ -656,10 +656,10 @@ async fn locate_or_download_stock(
             if !path_str.is_empty() {
                 state.log(format!("📱 Mengambil APK terpasang ({}) via root: {}", package_name, path_str));
                 let cp_cmd = format!(
-                    "su -c 'cp "{}" "{}" 2>/dev/null; chmod 666 "{}" 2>/dev/null'",
+                "cp \"{}\" \"{}\" 2>/dev/null; chmod 666 \"{}\" 2>/dev/null",
                     path_str, target_stock.display(), target_stock.display()
                 );
-                let _ = std::process::Command::new("/system/bin/sh")
+                let _ = std::process::Command::new("su")
                     .arg("-c")
                     .arg(&cp_cmd)
                     .status();
