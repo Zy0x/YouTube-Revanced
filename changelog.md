@@ -1,3 +1,10 @@
+## v2.1.34 (2026-10-25)
+- **Root Shell Execution Wrapper for Morphe CLI**: Menjalankan patcher Java OpenJDK via `su -c` dengan wrapper shell command untuk meneruskan `LD_LIBRARY_PATH` dan `TMPDIR` tanpa diblokir oleh dynamic linker namespace Android bionic.
+- **Dedicated Ext4 Temporary Directory (-t flag)**: Mengarahkan file temporer Morphe CLI langsung ke partisi internal flash ext4 (`state.modpath/tmp`) melalui argumen `-t`, mengeliminasi bug XML truncation (`Premature end of file`) yang diakibatkan oleh latensi sinkronisasi FUSE pada `/storage/emulated/0`.
+- **Comprehensive Shared Library Bundling**: Menyalin dependensi `libc++_shared.so`, `libiconv.so*`, `libz.so*`, dan `libandroid-*.so` serta menetapkan permission 755 untuk kompatibilitas penuh binary Termux OpenJDK.
+- **Robust Storage Resolution Fallback**: `resolve_request_locations` kini memiliki fallback cerdas ke `storage_defaults` tanpa menggagalkan proses patching jika preflight belum dijalankan.
+- **Extended Cache Scavenging**: Menambahkan pemindaian otomatis direktori `/sdcard/Revancify-Xisr/cache/` untuk mengimpor `morphe-cli.jar` dan APK YouTube yang sudah diunduh sebelumnya secara instan.
+
 ## v2.1.33 (2026-10-25)
 - **Fix Morphe Spawn Permission Denied**: Prioritaskan OpenJDK dari internal app storage (`modpath/jre/bin/java`) dan filter direktori yang memiliki flag `noexec` (`/sdcard` dan `/storage`) pada Android.
 - **Java IO Temp Directory Isolation**: Tambahkan `-Djava.io.tmpdir` dan `TMPDIR` mengarah ke folder internal modul untuk mencegah kegagalan ekstraksi smali / aapt2 di storage eksternal.

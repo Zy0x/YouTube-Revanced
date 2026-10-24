@@ -3,7 +3,7 @@ mod patch;
 mod previews;
 mod releases;
 mod sources;
-mod storage;
+pub(crate) mod storage;
 
 use crate::state::AppState;
 use axum::{

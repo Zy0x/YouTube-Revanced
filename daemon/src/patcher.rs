@@ -127,11 +127,28 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
         .await
         .map_err(|e| format!("Failed to create build_out directory: {}", e))?;
 
-    // 2. Download Morphe CLI
+    // 2. Download or import Morphe CLI
     let cli_jar = build_dir.join("morphe-cli.jar");
     if !cli_jar.exists() {
-        state.log("📦 Downloading Morphe CLI jar...");
-        download_file(&state.client, MORPHE_CLI_URL, &cli_jar, state, "cli").await?;
+        #[cfg(unix)]
+        {
+            let local_cands = [
+                "/sdcard/Revancify-Xisr/cache/morphe-cli.jar",
+                "/data/data/com.termux/files/home/Revancify-Xisr/cache/morphe-cli.jar",
+            ];
+            for cand in &local_cands {
+                let cp_cmd = format!("cp \"{}\" \"{}\" 2>/dev/null; chmod 666 \"{}\" 2>/dev/null", cand, cli_jar.display(), cli_jar.display());
+                let _ = std::process::Command::new("su").arg("-c").arg(&cp_cmd).status();
+                if cli_jar.exists() {
+                    state.log(format!("✨ Menggunakan Morphe CLI dari cache lokal: {}", cand));
+                    break;
+                }
+            }
+        }
+        if !cli_jar.exists() {
+            state.log("📦 Downloading Morphe CLI jar...");
+            download_file(&state.client, MORPHE_CLI_URL, &cli_jar, state, "cli").await?;
+        }
     }
     state.log("  Morphe CLI is ready.");
 
@@ -194,6 +211,8 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
         "-jar".to_string(),
         cli_jar.to_string_lossy().to_string(),
         "patch".to_string(),
+        "-t".to_string(),
+        tmp_dir.to_string_lossy().to_string(),
     ];
 
     // Force version compatibility check
@@ -376,38 +395,77 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
     args.push(stock_apk.to_string_lossy().to_string());
 
     // 6. Execute Morphe CLI process with live log streaming
+    let use_su = req.is_root || crate::utils::is_root_available();
     state.log("⚡ Executing Morphe CLI patcher...");
     state.log(format!(
-        "  Executing: {} with {} arguments",
+        "  Executing: {} with {} arguments (root execution: {})",
         java_bin.display(),
-        args.len()
+        args.len(),
+        use_su
     ));
 
-    let mut child_cmd = Command::new(&java_bin);
-    child_cmd.args(&args)
-        .current_dir(&state.modpath)
-        .env("TMPDIR", &tmp_dir)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+    #[cfg(unix)]
+    fn shell_quote(s: &str) -> String {
+        format!("'{}'", s.replace('\'', "'\\''"))
+    }
 
     #[cfg(unix)]
-    {
+    let mut child_cmd = {
+        let mut parts = vec![];
         if let Some(parent) = java_bin.parent().and_then(|p| p.parent()) {
             let jre_lib = parent.join("lib");
             let jre_server = jre_lib.join("server");
-            let existing_ld = std::env::var("LD_LIBRARY_PATH").unwrap_or_default();
-            let mut parts = vec![
-                jre_lib.to_string_lossy().to_string(),
-                jre_server.to_string_lossy().to_string(),
-                "/data/data/com.termux/files/usr/lib".to_string(),
-            ];
+            parts.push(jre_lib.to_string_lossy().to_string());
+            parts.push(jre_server.to_string_lossy().to_string());
+        }
+        parts.push("/data/data/com.termux/files/usr/lib".to_string());
+        if let Ok(existing_ld) = std::env::var("LD_LIBRARY_PATH") {
             if !existing_ld.is_empty() {
                 parts.push(existing_ld);
             }
-            parts.push("/system/lib64".to_string());
-            child_cmd.env("LD_LIBRARY_PATH", parts.join(":"));
         }
-    }
+        parts.push("/system/lib64".to_string());
+        let ld_path_str = parts.join(":");
+
+        let quoted_args: Vec<String> = std::iter::once(java_bin.to_string_lossy().to_string())
+            .chain(args.iter().cloned())
+            .map(|a| shell_quote(&a))
+            .collect();
+
+        let inner_cmd = format!(
+            "export LD_LIBRARY_PATH=\"{}\"; export TMPDIR=\"{}\"; exec {}",
+            ld_path_str,
+            tmp_dir.display(),
+            quoted_args.join(" ")
+        );
+
+        let mut cmd = if use_su {
+            let mut c = Command::new("su");
+            c.arg("-c").arg(&inner_cmd);
+            c
+        } else {
+            let mut c = Command::new("/system/bin/sh");
+            c.arg("-c").arg(&inner_cmd);
+            c
+        };
+
+        cmd.current_dir(&state.modpath)
+            .env("TMPDIR", &tmp_dir)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        cmd
+    };
+
+    #[cfg(not(unix))]
+    let mut child_cmd = {
+        let mut cmd = Command::new(&java_bin);
+        cmd.args(&args)
+            .current_dir(&state.modpath)
+            .env("TMPDIR", &tmp_dir)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        cmd
+    };
 
     let mut child = child_cmd
         .spawn()
@@ -481,38 +539,26 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
 
 async fn resolve_request_locations(
     state: &AppState,
-    req: &PatchRequest,
+    _req: &PatchRequest,
 ) -> Result<(PathBuf, PathBuf), String> {
     let config_path = state.modpath.join("config").join("storage.json");
-    let value = tokio::fs::read(&config_path)
-        .await
-        .ok()
-        .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok())
-        .ok_or_else(|| "Storage locations have not been selected".to_string())?;
-    let workspace_id = req
-        .workspace_location_id
-        .as_deref()
-        .ok_or_else(|| "Missing workspace location".to_string())?;
-    let output_id = req
-        .output_location_id
-        .as_deref()
-        .ok_or_else(|| "Missing output location".to_string())?;
-    if value.get("workspaceId").and_then(|v| v.as_str()) != Some(workspace_id)
-        || value.get("outputId").and_then(|v| v.as_str()) != Some(output_id)
-    {
-        return Err("Storage selection changed; run download preflight again".to_string());
+    if let Ok(bytes) = tokio::fs::read(&config_path).await {
+        if let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) {
+            let workspace = value
+                .get("workspacePath")
+                .and_then(|v| v.as_str())
+                .map(PathBuf::from);
+            let output = value
+                .get("outputPath")
+                .and_then(|v| v.as_str())
+                .map(PathBuf::from);
+            if let (Some(w), Some(o)) = (workspace, output) {
+                return Ok((w, o));
+            }
+        }
     }
-    let workspace = value
-        .get("workspacePath")
-        .and_then(|v| v.as_str())
-        .map(PathBuf::from)
-        .ok_or_else(|| "Workspace path is unavailable".to_string())?;
-    let output = value
-        .get("outputPath")
-        .and_then(|v| v.as_str())
-        .map(PathBuf::from)
-        .ok_or_else(|| "Output path is unavailable".to_string())?;
-    Ok((workspace, output))
+    let (default_w, default_o) = crate::api::storage::storage_defaults(state);
+    Ok((default_w, default_o))
 }
 
 fn validate_patch_bundle_url(url: &str) -> Result<(), String> {
@@ -625,6 +671,11 @@ async fn locate_or_download_stock(
     #[cfg(unix)]
     {
         let revancify_candidates = [
+            format!("/sdcard/Revancify-Xisr/cache/{}-{}.apk", app_alias, version),
+            format!("/sdcard/Revancify-Xisr/cache/{}.apk", version),
+            format!("/sdcard/Revancify-Xisr/cache/youtube-{}.apk", version),
+            format!("/data/data/com.termux/files/home/Revancify-Xisr/cache/{}-{}.apk", app_alias, version),
+            format!("/data/data/com.termux/files/home/Revancify-Xisr/cache/{}.apk", version),
             format!("/data/data/com.termux/files/home/Revancify-Xisr/apps/YouTube/{}.apk", version),
             format!("/data/data/com.termux/files/home/Revancify-Xisr/apps/YouTube/youtube-{}.apk", version),
             format!("/data/data/com.termux/files/home/Revancify-Xisr/apps/{}/{}.apk", app_alias, version),

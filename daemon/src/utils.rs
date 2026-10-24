@@ -2,6 +2,22 @@ use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use tokio::process::Command;
 
+pub fn is_root_available() -> bool {
+    #[cfg(unix)]
+    {
+        std::process::Command::new("su")
+            .arg("-c")
+            .arg("id")
+            .output()
+            .map(|o| o.status.success() && String::from_utf8_lossy(&o.stdout).contains("uid=0"))
+            .unwrap_or(false)
+    }
+    #[cfg(not(unix))]
+    {
+        false
+    }
+}
+
 pub fn get_java_binary_in(modpath: &Path, workspace: Option<&Path>) -> Option<PathBuf> {
     // 1. Check local module embedded/downloaded JRE (always in internal app storage, exec-safe)
     let local_java =
@@ -13,7 +29,7 @@ pub fn get_java_binary_in(modpath: &Path, workspace: Option<&Path>) -> Option<Pa
         return Some(local_java);
     }
 
-    // 2. Check Android Termux JRE paths (on internal ext4, exec-safe)
+    // 2. Check Android Termux JRE paths (on internal ext4, exec-safe with root)
     #[cfg(unix)]
     {
         let termux_candidates = [
@@ -24,10 +40,23 @@ pub fn get_java_binary_in(modpath: &Path, workspace: Option<&Path>) -> Option<Pa
             "/data/adb/modules/rvx_patcher/jre/bin/java",
             "/data/adb/modules/magisk_openjdk/bin/java",
         ];
+        let root_ok = is_root_available();
         for candidate in termux_candidates {
             let p = Path::new(candidate);
             if p.exists() {
                 return Some(p.to_path_buf());
+            }
+            if root_ok {
+                let check_cmd = format!("su -c '[ -f \"{}\" ]'", candidate);
+                if std::process::Command::new("/system/bin/sh")
+                    .arg("-c")
+                    .arg(&check_cmd)
+                    .status()
+                    .map(|s| s.success())
+                    .unwrap_or(false)
+                {
+                    return Some(p.to_path_buf());
+                }
             }
         }
     }

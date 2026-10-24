@@ -31,9 +31,10 @@ pub async fn ensure_jre_installed(
                 let dest_jre = state.modpath.join("jre");
                 let _ = tokio::fs::create_dir_all(&dest_jre).await;
                 let cp_cmd = format!(
-                    "su -c 'cp -a \"{src}/\"* \"{dest}/\" 2>/dev/null; cp -a /data/data/com.termux/files/usr/lib/libz.so* /data/data/com.termux/files/usr/lib/libandroid-*.so \"{dest}/lib/\" 2>/dev/null; chmod -R 755 \"{dest}\"'",
+                    "su -c 'cp -a \"{src}/\"* \"{dest}/\" 2>/dev/null; cp -a /data/data/com.termux/files/usr/lib/libz.so* /data/data/com.termux/files/usr/lib/libandroid-*.so /data/data/com.termux/files/usr/lib/libc++_shared.so /data/data/com.termux/files/usr/lib/libiconv.so* \"{dest}/lib/\" 2>/dev/null; chmod -R 755 \"{dest}\"; chown -R $(stat -c %u:%g \"{parent}\") \"{dest}\" 2>/dev/null'",
                     src = src.display(),
-                    dest = dest_jre.display()
+                    dest = dest_jre.display(),
+                    parent = state.modpath.display()
                 );
                 let _ = std::process::Command::new("/system/bin/sh")
                     .arg("-c")
