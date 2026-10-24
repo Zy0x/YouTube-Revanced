@@ -23,7 +23,26 @@ pub fn get_java_binary_in(modpath: &Path, workspace: Option<&Path>) -> Option<Pa
         return Some(local_java);
     }
 
-    // 2. Check system PATH java
+    // 2. Check Android Termux JRE paths
+    #[cfg(unix)]
+    {
+        let termux_candidates = [
+            "/data/data/com.termux/files/usr/lib/jvm/java-21-openjdk/bin/java",
+            "/data/data/com.termux/files/usr/bin/java",
+            "/data/data/com.termux/files/usr/lib/jvm/openjdk-21/bin/java",
+            "/data/data/com.termux/files/usr/lib/jvm/openjdk-17/bin/java",
+            "/data/adb/modules/rvx_patcher/jre/bin/java",
+            "/data/adb/modules/magisk_openjdk/bin/java",
+        ];
+        for candidate in termux_candidates {
+            let p = Path::new(candidate);
+            if p.exists() {
+                return Some(p.to_path_buf());
+            }
+        }
+    }
+
+    // 3. Check system PATH java
     if let Ok(output) = std::process::Command::new(if cfg!(windows) { "where" } else { "which" })
         .arg("java")
         .output()

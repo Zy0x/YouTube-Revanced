@@ -379,10 +379,31 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
         args.len()
     ));
 
-    let mut child = Command::new(&java_bin)
-        .args(&args)
+    let mut child_cmd = Command::new(&java_bin);
+    child_cmd.args(&args)
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::piped());
+
+    #[cfg(unix)]
+    {
+        if let Some(parent) = java_bin.parent().and_then(|p| p.parent()) {
+            let jre_lib = parent.join("lib");
+            let jre_server = jre_lib.join("server");
+            let existing_ld = std::env::var("LD_LIBRARY_PATH").unwrap_or_default();
+            let mut parts = vec![
+                jre_lib.to_string_lossy().to_string(),
+                jre_server.to_string_lossy().to_string(),
+                "/data/data/com.termux/files/usr/lib".to_string(),
+            ];
+            if !existing_ld.is_empty() {
+                parts.push(existing_ld);
+            }
+            parts.push("/system/lib64".to_string());
+            child_cmd.env("LD_LIBRARY_PATH", parts.join(":"));
+        }
+    }
+
+    let mut child = child_cmd
         .spawn()
         .map_err(|e| format!("Failed to spawn Morphe CLI: {}", e))?;
 
