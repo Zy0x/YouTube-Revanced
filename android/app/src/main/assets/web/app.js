@@ -667,8 +667,10 @@ function initEventListeners() {
     document.getElementById('btnConfirmDownloadConsent').disabled = true;
     renderStorageLocations({ edit: true });
   });
+  document.getElementById('selectStorageLocation')?.addEventListener('change', syncCustomStorageFields);
   document.getElementById('selectWorkspaceLocation')?.addEventListener('change', syncCustomStorageFields);
   document.getElementById('selectOutputLocation')?.addEventListener('change', syncCustomStorageFields);
+  document.getElementById('btnBrowseStorage')?.addEventListener('click', () => openStorageBrowser('storage'));
   document.getElementById('btnBrowseWorkspace')?.addEventListener('click', () => openStorageBrowser('workspace'));
   document.getElementById('btnBrowseOutput')?.addEventListener('click', () => openStorageBrowser('output'));
   document.getElementById('btnStorageBrowserUp')?.addEventListener('click', () => {

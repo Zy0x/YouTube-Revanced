@@ -11,7 +11,7 @@
   <style>
 /* ==========================================================================
    YouTube RVX — Master Modular Stylesheet
-   Version: 2.1.29
+   Version: 2.1.30
    ========================================================================== */
 
 /* ==========================================================================
@@ -8232,21 +8232,16 @@ window.__RVX_ENGINE_WORKER_SOURCE__ = "/* Executes only a verified RVX Portable 
         </div>
         <section class="storage-location-summary" aria-labelledby="storageLocationHeading">
           <div class="storage-location-heading">
-            <div><strong id="storageLocationHeading">Lokasi penyimpanan</strong><small>File kerja dan hasil akhir disimpan terpisah.</small></div>
+            <div><strong id="storageLocationHeading">Direktori Penyimpanan</strong><small id="storageLocationHelp">File kerja dan hasil akhir (APK &amp; ZIP) disimpan dalam satu direktori.</small></div>
             <button type="button" id="btnChangeStorageLocations" class="btn-clean-ghost">Ubah</button>
           </div>
           <div id="storageLocationReadout" class="storage-location-readout"></div>
           <div id="storageLocationEditor" class="storage-location-editor hidden">
             <div class="storage-picker-field">
-              <label>Workspace<select id="selectWorkspaceLocation" class="morphe-select"></select></label>
-              <button type="button" id="btnBrowseWorkspace" class="btn-clean-ghost">Jelajahi folder</button>
+              <label>Lokasi Folder<select id="selectStorageLocation" class="morphe-select"></select></label>
+              <button type="button" id="btnBrowseStorage" class="btn-clean-ghost">Jelajahi folder</button>
             </div>
-            <label id="customWorkspaceField" class="hidden">Path workspace khusus<input id="inputCustomWorkspace" class="morphe-input" type="text" autocomplete="off" spellcheck="false"></label>
-            <div class="storage-picker-field">
-              <label>Hasil akhir<select id="selectOutputLocation" class="morphe-select"></select></label>
-              <button type="button" id="btnBrowseOutput" class="btn-clean-ghost">Jelajahi folder</button>
-            </div>
-            <label id="customOutputField" class="hidden">Path hasil khusus<input id="inputCustomOutput" class="morphe-input" type="text" autocomplete="off" spellcheck="false"></label>
+            <label id="customStorageField" class="hidden">Path folder khusus<input id="inputCustomStorage" class="morphe-input" type="text" autocomplete="off" spellcheck="false" placeholder="/sdcard/RVX-Patcher"></label>
             <button type="button" id="btnSaveStorageLocations" class="btn-clean-primary">Simpan &amp; periksa lokasi</button>
             <p id="storageLocationStatus" class="storage-location-status" role="status"></p>
           </div>
@@ -11732,22 +11727,24 @@ function renderStorageLocations({ edit = false } = {}) {
   const selection = STATE.storageSelection;
   const editor = document.getElementById('storageLocationEditor');
   const readout = document.getElementById('storageLocationReadout');
-  const workspaceSelect = document.getElementById('selectWorkspaceLocation');
-  const outputSelect = document.getElementById('selectOutputLocation');
-  if (!editor || !readout || !workspaceSelect || !outputSelect) return;
-  const workspaces = STATE.storageLocations.filter(item => item.kind === 'workspace');
-  const outputs = STATE.storageLocations.filter(item => item.kind === 'output');
-  workspaceSelect.innerHTML = `${workspaces.map(item => locationOptionMarkup(item, selection?.workspaceId)).join('')}${workspaces.some(item => item.id === 'custom-workspace') ? '' : '<option value="custom-workspace">Path khusus…</option>'}`;
-  outputSelect.innerHTML = `${outputs.map(item => locationOptionMarkup(item, selection?.outputId)).join('')}${outputs.some(item => item.id === 'custom-output') ? '' : '<option value="custom-output">Path khusus…</option>'}`;
-  if (selection?.workspaceId && [...workspaceSelect.options].some(option => option.value === selection.workspaceId)) workspaceSelect.value = selection.workspaceId;
-  if (selection?.outputId && [...outputSelect.options].some(option => option.value === selection.outputId)) outputSelect.value = selection.outputId;
-  const workspaceInput = document.getElementById('inputCustomWorkspace');
-  const outputInput = document.getElementById('inputCustomOutput');
-  if (workspaceInput && selection?.workspaceId === 'custom-workspace') workspaceInput.value = selection.workspacePath || '';
-  if (outputInput && selection?.outputId === 'custom-output') outputInput.value = selection.outputPath || '';
-  const workspace = selection?.workspacePath || 'Belum dipilih';
-  const output = selection?.outputPath || 'Belum dipilih';
-  readout.innerHTML = `<div><span>Workspace</span><strong title="${escapeHtml(workspace)}">${escapeHtml(workspace)}</strong></div><div><span>Hasil akhir</span><strong title="${escapeHtml(output)}">${escapeHtml(output)}</strong></div>`;
+  const storageSelect = document.getElementById('selectStorageLocation') || document.getElementById('selectWorkspaceLocation');
+  if (!editor || !readout || !storageSelect) return;
+
+  const storageItems = STATE.storageLocations.filter(item => item.kind === 'storage' || item.kind === 'output');
+  const activeId = selection?.storageId || selection?.outputPath || selection?.workspaceId;
+  storageSelect.innerHTML = `${storageItems.map(item => locationOptionMarkup(item, activeId)).join('')}${storageItems.some(item => item.id === 'custom-storage' || item.id === 'custom-output') ? '' : '<option value="custom-storage">Path khusus…</option>'}`;
+
+  if (activeId && [...storageSelect.options].some(option => option.value === activeId)) {
+    storageSelect.value = activeId;
+  }
+  const customInput = document.getElementById('inputCustomStorage') || document.getElementById('inputCustomWorkspace');
+  const activePath = selection?.storagePath || selection?.outputPath || selection?.workspacePath || '';
+  if (customInput && (storageSelect.value === 'custom-storage' || storageSelect.value === 'custom-output' || !selection?.storageId)) {
+    customInput.value = activePath;
+  }
+
+  const displayPath = activePath || 'Belum dipilih';
+  readout.innerHTML = `<div><span>Direktori</span><strong title="${escapeHtml(displayPath)}">${escapeHtml(displayPath)}</strong></div>`;
   editor.classList.toggle('hidden', !edit && Boolean(selection));
   readout.classList.toggle('hidden', edit || !selection);
   document.getElementById('btnChangeStorageLocations')?.classList.toggle('hidden', edit || !selection);
@@ -11755,8 +11752,11 @@ function renderStorageLocations({ edit = false } = {}) {
 }
 
 function syncCustomStorageFields() {
-  document.getElementById('customWorkspaceField')?.classList.toggle('hidden', document.getElementById('selectWorkspaceLocation')?.value !== 'custom-workspace');
-  document.getElementById('customOutputField')?.classList.toggle('hidden', document.getElementById('selectOutputLocation')?.value !== 'custom-output');
+  const selVal = (document.getElementById('selectStorageLocation') || document.getElementById('selectWorkspaceLocation'))?.value;
+  const isCustom = selVal === 'custom-storage' || selVal === 'custom-workspace' || selVal === 'custom-output';
+  document.getElementById('customStorageField')?.classList.toggle('hidden', !isCustom);
+  document.getElementById('customWorkspaceField')?.classList.toggle('hidden', !isCustom);
+  document.getElementById('customOutputField')?.classList.toggle('hidden', !isCustom);
 }
 
 function renderBrowserStorageMode() {
@@ -11777,20 +11777,19 @@ function renderBrowserStorageMode() {
   if (heading) heading.textContent = 'Penyimpanan browser';
   if (help) help.textContent = 'Browser tidak mengekspos path internal perangkat kepada halaman HTML.';
   if (readout) {
-    readout.innerHTML = `<div><span>Workspace</span><strong>${escapeHtml(workspace)}</strong></div><div><span>Hasil akhir</span><strong>${escapeHtml(output)}</strong></div>`;
+    readout.innerHTML = `<div><span>Direktori</span><strong>${escapeHtml(output || workspace)}</strong></div>`;
     readout.classList.remove('hidden');
   }
   editor?.classList.add('hidden');
   changeButton?.classList.add('hidden');
 }
 
-function storageBrowseElements(kind = STATE.storageBrowseKind) {
-  const workspace = kind === 'workspace';
+function storageBrowseElements(kind = STATE.storageBrowseKind || 'storage') {
   return {
-    select: document.getElementById(workspace ? 'selectWorkspaceLocation' : 'selectOutputLocation'),
-    input: document.getElementById(workspace ? 'inputCustomWorkspace' : 'inputCustomOutput'),
-    customId: workspace ? 'custom-workspace' : 'custom-output',
-    openerId: workspace ? 'btnBrowseWorkspace' : 'btnBrowseOutput'
+    select: document.getElementById('selectStorageLocation') || document.getElementById('selectWorkspaceLocation'),
+    input: document.getElementById('inputCustomStorage') || document.getElementById('inputCustomWorkspace'),
+    customId: document.getElementById('selectStorageLocation') ? 'custom-storage' : 'custom-workspace',
+    openerId: document.getElementById('btnBrowseStorage') ? 'btnBrowseStorage' : 'btnBrowseWorkspace'
   };
 }
 
@@ -11860,8 +11859,8 @@ async function fetchStorageDirectory(path = '') {
   }
 }
 
-async function openStorageBrowser(kind) {
-  if (kind !== 'workspace' && kind !== 'output') return;
+async function openStorageBrowser(kind = 'storage') {
+  if (kind !== 'workspace' && kind !== 'output' && kind !== 'storage') return;
   if (!STATE.daemonOnline) {
     renderBrowserStorageMode();
     return;
@@ -11872,12 +11871,10 @@ async function openStorageBrowser(kind) {
   const controls = storageBrowseElements(kind);
   STATE.storageBrowseKind = kind;
   STATE.storageBrowseReturnFocusId = controls.openerId;
-  const selected = STATE.storageLocations.find(location => location.kind === kind && location.id === controls.select?.value);
+  const selected = STATE.storageLocations.find(location => (location.kind === kind || location.kind === 'storage' || location.kind === 'output') && location.id === controls.select?.value);
   const initialPath = controls.select?.value === controls.customId ? controls.input?.value.trim() : selected?.path;
-  if (title) title.textContent = kind === 'workspace' ? 'Pilih folder workspace' : 'Pilih folder hasil akhir';
-  if (subtitle) subtitle.textContent = kind === 'workspace'
-    ? 'Bundle, runtime, cache, dan file sementara disimpan di sini.'
-    : 'APK hasil dan ZIP flashable disimpan di sini.';
+  if (title) title.textContent = 'Pilih folder penyimpanan';
+  if (subtitle) subtitle.textContent = 'Workspace, cache, bundle, serta APK dan ZIP hasil akhir disimpan dalam folder ini.';
   modal?.classList.remove('hidden');
   title?.focus({ preventScroll: true });
   await fetchStorageDirectory(initialPath || '');
@@ -11909,23 +11906,36 @@ async function saveStorageLocations() {
   const button = document.getElementById('btnSaveStorageLocations');
   if (button) button.disabled = true;
   if (status) status.textContent = 'Memvalidasi akses tulis dan ruang kosong…';
+  const selectEl = document.getElementById('selectStorageLocation') || document.getElementById('selectWorkspaceLocation');
+  const customEl = document.getElementById('inputCustomStorage') || document.getElementById('inputCustomWorkspace');
+  const storageVal = selectEl?.value || '';
+  const customVal = customEl?.value.trim() || null;
   const payload = {
-    workspaceId: document.getElementById('selectWorkspaceLocation')?.value || '',
-    outputId: document.getElementById('selectOutputLocation')?.value || '',
-    workspacePath: document.getElementById('inputCustomWorkspace')?.value.trim() || null,
-    outputPath: document.getElementById('inputCustomOutput')?.value.trim() || null
+    storageId: storageVal,
+    storagePath: customVal,
+    workspaceId: storageVal,
+    outputId: storageVal,
+    workspacePath: customVal,
+    outputPath: customVal
   };
   try {
     const response = await fetch(`${STATE.daemonUrl}/api/v1/storage/selection`, {
       method: 'PUT', headers: daemonAuthHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(payload)
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+    if (!response.ok) {
+      if (window.RVXNativeBridge?.requestStoragePermission) {
+        window.RVXNativeBridge.requestStoragePermission();
+      }
+      throw new Error(data.error || `HTTP ${response.status}`);
+    }
     STATE.storageSelection = data.selection;
     await loadStorageLocations();
     await runDownloadPreflight();
   } catch (error) {
-    if (status) status.textContent = error.message;
+    if (status) {
+      status.innerHTML = `${escapeHtml(error.message)} ${window.RVXNativeBridge ? '<button type="button" class="btn-clean-ghost" style="margin-top:6px;font-size:12px;padding:3px 10px;" onclick="window.RVXNativeBridge?.requestStoragePermission()">Buka Izin Akses File</button>' : ''}`;
+    }
   } finally {
     if (button) button.disabled = false;
   }
@@ -11940,8 +11950,14 @@ function renderDownloadPreflight(plan) {
   const stateLabels = { ready: 'Siap', cached: 'Cache', download: 'Unduh', required: 'Perlu unduh', generated: 'Lokal', 'not-needed': 'Tidak perlu', unavailable: 'Belum tersedia', 'native-only': 'Root/native saja' };
   const stateClasses = { ready: 'is-cached', cached: 'is-cached', download: 'is-download', required: 'is-download', generated: '', 'not-needed': '', unavailable: 'is-download', 'native-only': 'is-download' };
   const readout = document.getElementById('storageLocationReadout');
-  if (readout && plan.workspace && plan.output) {
-    readout.innerHTML = `<div><span>Workspace</span><strong title="${escapeHtml(plan.workspace.path)}">${escapeHtml(plan.workspace.path)} · ${formatDownloadBytes(plan.workspace.availableBytes)} kosong</strong></div><div><span>Hasil akhir</span><strong title="${escapeHtml(plan.output.path)}">${escapeHtml(plan.output.path)} · ${formatDownloadBytes(plan.output.availableBytes)} kosong</strong></div>`;
+  if (readout && (plan.storage || plan.output || plan.workspace)) {
+    const target = plan.storage || plan.output || plan.workspace;
+    const isSame = plan.workspace?.path === plan.output?.path;
+    if (isSame || plan.storage) {
+      readout.innerHTML = `<div><span>Direktori Penyimpanan</span><strong title="${escapeHtml(target.path)}">${escapeHtml(target.path)} · ${formatDownloadBytes(target.availableBytes)} kosong</strong></div>`;
+    } else {
+      readout.innerHTML = `<div><span>Workspace</span><strong title="${escapeHtml(plan.workspace.path)}">${escapeHtml(plan.workspace.path)} · ${formatDownloadBytes(plan.workspace.availableBytes)} kosong</strong></div><div><span>Hasil akhir</span><strong title="${escapeHtml(plan.output.path)}">${escapeHtml(plan.output.path)} · ${formatDownloadBytes(plan.output.availableBytes)} kosong</strong></div>`;
+    }
   }
   list.innerHTML = (plan.items || []).map(item => {
     const download = item.downloadBytes === null || item.downloadBytes === undefined ? 'Ukuran unduh tidak diberikan server' : `Unduh ${formatDownloadBytes(item.downloadBytes)}`;
@@ -12079,8 +12095,8 @@ async function openDownloadConsentModal() {
     const storage = await loadStorageLocations();
     if (!storage.requiresSelection && STATE.storageSelection) await runDownloadPreflight();
     else {
-      list.innerHTML = renderDownloadPlanItem('⌖', 'Pilih lokasi penyimpanan', 'Pilih workspace dan folder hasil, lalu tekan “Simpan & periksa lokasi”.', 'Menunggu pilihan');
-      if (total) total.textContent = 'Pilih dua lokasi sebelum memulai';
+      list.innerHTML = renderDownloadPlanItem('⌖', 'Pilih lokasi penyimpanan', 'Pilih folder penyimpanan kerja & hasil, lalu tekan “Simpan & periksa lokasi”.', 'Menunggu pilihan');
+      if (total) total.textContent = 'Pilih folder sebelum memulai';
     }
   } catch (error) {
     list.innerHTML = renderDownloadPlanItem('!', 'Preflight gagal', error.message, 'Coba lagi', 'is-download');
@@ -17062,8 +17078,10 @@ function initEventListeners() {
     document.getElementById('btnConfirmDownloadConsent').disabled = true;
     renderStorageLocations({ edit: true });
   });
+  document.getElementById('selectStorageLocation')?.addEventListener('change', syncCustomStorageFields);
   document.getElementById('selectWorkspaceLocation')?.addEventListener('change', syncCustomStorageFields);
   document.getElementById('selectOutputLocation')?.addEventListener('change', syncCustomStorageFields);
+  document.getElementById('btnBrowseStorage')?.addEventListener('click', () => openStorageBrowser('storage'));
   document.getElementById('btnBrowseWorkspace')?.addEventListener('click', () => openStorageBrowser('workspace'));
   document.getElementById('btnBrowseOutput')?.addEventListener('click', () => openStorageBrowser('output'));
   document.getElementById('btnStorageBrowserUp')?.addEventListener('click', () => {

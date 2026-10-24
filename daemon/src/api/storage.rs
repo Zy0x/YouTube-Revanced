@@ -5,7 +5,6 @@ use axum::{
     response::{IntoResponse, Json, Response},
 };
 use serde_json::{json, Value};
-use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -31,11 +30,14 @@ pub(crate) fn runtime_has_root_access() -> bool {
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub(crate) struct StorageSelectionInput {
-    workspace_id: String,
-    output_id: String,
+    workspace_id: Option<String>,
+    output_id: Option<String>,
     workspace_path: Option<String>,
     output_path: Option<String>,
+    storage_id: Option<String>,
+    storage_path: Option<String>,
 }
 
 #[derive(serde::Deserialize)]
@@ -45,16 +47,24 @@ pub(crate) struct StorageBrowseQuery {
 }
 
 pub(crate) fn storage_defaults(state: &AppState) -> (PathBuf, PathBuf) {
-    let workspace = state.modpath.join("workspace");
-    let android_downloads = PathBuf::from("/sdcard/Download/RVX-Patcher");
-    let output = if Path::new("/sdcard/Download").exists() {
-        android_downloads
+    let rvx_dir = PathBuf::from("/sdcard/RVX-Patcher");
+    let xisr_dir = PathBuf::from("/sdcard/Revancify-Xisr");
+    let dl_dir = PathBuf::from("/sdcard/Download/RVX-Patcher");
+
+    let unified = if rvx_dir.exists() {
+        rvx_dir
+    } else if xisr_dir.exists() {
+        xisr_dir
+    } else if Path::new("/sdcard").exists() {
+        rvx_dir
+    } else if Path::new("/sdcard/Download").exists() {
+        dl_dir
     } else if let Ok(profile) = std::env::var("USERPROFILE") {
         PathBuf::from(profile).join("Downloads").join("RVX-Patcher")
     } else {
-        state.modpath.join("output")
+        state.modpath.join("storage")
     };
-    (workspace, output)
+    (unified.clone(), unified)
 }
 
 fn storage_config_path(state: &AppState) -> PathBuf {
@@ -118,13 +128,31 @@ fn safe_storage_path(state: &AppState, raw: &str, kind: &str) -> Result<PathBuf,
 }
 
 pub(crate) async fn ensure_writable_directory(path: &Path) -> Result<(), String> {
-    tokio::fs::create_dir_all(path)
-        .await
-        .map_err(|e| format!("Cannot create {}: {}", path.display(), e))?;
+    if let Err(e) = tokio::fs::create_dir_all(path).await {
+        #[cfg(unix)]
+        {
+            let _ = std::process::Command::new("su")
+                .arg("-c")
+                .arg(format!("mkdir -p '{}'", path.display()))
+                .status();
+        }
+        if !path.exists() {
+            return Err(format!("Cannot create {}: {}", path.display(), e));
+        }
+    }
     let marker = path.join(format!(".rvx-write-check-{}", std::process::id()));
-    tokio::fs::write(&marker, b"ok")
-        .await
-        .map_err(|e| format!("{} is not writable: {}", path.display(), e))?;
+    if let Err(_e) = tokio::fs::write(&marker, b"ok").await {
+        #[cfg(unix)]
+        {
+            let _ = std::process::Command::new("su")
+                .arg("-c")
+                .arg(format!("chmod 777 '{}' 2>/dev/null", path.display()))
+                .status();
+        }
+        tokio::fs::write(&marker, b"ok")
+            .await
+            .map_err(|e| format!("{} is not writable: {}", path.display(), e))?;
+    }
     let _ = tokio::fs::remove_file(marker).await;
     Ok(())
 }
@@ -154,56 +182,77 @@ pub(crate) async fn get_storage_locations(State(state): State<AppState>) -> impl
     let selection = read_storage_selection(&state).await;
     let mut locations = vec![
         json!({
-            "id": "module-workspace", "kind": "workspace", "label": "Workspace modul",
+            "id": "rvx-unified", "kind": "storage", "label": "Folder RVX-Patcher",
             "path": default_workspace.to_string_lossy(), "recommended": true,
             "writable": storage_path_is_available(&default_workspace),
-            "availableBytes": path_available_bytes(default_workspace.parent().unwrap_or(&state.modpath))
-        }),
-        json!({
-            "id": "downloads", "kind": "output", "label": "Folder unduhan",
-            "path": default_output.to_string_lossy(), "recommended": true,
-            "writable": storage_path_is_available(&default_output),
-            "availableBytes": path_available_bytes(default_output.parent().unwrap_or(&state.modpath))
-        }),
-        json!({
-            "id": "module-output", "kind": "output", "label": "Hasil di modul",
-            "path": state.modpath.join("output").to_string_lossy(), "recommended": false,
-            "writable": storage_path_is_available(&state.modpath.join("output")),
-            "availableBytes": path_available_bytes(&state.modpath)
+            "availableBytes": path_available_bytes(&default_workspace)
         }),
     ];
+    if Path::new("/sdcard/Revancify-Xisr").exists() {
+        let xisr = PathBuf::from("/sdcard/Revancify-Xisr");
+        locations.push(json!({
+            "id": "xisr-unified", "kind": "storage", "label": "Folder Revancify-Xisr",
+            "path": xisr.to_string_lossy(), "recommended": true,
+            "writable": storage_path_is_available(&xisr),
+            "availableBytes": path_available_bytes(&xisr)
+        }));
+    }
+    if Path::new("/sdcard/Download").exists() {
+        let dl = PathBuf::from("/sdcard/Download/RVX-Patcher");
+        locations.push(json!({
+            "id": "downloads-unified", "kind": "storage", "label": "Folder Unduhan (/sdcard/Download)",
+            "path": dl.to_string_lossy(), "recommended": false,
+            "writable": storage_path_is_available(&dl),
+            "availableBytes": path_available_bytes(&dl)
+        }));
+    }
+    let mod_storage = state.modpath.join("storage");
+    locations.push(json!({
+        "id": "module-storage", "kind": "storage", "label": "Penyimpanan Internal Modul",
+        "path": mod_storage.to_string_lossy(), "recommended": false,
+        "writable": storage_path_is_available(&mod_storage),
+        "availableBytes": path_available_bytes(&state.modpath)
+    }));
+
+    // Backward compatible workspace and output entries
+    locations.push(json!({
+        "id": "module-workspace", "kind": "workspace", "label": "Workspace modul",
+        "path": default_workspace.to_string_lossy(), "recommended": true,
+        "writable": storage_path_is_available(&default_workspace),
+        "availableBytes": path_available_bytes(&default_workspace)
+    }));
+    locations.push(json!({
+        "id": "downloads", "kind": "output", "label": "Folder unduhan",
+        "path": default_output.to_string_lossy(), "recommended": true,
+        "writable": storage_path_is_available(&default_output),
+        "availableBytes": path_available_bytes(&default_output)
+    }));
+    locations.push(json!({
+        "id": "module-output", "kind": "output", "label": "Hasil di modul",
+        "path": state.modpath.join("output").to_string_lossy(), "recommended": false,
+        "writable": storage_path_is_available(&state.modpath.join("output")),
+        "availableBytes": path_available_bytes(&state.modpath)
+    }));
+
     if let Some(saved) = selection.as_ref() {
-        for (id_key, path_key, kind, label) in [
-            (
-                "workspaceId",
-                "workspacePath",
-                "workspace",
-                "Workspace tersimpan",
-            ),
-            ("outputId", "outputPath", "output", "Lokasi hasil tersimpan"),
-        ] {
-            if saved
-                .get(id_key)
-                .and_then(Value::as_str)
-                .is_some_and(|id| id.starts_with("custom-"))
-            {
-                if let Some(path) = saved.get(path_key).and_then(Value::as_str) {
-                    let path_buf = PathBuf::from(path);
-                    locations.push(json!({
-                        "id": saved.get(id_key).and_then(Value::as_str), "kind": kind, "label": label,
-                        "path": path, "recommended": false, "writable": storage_path_is_available(&path_buf),
-                        "availableBytes": path_available_bytes(path_buf.parent().unwrap_or(&path_buf))
-                    }));
-                }
-            }
+        if let Some(path) = saved.get("storagePath").or_else(|| saved.get("outputPath")).and_then(Value::as_str) {
+            let path_buf = PathBuf::from(path);
+            locations.push(json!({
+                "id": "custom-storage", "kind": "storage", "label": "Lokasi tersimpan",
+                "path": path, "recommended": false, "writable": storage_path_is_available(&path_buf),
+                "availableBytes": path_available_bytes(path_buf.parent().unwrap_or(&path_buf))
+            }));
         }
     }
+
     let selection_valid = selection.as_ref().is_some_and(|saved| {
-        ["workspacePath", "outputPath"].iter().all(|key| {
-            saved.get(key).and_then(Value::as_str).is_some_and(|raw| {
-                let path = PathBuf::from(raw);
-                path.exists() && storage_path_is_available(&path)
-            })
+        let p = saved.get("storagePath")
+            .or_else(|| saved.get("outputPath"))
+            .or_else(|| saved.get("workspacePath"))
+            .and_then(Value::as_str);
+        p.is_some_and(|raw| {
+            let path = PathBuf::from(raw);
+            path.exists() && storage_path_is_available(&path)
         })
     });
     Json(
@@ -222,25 +271,29 @@ fn storage_browse_roots(state: &AppState, kind: &str) -> Vec<PathBuf> {
                 roots.push(root);
             }
         }
-        if kind == "workspace" {
+        if kind == "workspace" || kind == "storage" {
             roots.push(state.modpath.clone());
-        } else if let Ok(profile) = std::env::var("USERPROFILE") {
+        }
+        if let Ok(profile) = std::env::var("USERPROFILE") {
             roots.push(PathBuf::from(profile).join("Downloads"));
         }
     }
 
     #[cfg(not(windows))]
     {
-        if kind == "workspace" {
-            roots.push(state.modpath.clone());
-            if runtime_has_root_access() {
-                roots.push(PathBuf::from("/data/adb"));
-            }
-            roots.push(PathBuf::from("/sdcard"));
-        } else {
-            roots.push(PathBuf::from("/sdcard/Download"));
-            roots.push(PathBuf::from("/sdcard"));
-            roots.push(state.modpath.clone());
+        roots.push(PathBuf::from("/sdcard"));
+        roots.push(PathBuf::from("/sdcard/Download"));
+        let xisr = PathBuf::from("/sdcard/Revancify-Xisr");
+        if xisr.exists() {
+            roots.push(xisr);
+        }
+        let rvx = PathBuf::from("/sdcard/RVX-Patcher");
+        if rvx.exists() {
+            roots.push(rvx);
+        }
+        roots.push(state.modpath.clone());
+        if runtime_has_root_access() {
+            roots.push(PathBuf::from("/data/adb"));
         }
     }
 
@@ -276,7 +329,7 @@ pub(crate) async fn browse_storage_directories(
     State(state): State<AppState>,
     Query(query): Query<StorageBrowseQuery>,
 ) -> Response {
-    if query.kind != "workspace" && query.kind != "output" {
+    if query.kind != "workspace" && query.kind != "output" && query.kind != "storage" {
         return (
             StatusCode::BAD_REQUEST,
             Json(json!({"error": "Jenis lokasi tidak dikenal"})),
@@ -394,80 +447,54 @@ pub(crate) async fn save_storage_selection(
     State(state): State<AppState>,
     Json(input): Json<StorageSelectionInput>,
 ) -> Response {
-    let (default_workspace, default_output) = storage_defaults(&state);
-    let workspace = match input.workspace_id.as_str() {
-        "module-workspace" => default_workspace,
-        "custom-workspace" => match input
-            .workspace_path
-            .as_deref()
-            .map(|p| safe_storage_path(&state, p, "Workspace"))
-        {
-            Some(Ok(path)) => path,
-            Some(Err(error)) => {
-                return (StatusCode::BAD_REQUEST, Json(json!({"error": error}))).into_response()
-            }
-            None => {
-                return (
-                    StatusCode::BAD_REQUEST,
-                    Json(json!({"error": "Custom workspace path is required"})),
-                )
-                    .into_response()
-            }
-        },
-        _ => {
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(json!({"error": "Unknown workspace location"})),
-            )
-                .into_response()
+    let (default_workspace, _default_output) = storage_defaults(&state);
+
+    let unified_res = if let Some(sid) = input.storage_id.as_deref() {
+        match sid {
+            "rvx-unified" => Ok(default_workspace.clone()),
+            "xisr-unified" => Ok(PathBuf::from("/sdcard/Revancify-Xisr")),
+            "downloads-unified" | "downloads" => Ok(PathBuf::from("/sdcard/Download/RVX-Patcher")),
+            "module-storage" | "module-workspace" => Ok(state.modpath.join("storage")),
+            "custom-storage" => match input.storage_path.as_deref().map(|p| safe_storage_path(&state, p, "Storage")) {
+                Some(Ok(p)) => Ok(p),
+                Some(Err(e)) => Err(e),
+                None => Err("Custom storage path is required".to_string()),
+            },
+            _ => Ok(default_workspace.clone()),
         }
-    };
-    let output = match input.output_id.as_str() {
-        "downloads" => default_output,
-        "module-output" => state.modpath.join("output"),
-        "custom-output" => match input
-            .output_path
-            .as_deref()
-            .map(|p| safe_storage_path(&state, p, "Output"))
-        {
-            Some(Ok(path)) => path,
-            Some(Err(error)) => {
-                return (StatusCode::BAD_REQUEST, Json(json!({"error": error}))).into_response()
-            }
-            None => {
-                return (
-                    StatusCode::BAD_REQUEST,
-                    Json(json!({"error": "Custom output path is required"})),
-                )
-                    .into_response()
-            }
-        },
-        _ => {
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(json!({"error": "Unknown output location"})),
-            )
-                .into_response()
+    } else if let Some(wid) = input.workspace_id.as_deref() {
+        match wid {
+            "custom-workspace" => match input.workspace_path.as_deref().map(|p| safe_storage_path(&state, p, "Workspace")) {
+                Some(Ok(p)) => Ok(p),
+                Some(Err(e)) => Err(e),
+                None => Err("Custom workspace path is required".to_string()),
+            },
+            _ => Ok(default_workspace.clone()),
         }
+    } else {
+        Ok(default_workspace.clone())
     };
-    if workspace == output {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(json!({"error": "Workspace and output must use different directories"})),
-        )
-            .into_response();
-    }
-    if let Err(error) = ensure_writable_directory(&workspace).await {
+
+    let target_dir = match unified_res {
+        Ok(dir) => dir,
+        Err(e) => return (StatusCode::BAD_REQUEST, Json(json!({"error": e}))).into_response(),
+    };
+
+    if let Err(error) = ensure_writable_directory(&target_dir).await {
         return (StatusCode::BAD_REQUEST, Json(json!({"error": error}))).into_response();
     }
-    if let Err(error) = ensure_writable_directory(&output).await {
-        return (StatusCode::BAD_REQUEST, Json(json!({"error": error}))).into_response();
-    }
+
+    let storage_id_val = input.storage_id.clone().unwrap_or_else(|| "custom-storage".to_string());
     let value = json!({
-        "workspaceId": input.workspace_id, "workspacePath": workspace.to_string_lossy(),
-        "outputId": input.output_id, "outputPath": output.to_string_lossy(),
+        "storageId": storage_id_val,
+        "storagePath": target_dir.to_string_lossy(),
+        "workspaceId": storage_id_val,
+        "workspacePath": target_dir.to_string_lossy(),
+        "outputId": storage_id_val,
+        "outputPath": target_dir.to_string_lossy(),
         "updatedAt": SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis()
     });
+
     let config_path = storage_config_path(&state);
     if let Some(parent) = config_path.parent() {
         let _ = tokio::fs::create_dir_all(parent).await;
@@ -484,14 +511,15 @@ pub(crate) async fn save_storage_selection(
         )
             .into_response();
     }
+
     (
         StatusCode::OK,
         Json(json!({
             "selection": value,
-            "workspaceAvailableBytes": path_available_bytes(&workspace),
-            "outputAvailableBytes": path_available_bytes(&output)
+            "storageAvailableBytes": path_available_bytes(&target_dir),
+            "workspaceAvailableBytes": path_available_bytes(&target_dir),
+            "outputAvailableBytes": path_available_bytes(&target_dir)
         })),
     )
         .into_response()
-
 }

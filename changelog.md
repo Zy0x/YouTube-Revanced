@@ -1,3 +1,11 @@
+## v2.1.30 (2026-10-25)
+
+### Unified Storage & Storage Access Permission Fix
+- **Penyatuan Direktori Kerja & Output**: Menggabungkan pilihan workspace dan output ke dalam 1 lokasi direktori terpadu (`selectStorageLocation`, `btnBrowseStorage`, `customStorageField`). File sementara dan artefak final (APK & ZIP) kini teratur di dalam satu folder induk tanpa redundansi.
+- **Perbaikan Scoped Storage Android 11+ (API 30+)**: Menambahkan deklarasi perizinan `MANAGE_EXTERNAL_STORAGE` dan dialog runtime all-files access permission untuk mencegah kegagalan `os error 1 (Operation not permitted)` pada perangkat Android modern.
+- **Root Fallback Permission Fix**: Daemon otomatis mencoba pemulihan akses via `su -c "chmod 777"` dan `mkdir -p` jika penulisan marker ke direktori `/sdcard/...` terblokir oleh kebijakan sandboxing.
+- **Native Bridge Action**: Menyediakan tombol pintas langsung di modal penyimpanan untuk membuka pengaturan akses file sistem jika izin belum diberikan.
+
 ## v2.1.29 (2026-10-25)
 
 ### Integrasi Ekosistem Revancify-Xisr, Smart Beta Recovery, Opsi Granular & Root Persistence

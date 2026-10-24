@@ -36,8 +36,11 @@ pub(crate) async fn create_download_plan(
     };
     let workspace_id = request.workspace_location_id.as_deref().unwrap_or_default();
     let output_id = request.output_location_id.as_deref().unwrap_or_default();
-    if selection.get("workspaceId").and_then(Value::as_str) != Some(workspace_id)
-        || selection.get("outputId").and_then(Value::as_str) != Some(output_id)
+    let sel_storage_id = selection.get("storageId").and_then(Value::as_str);
+    let sel_ws_id = selection.get("workspaceId").and_then(Value::as_str).or(sel_storage_id);
+    let sel_out_id = selection.get("outputId").and_then(Value::as_str).or(sel_storage_id);
+    if (!workspace_id.is_empty() && sel_ws_id != Some(workspace_id) && sel_storage_id != Some(workspace_id))
+        || (!output_id.is_empty() && sel_out_id != Some(output_id) && sel_storage_id != Some(output_id))
     {
         return (
             StatusCode::CONFLICT,
@@ -48,12 +51,14 @@ pub(crate) async fn create_download_plan(
     let workspace = PathBuf::from(
         selection
             .get("workspacePath")
+            .or_else(|| selection.get("storagePath"))
             .and_then(Value::as_str)
             .unwrap_or_default(),
     );
     let output = PathBuf::from(
         selection
             .get("outputPath")
+            .or_else(|| selection.get("storagePath"))
             .and_then(Value::as_str)
             .unwrap_or_default(),
     );
@@ -243,7 +248,8 @@ pub(crate) async fn create_download_plan(
         "planId": plan_id, "expiresAt": expires_at, "items": items,
         "knownDownloadBytes": known_download_bytes, "unknownSizeCount": unknown_size_count,
         "workspace": {"id": workspace_id, "path": workspace.to_string_lossy(), "availableBytes": workspace_available},
-        "output": {"id": output_id, "path": output.to_string_lossy(), "availableBytes": path_available_bytes(&output)}
+        "output": {"id": output_id, "path": output.to_string_lossy(), "availableBytes": path_available_bytes(&output)},
+        "storage": {"id": sel_storage_id.unwrap_or(workspace_id), "path": workspace.to_string_lossy(), "availableBytes": workspace_available}
     }))).into_response()
 }
 

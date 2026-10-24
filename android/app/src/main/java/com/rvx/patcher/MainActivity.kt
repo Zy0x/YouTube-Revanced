@@ -54,6 +54,7 @@ class MainActivity : AppCompatActivity() {
         setupLayout()
         setupWebView()
         setupBackHandler()
+        checkStoragePermissions()
 
         lifecycleScope.launch {
             loadingText.text = getString(R.string.daemon_starting)
@@ -224,5 +225,45 @@ class MainActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun isNativeWrapper(): Boolean = true
+
+        @JavascriptInterface
+        fun requestStoragePermission() {
+            runOnUiThread {
+                checkStoragePermissions()
+            }
+        }
+
+        @JavascriptInterface
+        fun hasStoragePermission(): Boolean {
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                android.os.Environment.isExternalStorageManager()
+            } else {
+                checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            }
+        }
+    }
+
+    private fun checkStoragePermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!android.os.Environment.isExternalStorageManager()) {
+                try {
+                    val intent = Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                } catch (_: Exception) {
+                    try {
+                        val intent = Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                        startActivity(intent)
+                    } catch (_: Exception) {}
+                }
+            }
+        } else {
+            val permissions = arrayOf(
+                android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+            requestPermissions(permissions, 1001)
+        }
     }
 }

@@ -9,7 +9,7 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23E53935'><path d='M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.377.55a3.016 3.016 0 0 0-2.122 2.136C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.55 9.376.55 9.376.55s7.505 0 9.377-.55a3.016 3.016 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z'/></svg>">
-  <link rel="stylesheet" href="style.css?v=2.1.29">
+  <link rel="stylesheet" href="style.css?v=2.1.30">
 </head>
 <body class="mode-morphe theme-editorial">
 
@@ -869,21 +869,16 @@
         </div>
         <section class="storage-location-summary" aria-labelledby="storageLocationHeading">
           <div class="storage-location-heading">
-            <div><strong id="storageLocationHeading">Lokasi penyimpanan</strong><small>File kerja dan hasil akhir disimpan terpisah.</small></div>
+            <div><strong id="storageLocationHeading">Direktori Penyimpanan</strong><small id="storageLocationHelp">File kerja dan hasil akhir (APK &amp; ZIP) disimpan dalam satu direktori.</small></div>
             <button type="button" id="btnChangeStorageLocations" class="btn-clean-ghost">Ubah</button>
           </div>
           <div id="storageLocationReadout" class="storage-location-readout"></div>
           <div id="storageLocationEditor" class="storage-location-editor hidden">
             <div class="storage-picker-field">
-              <label>Workspace<select id="selectWorkspaceLocation" class="morphe-select"></select></label>
-              <button type="button" id="btnBrowseWorkspace" class="btn-clean-ghost">Jelajahi folder</button>
+              <label>Lokasi Folder<select id="selectStorageLocation" class="morphe-select"></select></label>
+              <button type="button" id="btnBrowseStorage" class="btn-clean-ghost">Jelajahi folder</button>
             </div>
-            <label id="customWorkspaceField" class="hidden">Path workspace khusus<input id="inputCustomWorkspace" class="morphe-input" type="text" autocomplete="off" spellcheck="false"></label>
-            <div class="storage-picker-field">
-              <label>Hasil akhir<select id="selectOutputLocation" class="morphe-select"></select></label>
-              <button type="button" id="btnBrowseOutput" class="btn-clean-ghost">Jelajahi folder</button>
-            </div>
-            <label id="customOutputField" class="hidden">Path hasil khusus<input id="inputCustomOutput" class="morphe-input" type="text" autocomplete="off" spellcheck="false"></label>
+            <label id="customStorageField" class="hidden">Path folder khusus<input id="inputCustomStorage" class="morphe-input" type="text" autocomplete="off" spellcheck="false" placeholder="/sdcard/RVX-Patcher"></label>
             <button type="button" id="btnSaveStorageLocations" class="btn-clean-primary">Simpan &amp; periksa lokasi</button>
             <p id="storageLocationStatus" class="storage-location-status" role="status"></p>
           </div>
@@ -965,23 +960,23 @@
       </div>
     </div>
   </div>
-  <script src="js/runtime.js?v=2.1.29"></script>
-  <script src="js/state.js?v=2.1.29"></script>
-  <script src="js/artifact-store.js?v=2.1.29"></script>
-  <script src="js/local-engine.js?v=2.1.29"></script>
-  <script src="js/api-registry.js?v=2.1.29"></script>
-  <script src="js/api.js?v=2.1.29"></script>
-  <script src="js/ui-patch-options.js?v=2.1.29"></script>
-  <script src="js/ui-storage-consent.js?v=2.1.29"></script>
-  <script src="js/ui-morphe.js?v=2.1.29"></script>
-  <script src="js/ui-wizard-sources.js?v=2.1.29"></script>
-  <script src="js/ui-wizard.js?v=2.1.29"></script>
-  <script src="js/ui-morphe-engine.js?v=2.1.29"></script>
-  <script src="js/ui-preset.js?v=2.1.29"></script>
-  <script src="js/ui-smart-recovery.js?v=2.1.29"></script>
-  <script src="js/ui-dashboard.js?v=2.1.29"></script>
-  <script src="js/ui-tui.js?v=2.1.29"></script>
-  <script src="js/ui-navigation.js?v=2.1.29"></script>
-  <script src="app.js?v=2.1.29"></script>
+  <script src="js/runtime.js?v=2.1.30"></script>
+  <script src="js/state.js?v=2.1.30"></script>
+  <script src="js/artifact-store.js?v=2.1.30"></script>
+  <script src="js/local-engine.js?v=2.1.30"></script>
+  <script src="js/api-registry.js?v=2.1.30"></script>
+  <script src="js/api.js?v=2.1.30"></script>
+  <script src="js/ui-patch-options.js?v=2.1.30"></script>
+  <script src="js/ui-storage-consent.js?v=2.1.30"></script>
+  <script src="js/ui-morphe.js?v=2.1.30"></script>
+  <script src="js/ui-wizard-sources.js?v=2.1.30"></script>
+  <script src="js/ui-wizard.js?v=2.1.30"></script>
+  <script src="js/ui-morphe-engine.js?v=2.1.30"></script>
+  <script src="js/ui-preset.js?v=2.1.30"></script>
+  <script src="js/ui-smart-recovery.js?v=2.1.30"></script>
+  <script src="js/ui-dashboard.js?v=2.1.30"></script>
+  <script src="js/ui-tui.js?v=2.1.30"></script>
+  <script src="js/ui-navigation.js?v=2.1.30"></script>
+  <script src="app.js?v=2.1.30"></script>
 </body>
 </html>
