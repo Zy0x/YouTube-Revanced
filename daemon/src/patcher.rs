@@ -593,65 +593,114 @@ async fn locate_or_download_stock(
         _ => package_name.split('.').last().unwrap_or("app"),
     };
 
-    // 1. Check if user already supplied stock APK in module directory
+    let target_stock = build_dir.join(format!("{}-{}.apk", app_alias, version));
+    if target_stock.exists() {
+        if let Ok(true) = crate::apkmirror::validate_apk_file(&target_stock) {
+            state.log(format!("📦 Menggunakan cache Stock APK: {}", target_stock.display()));
+            return Ok(target_stock);
+        }
+    }
+
+    // 1. Check user provided APK in module directory
     let cands = [
         state.modpath.join(format!("stock-{}.apk", app_alias)),
         state.modpath.join(format!("stock-{}.apk", package_name)),
     ];
     for cand in cands {
         if cand.exists() {
-            state.log(format!("📂 Using provided stock APK: {}", cand.display()));
-            return Ok(cand);
+            if let Ok(true) = crate::apkmirror::validate_apk_file(&cand) {
+                state.log(format!("📂 Using provided stock APK: {}", cand.display()));
+                return Ok(cand);
+            }
         }
     }
 
-    let target_stock = build_dir.join(format!("{}-{}.apk", app_alias, version));
-    if target_stock.exists() {
-        return Ok(target_stock);
-    }
-
-    // 2. On Android: Check if installed package base APK can be extracted
+    // 2. Auto-import from Revancify-Xisr local storage
     #[cfg(unix)]
     {
-        let query_cmd = format!(
-            "pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n1",
-            package_name
-        );
-        if let Ok(output) = crate::utils::run_shell_command(&query_cmd).await {
-            let path_str = output.trim();
-            if !path_str.is_empty() && Path::new(path_str).exists() {
-                state.log(format!(
-                    "📲 Extracted installed APK ({}) from device: {}",
-                    package_name, path_str
-                ));
-                let _ = tokio::fs::copy(path_str, &target_stock).await;
-                if target_stock.exists() {
+        let revancify_candidates = [
+            format!("/data/data/com.termux/files/home/Revancify-Xisr/apps/YouTube/{}.apk", version),
+            format!("/data/data/com.termux/files/home/Revancify-Xisr/apps/YouTube/youtube-{}.apk", version),
+            format!("/data/data/com.termux/files/home/Revancify-Xisr/apps/{}/{}.apk", app_alias, version),
+            format!("/sdcard/Revancify-Xisr/apps/YouTube/{}.apk", version),
+            format!("/sdcard/Revancify-Xisr/{}-{}.apk", app_alias, version),
+            format!("/sdcard/RVX-Patcher/apps/YouTube/{}.apk", version),
+        ];
+        for cand in &revancify_candidates {
+            let cp_cmd = format!(
+                "su -c 'cp "{}" "{}" 2>/dev/null; chmod 666 "{}" 2>/dev/null'",
+                cand, target_stock.display(), target_stock.display()
+            );
+            let _ = std::process::Command::new("/system/bin/sh")
+                .arg("-c")
+                .arg(&cp_cmd)
+                .status();
+            if target_stock.exists() {
+                if let Ok(true) = crate::apkmirror::validate_apk_file(&target_stock) {
+                    state.log(format!("✨ Berhasil mengimpor Stock APK dari Revancify-Xisr: {}", cand));
                     return Ok(target_stock);
                 }
             }
         }
     }
 
-    // 3. Fallback: Download via download-stock script if YouTube
-    if package_name == "com.google.android.youtube" {
-        state.log(format!("📥 Fetching Stock YouTube v{} APK...", version));
-        let script_path = state.modpath.join("tools").join("download-stock.py");
-        if script_path.exists() {
-            let cmd = format!(
-                "python3 \"{}\" \"{}\" \"{}\"",
-                script_path.display(),
-                version,
-                target_stock.display()
-            );
-            let _ = crate::utils::run_shell_command(&cmd).await;
-            if target_stock.exists() {
+    // 3. Extract installed APK from device via root/pm
+    #[cfg(unix)]
+    {
+        let query_cmd = format!(
+            "su -c 'pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n1'",
+            package_name
+        );
+        if let Ok(output) = crate::utils::run_shell_command(&query_cmd).await {
+            let path_str = output.trim();
+            if !path_str.is_empty() {
+                state.log(format!("📱 Mengambil APK terpasang ({}) via root: {}", package_name, path_str));
+                let cp_cmd = format!(
+                    "su -c 'cp "{}" "{}" 2>/dev/null; chmod 666 "{}" 2>/dev/null'",
+                    path_str, target_stock.display(), target_stock.display()
+                );
+                let _ = std::process::Command::new("/system/bin/sh")
+                    .arg("-c")
+                    .arg(&cp_cmd)
+                    .status();
+                if target_stock.exists() {
+                    if let Ok(true) = crate::apkmirror::validate_apk_file(&target_stock) {
+                        return Ok(target_stock);
+                    }
+                }
+            }
+        }
+    }
+
+    // 4. Crawl APKMirror natively via reqwest
+    state.log(format!("🌐 Mengambil Stock APK v{} dari APKMirror...", version));
+    match crate::apkmirror::scrape_and_download_apkmirror(state, package_name, version, &target_stock).await {
+        Ok(path) => {
+            state.log(format!("✅ Berhasil mengunduh Stock APK dari APKMirror: {}", path.display()));
+            return Ok(path);
+        }
+        Err(e) => {
+            state.log(format!("⚠️ APKMirror crawler: {}", e));
+        }
+    }
+
+    // 5. Direct Mirrors Fallback
+    let mirrors = [
+        format!("https://github.com/revanced-apks/builds/releases/download/v{}/youtube.apk", version),
+        format!("https://archive.org/download/youtube-apk-{}/youtube-{}.apk", version.replace('.', "-"), version),
+        format!("https://github.com/Zy0x/YouTube-Revanced/releases/download/v{}/youtube-{}.apk", version, version),
+    ];
+    for m in mirrors {
+        state.log(format!("📥 Mencoba mirror unduhan: {}", m));
+        if download_file(&state.client, &m, &target_stock, state, "stock-mirror").await.is_ok() {
+            if let Ok(true) = crate::apkmirror::validate_apk_file(&target_stock) {
                 return Ok(target_stock);
             }
         }
     }
 
     Err(format!(
-        "Stock APK for {} (v{}) not found. Please install the app on device or place stock-{}.apk in module directory.",
+        "Stock APK untuk {} (v{}) tidak ditemukan. Silakan pasang aplikasi di perangkat atau letakkan stock-{}.apk di direktori kerja.",
         package_name, version, app_alias
     ))
 }
