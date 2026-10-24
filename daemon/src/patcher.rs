@@ -37,6 +37,8 @@ pub struct MorpheEngineOptions {
     pub force: Option<bool>,
     #[serde(default)]
     pub disable_purge: Option<bool>,
+    #[serde(default)]
+    pub secondary_bundle_path: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -231,6 +233,21 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
     args.push("-p".to_string());
     args.push(patch_mpp.to_string_lossy().to_string());
 
+    // Optional secondary patch bundle (Experimental multi-bundle)
+    if let Some(sec_path) = &engine_opts.secondary_bundle_path {
+        let trimmed = sec_path.trim();
+        if !trimmed.is_empty() {
+            let sec_file = PathBuf::from(trimmed);
+            if sec_file.exists() {
+                args.push("-p".to_string());
+                args.push(sec_file.to_string_lossy().to_string());
+                state.log(format!("📦 Added secondary patch bundle: {}", sec_file.display()));
+            } else {
+                state.log(format!("⚠️ Secondary patch bundle not found: {}", trimmed));
+            }
+        }
+    }
+
     // Keystore & signing options
     if engine_opts.unsigned {
         args.push("--unsigned".to_string());
@@ -259,8 +276,8 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
                 }
             }
         } else {
-            // Persistent keystore in build cache (Revancify Termux default pattern)
-            let persistent_keystore = build_dir.join("morphe.keystore");
+            // Persistent keystore in shared public storage with auto-import from Revancify-Xisr
+            let persistent_keystore = resolve_persistent_keystore(&state, &build_dir).await;
             args.push(format!("--keystore={}", persistent_keystore.display()));
         }
 
@@ -694,4 +711,59 @@ pub(crate) async fn download_file(
         .map_err(|e| format!("Failed to finalize {}: {}", target.display(), e))?;
 
     Ok(())
+}
+
+async fn resolve_persistent_keystore(state: &AppState, build_dir: &Path) -> PathBuf {
+    let public_rvx_ks = PathBuf::from("/sdcard/RVX-Patcher/keystore/morphe.keystore");
+    let public_xisr_ks = PathBuf::from("/sdcard/Revancify-Xisr/morphe.keystore");
+
+    // 1. Prioritize existing RVX shared keystore
+    if public_rvx_ks.exists() {
+        state.log(format!(
+            "🔑 Menggunakan Keystore Persisten Shared: {}",
+            public_rvx_ks.display()
+        ));
+        return public_rvx_ks;
+    }
+
+    // 2. Auto-import from Revancify-Xisr if available
+    if public_xisr_ks.exists() {
+        if let Some(parent) = public_rvx_ks.parent() {
+            let _ = tokio::fs::create_dir_all(parent).await;
+        }
+        if let Ok(_) = tokio::fs::copy(&public_xisr_ks, &public_rvx_ks).await {
+            state.log(format!(
+                "🔑 Berhasil Auto-Import Keystore dari Revancify-Xisr -> {}",
+                public_rvx_ks.display()
+            ));
+            return public_rvx_ks;
+        } else {
+            state.log(format!(
+                "🔑 Menggunakan Keystore Revancify-Xisr langsung: {}",
+                public_xisr_ks.display()
+            ));
+            return public_xisr_ks;
+        }
+    }
+
+    // 3. If /sdcard is available, use /sdcard/RVX-Patcher/keystore/morphe.keystore
+    let sdcard = Path::new("/sdcard");
+    if sdcard.exists() && sdcard.is_dir() {
+        if let Some(parent) = public_rvx_ks.parent() {
+            let _ = tokio::fs::create_dir_all(parent).await;
+        }
+        state.log(format!(
+            "🔑 Target Keystore Persisten Publik: {}",
+            public_rvx_ks.display()
+        ));
+        return public_rvx_ks;
+    }
+
+    // 4. Fallback to build directory
+    let local_ks = build_dir.join("morphe.keystore");
+    state.log(format!(
+        "🔑 Menggunakan Keystore Persisten Lokal: {}",
+        local_ks.display()
+    ));
+    local_ks
 }

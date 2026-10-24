@@ -1,0 +1,229 @@
+/* ==========================================================================
+   YouTube RVX — Smart Failure Recovery & Pre-release Warning CSS
+   Version: 2.1.29
+   ========================================================================== */
+
+.prerelease-warning-banner {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 12px 0;
+  animation: fadeInBanner 0.2s ease-out;
+}
+
+@keyframes fadeInBanner {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.prerelease-warning-content {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.prerelease-warning-content .warning-icon {
+  font-size: 1.25rem;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.prerelease-warning-content .warning-text strong {
+  display: block;
+  font-size: 0.88rem;
+  color: #fbbf24;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.prerelease-warning-content .warning-text p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #d1d5db;
+  line-height: 1.4;
+}
+
+.smart-recovery-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.smart-recovery-backdrop.hidden {
+  display: none !important;
+}
+
+.smart-recovery-card {
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  animation: recoveryFadeIn 0.2s ease-out;
+}
+
+@keyframes recoveryFadeIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.smart-recovery-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.recovery-header-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.smart-recovery-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recovery-error-box {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.error-box-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #f87171;
+  margin-bottom: 4px;
+}
+
+.error-box-code {
+  display: block;
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: #fca5a5;
+  max-height: 80px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.recovery-tip-box {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.tip-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.recovery-tip-box p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #e4e4e7;
+  line-height: 1.4;
+}
+
+.recovery-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.recovery-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  width: 100%;
+}
+
+.recovery-action-btn.primary {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #fff;
+}
+
+.recovery-action-btn.primary:hover {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: #60a5fa;
+}
+
+.recovery-action-btn.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e4e4e7;
+}
+
+.recovery-action-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.recovery-action-btn.outline {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #a1a1aa;
+}
+
+.recovery-action-btn.outline:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #f4f4f5;
+}
+
+.recovery-action-btn .action-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.recovery-action-btn .action-info strong {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.recovery-action-btn .action-info small {
+  display: block;
+  font-size: 0.74rem;
+  color: #a1a1aa;
+  line-height: 1.3;
+}
+
+.smart-recovery-footer {
+  padding: 12px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: flex-end;
+}

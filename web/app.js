@@ -619,6 +619,14 @@ function initEventListeners() {
     syncAllSummaries();
     closePatchBulkMenu();
   });
+  document.getElementById('btnWizExportPreset')?.addEventListener('click', () => {
+    if (typeof exportCurrentPatchPreset === 'function') exportCurrentPatchPreset();
+    closePatchBulkMenu();
+  });
+  document.getElementById('btnWizImportPreset')?.addEventListener('click', () => {
+    if (typeof triggerImportPatchPreset === 'function') triggerImportPatchPreset();
+    closePatchBulkMenu();
+  });
   document.getElementById('btnWizStep4Back')?.addEventListener('click', () => goToWizardStep(3));
   document.getElementById('btnWizStep4Next')?.addEventListener('click', () => {
     if (STATE.targetMode && STATE.selectedPatches.size > 0) goToWizardStep(5);

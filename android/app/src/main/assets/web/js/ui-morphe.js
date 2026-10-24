@@ -499,7 +499,8 @@ function createLocalPatchPayload() {
       bytecode_mode: STATE.morpheEngineOptions?.bytecodeMode || 'STRIP_FAST',
       continue_on_error: STATE.morpheEngineOptions?.continueOnError !== false,
       force: STATE.morpheEngineOptions?.force !== false,
-      disable_purge: STATE.morpheEngineOptions?.disablePurge === true
+      disable_purge: STATE.morpheEngineOptions?.disablePurge === true,
+      secondary_bundle_path: STATE.morpheEngineOptions?.secondaryBundlePath || null
     }
   };
 }
@@ -682,6 +683,9 @@ async function triggerLocalPatch(payload = createLocalPatchPayload()) {
       } else if (line.includes('Patching failed')) {
         setLocalBuildProgress(100, 'Proses dihentikan karena kesalahan');
         if (STATE.eventSource) STATE.eventSource.close();
+        if (typeof openSmartRecoveryModal === 'function') {
+          openSmartRecoveryModal({ error: line });
+        }
       }
     }).catch(error => {
       if (error.name !== 'AbortError') appendTerminalLog(`Log stream terputus: ${error.message}`, '!');
@@ -689,6 +693,9 @@ async function triggerLocalPatch(payload = createLocalPatchPayload()) {
   } catch (err) {
     appendTerminalLog(`Failed to start patching: ${err.message}`, '!');
     setLocalBuildProgress(100, 'Gagal memulai proses');
+    if (typeof openSmartRecoveryModal === 'function') {
+      openSmartRecoveryModal({ error: err.message });
+    }
   }
 }
 

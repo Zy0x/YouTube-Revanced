@@ -244,24 +244,27 @@ pub(crate) async fn mount_apps(State(state): State<AppState>) -> impl IntoRespon
                         .to_string();
                     let pkg = resolve_pkg_from_filename(&file_name);
                     let cmd = format!(
-                        "STOCKAPK=$(pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n 1); \
+                        "STOCKAPK=$(pm path {pkg} 2>/dev/null | grep base | cut -d: -f2 | head -n 1); \
                          if [ -n \"$STOCKAPK\" ]; then \
-                             chcon u:object_r:apk_data_file:s0 \"{}\"; \
-                             mount -o bind \"{}\" \"$STOCKAPK\"; \
-                             am force-stop {}; \
+                             chcon u:object_r:apk_data_file:s0 \"{apk}\"; \
+                             mount -o bind \"{apk}\" \"$STOCKAPK\"; \
+                             am force-stop {pkg}; \
+                             mkdir -p /data/adb/service.d /data/adb/post-fs-data.d; \
+                             printf '#!/system/bin/sh\\nuntil [ \"$(getprop sys.boot_completed)\" = \"1\" ]; do sleep 2; done\\nS=$(pm path %s 2>/dev/null | grep base | cut -d: -f2 | head -n 1)\\nif [ -n \"$S\" ] && [ -f \"%s\" ]; then\\n  chcon u:object_r:apk_data_file:s0 \"%s\"\\n  mount -o bind \"%s\" \"$S\"\\nfi\\n' \"{pkg}\" \"{apk}\" \"{apk}\" \"{apk}\" > /data/adb/service.d/mount_{pkg}.sh; \
+                             chmod 755 /data/adb/service.d/mount_{pkg}.sh; \
+                             printf '#!/system/bin/sh\\nS=$(pm path %s 2>/dev/null | grep base | cut -d: -f2 | head -n 1)\\nif [ -n \"$S\" ]; then\\n  umount -l \"$S\" 2>/dev/null\\nfi\\n' \"{pkg}\" > /data/adb/post-fs-data.d/umount_{pkg}.sh; \
+                             chmod 755 /data/adb/post-fs-data.d/umount_{pkg}.sh; \
                              echo 'MOUNT_SUCCESS'; \
                          else \
                              echo 'STOCK_NOT_FOUND'; \
                          fi",
-                        pkg,
-                        p.display(),
-                        p.display(),
-                        pkg
+                        pkg = pkg,
+                        apk = p.display()
                     );
                     if let Ok(out) = run_shell_command(&cmd).await {
                         if out.contains("MOUNT_SUCCESS") {
                             state.log(format!(
-                                "🎉 Hot-mounted {} ({}) successfully!",
+                                "🎉 Hot-mounted {} ({}) successfully + dual persistence scripts installed!",
                                 pkg, file_name
                             ));
                             mounted_count += 1;
@@ -275,7 +278,7 @@ pub(crate) async fn mount_apps(State(state): State<AppState>) -> impl IntoRespon
             (
                 StatusCode::OK,
                 Json(
-                    json!({ "success": true, "message": format!("Successfully mounted {} app(s)!", mounted_count) }),
+                    json!({ "success": true, "message": format!("Successfully mounted {} app(s) with boot persistence!", mounted_count) }),
                 ),
             )
         } else {
@@ -296,6 +299,93 @@ pub(crate) async fn mount_apps(State(state): State<AppState>) -> impl IntoRespon
             Json(json!({ "success": true, "message": "Mount simulated (Non-Android host)" })),
         )
     }
+}
+
+pub(crate) async fn umount_apps(State(state): State<AppState>) -> impl IntoResponse {
+    let _app_dir = state.modpath.join("app");
+    #[cfg(unix)]
+    {
+        let mut unmounted_count = 0;
+        if let Ok(mut entries) = tokio::fs::read_dir(&_app_dir).await {
+            while let Ok(Some(entry)) = entries.next_entry().await {
+                let p = entry.path();
+                if p.extension().map_or(false, |ext| ext == "apk") {
+                    let file_name = p
+                        .file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .to_string();
+                    let pkg = resolve_pkg_from_filename(&file_name);
+                    let cmd = format!(
+                        "STOCKAPK=$(pm path {pkg} 2>/dev/null | grep base | cut -d: -f2 | head -n 1); \
+                         if [ -n \"$STOCKAPK\" ]; then \
+                             umount -l \"$STOCKAPK\" 2>/dev/null; \
+                             am force-stop {pkg}; \
+                             rm -f /data/adb/service.d/mount_{pkg}.sh /data/adb/post-fs-data.d/umount_{pkg}.sh; \
+                             echo 'UMOUNT_SUCCESS'; \
+                         fi",
+                        pkg = pkg
+                    );
+                    if let Ok(out) = run_shell_command(&cmd).await {
+                        if out.contains("UMOUNT_SUCCESS") {
+                            state.log(format!("🧹 Unmounted {} successfully and removed boot persistence.", pkg));
+                            unmounted_count += 1;
+                        }
+                    }
+                }
+            }
+        }
+        (
+            StatusCode::OK,
+            Json(json!({
+                "success": true,
+                "message": format!("Berhasil melepas mount {} aplikasi.", unmounted_count)
+            })),
+        )
+    }
+
+    #[cfg(not(unix))]
+    {
+        state.log("ℹ️ Umount command simulated on non-Android platform.");
+        (
+            StatusCode::OK,
+            Json(json!({ "success": true, "message": "Umount simulated (Non-Android host)" })),
+        )
+    }
+}
+
+pub(crate) async fn get_mount_status(State(state): State<AppState>) -> impl IntoResponse {
+    let _app_dir = state.modpath.join("app");
+    #[allow(unused_mut)]
+    let mut mounted_apps: Vec<String> = Vec::new();
+
+    #[cfg(unix)]
+    {
+        if let Ok(mounts) = tokio::fs::read_to_string("/proc/mounts").await {
+            if let Ok(mut entries) = tokio::fs::read_dir(&_app_dir).await {
+                while let Ok(Some(entry)) = entries.next_entry().await {
+                    let p = entry.path();
+                    if p.extension().map_or(false, |ext| ext == "apk") {
+                        let path_str = p.to_string_lossy();
+                        if mounts.contains(path_str.as_ref()) {
+                            let file_name = p.file_name().unwrap_or_default().to_string_lossy().to_string();
+                            let pkg = resolve_pkg_from_filename(&file_name);
+                            mounted_apps.push(pkg);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let is_mounted = !mounted_apps.is_empty();
+    (
+        StatusCode::OK,
+        Json(json!({
+            "mounted": is_mounted,
+            "apps": mounted_apps
+        })),
+    )
 }
 
 #[allow(dead_code)]

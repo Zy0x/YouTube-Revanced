@@ -19,8 +19,8 @@ use serde_json::json;
 
 use downloads::create_download_plan;
 use patch::{
-    export_zip, get_app_info, get_status, get_youtube_info, install_jre, mount_apps, start_patch,
-    stream_logs,
+    export_zip, get_app_info, get_mount_status, get_status, get_youtube_info, install_jre,
+    mount_apps, start_patch, stream_logs, umount_apps,
 };
 use previews::{get_option_previews, upload_option_assets};
 use releases::get_source_releases;
@@ -44,6 +44,8 @@ pub fn router(state: AppState) -> Router {
         .route("/patch/start", post(start_patch))
         .route("/patch/stream", get(stream_logs))
         .route("/patch/mount", post(mount_apps))
+        .route("/patch/umount", post(umount_apps))
+        .route("/patch/mount-status", get(get_mount_status))
         .route("/patch/export-zip", post(export_zip))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),

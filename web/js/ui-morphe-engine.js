@@ -119,6 +119,20 @@ function renderMorpheEnginePanel(container) {
           </div>
         </div>
 
+        <div id="enginePersistentKeystoreInfo" class="engine-subpanel ${opts.keystoreMode === 'persistent' ? '' : 'hidden'}" style="margin-top: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
+            <span style="font-size: 0.85rem; color: #a1a1aa;">📁 Shared Keystore:</span>
+            <span style="font-size: 0.8rem; background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 2px 8px; border-radius: 4px;">Auto-Sync Xisr</span>
+          </div>
+          <div style="font-family: monospace; font-size: 0.8rem; color: #e4e4e7; background: rgba(0, 0, 0, 0.25); padding: 6px 10px; border-radius: 6px; word-break: break-all;">
+            /sdcard/RVX-Patcher/keystore/morphe.keystore
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 10px;">
+            <button type="button" id="btnExportKeystore" class="morphe-btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; flex: 1;">📤 Cadangkan / Ekspor</button>
+            <button type="button" id="btnImportKeystore" class="morphe-btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; flex: 1;">📥 Impor Keystore</button>
+          </div>
+        </div>
+
         <div class="engine-field-row" style="margin-top: 12px;">
           <label class="engine-label" for="inputEngineSignerName">Nama Signer APK (--signer)</label>
           <input type="text" id="inputEngineSignerName" class="morphe-input" placeholder="Morphe" value="${escapeHtml(opts.signerName || 'Morphe')}">
@@ -212,7 +226,37 @@ function renderMorpheEnginePanel(container) {
             <input type="checkbox" id="toggleEngineDisablePurge" class="engine-switch" ${opts.disablePurge ? 'checked' : ''}>
           </div>
         </div>
+
+        <!-- Multi-bundle sekunder -->
+        <div class="engine-field-row" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px;">
+          <label class="engine-label" for="inputSecondaryBundle">
+            <span>Bundle Patch Sekunder (Eksperimental)</span>
+            <small style="display:block; color: #71717a; margin-top: 2px;">Path berkas .mpp tambahan untuk dimuat bersamaan via -p.</small>
+          </label>
+          <input type="text" id="inputSecondaryBundle" class="morphe-input" placeholder="/sdcard/.../extra-patches.mpp" value="${escapeHtml(opts.secondaryBundlePath || '')}">
+        </div>
       </section>
+
+      <!-- 05: ROOT PERSISTENCE & UMOUNT (Khusus Mode Root) -->
+      ${STATE.targetMode === 'root' ? `
+      <section class="engine-card" aria-labelledby="headingEngineRootMount">
+        <div class="engine-card-header">
+          <span class="engine-step-badge">05 · Root Persistence</span>
+          <h4 id="headingEngineRootMount">Manajemen Mount &amp; Boot Script</h4>
+          <p class="engine-subtext">Status aktif bind-mount di sistem dan script boot otomatis Magisk/KSU/APatch.</p>
+        </div>
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px; margin-top: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span style="font-size: 0.88rem; color: #e4e4e7;">Dual-Script Boot Persistence:</span>
+            <span id="rootPersistenceBadge" style="font-size: 0.78rem; background: rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 2px 8px; border-radius: 4px;">/data/adb/service.d &amp; post-fs-data.d</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" id="btnTriggerUmount" class="morphe-btn-secondary" style="font-size: 0.82rem; padding: 8px 12px; color: #f87171; border-color: rgba(248, 113, 113, 0.3); flex: 1;">🧹 Lepas Mount (Umount)</button>
+            <button type="button" id="btnCheckMountStatus" class="morphe-btn-secondary" style="font-size: 0.82rem; padding: 8px 12px; flex: 1;">🔄 Cek Status Mount</button>
+          </div>
+        </div>
+      </section>
+      ` : ''}
     </div>
   `;
 
@@ -232,6 +276,8 @@ function bindMorpheEngineEvents(container) {
       });
       const subpanel = document.getElementById('engineCustomKeystorePanel');
       if (subpanel) subpanel.classList.toggle('hidden', radio.value !== 'custom');
+      const infoPersist = document.getElementById('enginePersistentKeystoreInfo');
+      if (infoPersist) infoPersist.classList.toggle('hidden', radio.value !== 'persistent');
       saveMorpheEngineOptions();
     };
   });
@@ -328,6 +374,104 @@ function bindMorpheEngineEvents(container) {
     togglePurge.onchange = () => {
       STATE.morpheEngineOptions.disablePurge = togglePurge.checked;
       saveMorpheEngineOptions();
+    };
+  }
+
+  // Secondary bundle input
+  const inputSecondary = document.getElementById('inputSecondaryBundle');
+  if (inputSecondary) {
+    inputSecondary.oninput = (e) => {
+      STATE.morpheEngineOptions.secondaryBundlePath = e.target.value.trim();
+      saveMorpheEngineOptions();
+    };
+  }
+
+  // Keystore export / backup
+  const btnExportKs = document.getElementById('btnExportKeystore');
+  if (btnExportKs) {
+    btnExportKs.onclick = () => {
+      if (typeof showToast === 'function') {
+        showToast('Keystore tersimpan di /sdcard/RVX-Patcher/keystore/morphe.keystore (Aman antar-install)');
+      } else {
+        alert('Keystore tersimpan di /sdcard/RVX-Patcher/keystore/morphe.keystore (Aman antar-install)');
+      }
+    };
+  }
+
+  // Keystore import trigger
+  const btnImportKs = document.getElementById('btnImportKeystore');
+  if (btnImportKs) {
+    btnImportKs.onclick = () => {
+      let ksInput = document.getElementById('inputImportKeystoreFile');
+      if (!ksInput) {
+        ksInput = document.createElement('input');
+        ksInput.type = 'file';
+        ksInput.id = 'inputImportKeystoreFile';
+        ksInput.accept = '.keystore,.jks,.p12';
+        ksInput.style.display = 'none';
+        document.body.appendChild(ksInput);
+        ksInput.onchange = (e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            STATE.morpheEngineOptions.keystoreMode = 'custom';
+            STATE.morpheEngineOptions.customKeystorePath = file.name;
+            saveMorpheEngineOptions();
+            if (typeof showToast === 'function') {
+              showToast(`Keystore kustom terpilih: ${file.name}`);
+            }
+          }
+        };
+      }
+      ksInput.click();
+    };
+  }
+
+  // Root Mount Umount & Status
+  const btnUmount = document.getElementById('btnTriggerUmount');
+  if (btnUmount) {
+    btnUmount.onclick = async () => {
+      if (!confirm('Apakah Anda yakin ingin melepas seluruh bind-mount root dan membersihkan script boot?')) return;
+      try {
+        const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/umount`, {
+          method: 'POST',
+          headers: typeof daemonAuthHeaders === 'function' ? daemonAuthHeaders() : {}
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (typeof showToast === 'function') showToast(data.message || 'Berhasil melepas mount.');
+        } else {
+          alert(data.error || 'Gagal melepas mount');
+        }
+      } catch (err) {
+        alert(`Error melepas mount: ${err.message}`);
+      }
+    };
+  }
+
+  const btnCheckMount = document.getElementById('btnCheckMountStatus');
+  if (btnCheckMount) {
+    btnCheckMount.onclick = async () => {
+      try {
+        const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/mount-status`);
+        const data = await res.json();
+        const badge = document.getElementById('rootPersistenceBadge');
+        if (badge) {
+          if (data.is_mounted) {
+            badge.textContent = `Aktif (${data.mounted_packages?.join(', ') || 'Mounted'})`;
+            badge.style.background = 'rgba(16, 185, 129, 0.2)';
+            badge.style.color = '#34d399';
+          } else {
+            badge.textContent = 'Tidak Ada Mount Aktif';
+            badge.style.background = 'rgba(239, 68, 68, 0.15)';
+            badge.style.color = '#f87171';
+          }
+        }
+        if (typeof showToast === 'function') {
+          showToast(data.is_mounted ? 'Mount terdeteksi aktif pada sistem.' : 'Tidak ada mount aktif saat ini.');
+        }
+      } catch (err) {
+        alert(`Gagal cek status mount: ${err.message}`);
+      }
     };
   }
 }

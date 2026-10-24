@@ -509,6 +509,10 @@ function renderStep2ChannelSection() {
     picker.onclick = hasSource ? () => openPatchTagPickerModal() : null;
   }
 
+  if (typeof renderPrereleaseWarning === 'function') {
+    renderPrereleaseWarning(loadStatus || picker);
+  }
+
   bindPatchTagPickerModalEvents();
   updateWizardNavigationState();
 }

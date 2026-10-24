@@ -1,3 +1,24 @@
+## v2.1.29 (2026-10-25)
+
+### Integrasi Ekosistem Revancify-Xisr, Smart Beta Recovery, Opsi Granular & Root Persistence
+- **Shared Keystore Publik & Auto-Import Cerdas dari Revancify-Xisr**:
+  - Menyimpan keystore persisten secara default di `/sdcard/RVX-Patcher/keystore/morphe.keystore` (shared storage).
+  - Otomatis mendeteksi dan mengimpor keystore lama dari `/sdcard/Revancify-Xisr/morphe.keystore` sehingga update APK YouTube dan aplikasi lainnya tidak pernah ditolak sistem Android (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`).
+  - Menghadirkan tombol aksi langsung untuk Ekspor/Cadangkan Keystore dan Impor Keystore kustom.
+- **Editor Opsi Patch Granular (-Okey=value)**:
+  - Mengurai parameter opsi patch (warna hex tema amoled, style ikon branding, label nama aplikasi RVX, seek bar durasi, dsb.).
+  - Menghadirkan tombol gerigi `⚙️ Opsi` pada kartu patch yang membuka Bottom Sheet visual interaktif untuk mengubah konfigurasi tanpa mengedit script manual.
+- **Smart Failure Recovery & Peringatan Rilis Beta/Dev**:
+  - Banner peringatan dini ramah pengguna di Langkah 2 ketika saluran rilis yang dipilih berstatus Pra-rilis/Beta/Dev.
+  - Dialog pemulihan cerdas interaktif saat terjadi kegagalan patch: opsi 1-klik untuk beralih ke rilis Stabil terakhir atau mencoba ulang dengan toleransi tinggi (`--continue-on-error` & `--force`).
+- **Dual-Script Boot Persistence & Manajemen Umount Root**:
+  - Otomatis memasang script boot persistence Magisk/KernelSU/APatch (`/data/adb/service.d/mount_<pkg>.sh` dan `/data/adb/post-fs-data.d/umount_<pkg>.sh`) setelah mount root berhasil.
+  - Menambahkan endpoint dan kontrol antarmuka untuk memantau status mount aktif dan melepas bind mount (Umount) secara bersih.
+- **Ekspor & Impor Preset Pilihan Patch (Format JSON Kompatibel Xisr)**:
+  - Menyediakan fitur Simpan Preset dan Muat Preset racikan patch lengkap dengan opsi kustom dalam format JSON yang dapat dibagikan dan dicadangkan.
+- **Dukungan Multi-Bundle Patch Sekunder (Eksperimental)**:
+  - Menambahkan parameter bundle patch sekunder (`-p`) pada mesin Morphe CLI untuk memuat ekstensi patch tambahan secara modular.
+
 ## v2.1.28 (2026-10-21)
 
 ### Integrasi Opsi & Konfigurasi Mesin Morphe CLI Terkategori

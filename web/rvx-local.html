@@ -11,7 +11,7 @@
   <style>
 /* ==========================================================================
    YouTube RVX — Master Modular Stylesheet
-   Version: 2.1.28
+   Version: 2.1.29
    ========================================================================== */
 
 /* ==========================================================================
@@ -3530,6 +3530,236 @@ select option {
 
 
 
+
+/* ==========================================================================
+   YouTube RVX — Smart Failure Recovery & Pre-release Warning CSS
+   Version: 2.1.29
+   ========================================================================== */
+
+.prerelease-warning-banner {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 12px 0;
+  animation: fadeInBanner 0.2s ease-out;
+}
+
+@keyframes fadeInBanner {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.prerelease-warning-content {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.prerelease-warning-content .warning-icon {
+  font-size: 1.25rem;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.prerelease-warning-content .warning-text strong {
+  display: block;
+  font-size: 0.88rem;
+  color: #fbbf24;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.prerelease-warning-content .warning-text p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #d1d5db;
+  line-height: 1.4;
+}
+
+.smart-recovery-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.smart-recovery-backdrop.hidden {
+  display: none !important;
+}
+
+.smart-recovery-card {
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  animation: recoveryFadeIn 0.2s ease-out;
+}
+
+@keyframes recoveryFadeIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.smart-recovery-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.recovery-header-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.smart-recovery-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recovery-error-box {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.error-box-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #f87171;
+  margin-bottom: 4px;
+}
+
+.error-box-code {
+  display: block;
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: #fca5a5;
+  max-height: 80px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.recovery-tip-box {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.tip-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.recovery-tip-box p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #e4e4e7;
+  line-height: 1.4;
+}
+
+.recovery-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.recovery-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  width: 100%;
+}
+
+.recovery-action-btn.primary {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #fff;
+}
+
+.recovery-action-btn.primary:hover {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: #60a5fa;
+}
+
+.recovery-action-btn.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e4e4e7;
+}
+
+.recovery-action-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.recovery-action-btn.outline {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #a1a1aa;
+}
+
+.recovery-action-btn.outline:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #f4f4f5;
+}
+
+.recovery-action-btn .action-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.recovery-action-btn .action-info strong {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.recovery-action-btn .action-info small {
+  display: block;
+  font-size: 0.74rem;
+  color: #a1a1aa;
+  line-height: 1.3;
+}
+
+.smart-recovery-footer {
+  padding: 12px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: flex-end;
+}
 
 /* ==========================================================================
    YouTube RVX — Mode 2: Termux CLI Revancify-Xisr 1:1 TUI Stylesheet
@@ -7331,6 +7561,8 @@ window.__RVX_ENGINE_WORKER_SOURCE__ = "/* Executes only a verified RVX Portable 
                       <button type="button" id="btnWizPatchesDefault" role="menuitem"><strong>Gunakan rekomendasi</strong><small>Pilihan aman dari sumber patch</small></button>
                       <button type="button" id="btnWizPatchesAll" role="menuitem"><strong>Pilih semua</strong><small>Aktifkan seluruh patch yang tersedia</small></button>
                       <button type="button" id="btnWizPatchesClear" role="menuitem"><strong>Kosongkan</strong><small>Nonaktifkan seluruh pilihan</small></button>
+                      <button type="button" id="btnWizExportPreset" role="menuitem"><strong>Simpan Preset (.json)</strong><small>Ekspor racikan patch (kompatibel Xisr)</small></button>
+                      <button type="button" id="btnWizImportPreset" role="menuitem"><strong>Muat Preset (.json)</strong><small>Impor racikan patch dari berkas JSON</small></button>
                     </div>
                   </div>
                 </div>
@@ -12380,7 +12612,8 @@ function createLocalPatchPayload() {
       bytecode_mode: STATE.morpheEngineOptions?.bytecodeMode || 'STRIP_FAST',
       continue_on_error: STATE.morpheEngineOptions?.continueOnError !== false,
       force: STATE.morpheEngineOptions?.force !== false,
-      disable_purge: STATE.morpheEngineOptions?.disablePurge === true
+      disable_purge: STATE.morpheEngineOptions?.disablePurge === true,
+      secondary_bundle_path: STATE.morpheEngineOptions?.secondaryBundlePath || null
     }
   };
 }
@@ -12563,6 +12796,9 @@ async function triggerLocalPatch(payload = createLocalPatchPayload()) {
       } else if (line.includes('Patching failed')) {
         setLocalBuildProgress(100, 'Proses dihentikan karena kesalahan');
         if (STATE.eventSource) STATE.eventSource.close();
+        if (typeof openSmartRecoveryModal === 'function') {
+          openSmartRecoveryModal({ error: line });
+        }
       }
     }).catch(error => {
       if (error.name !== 'AbortError') appendTerminalLog(`Log stream terputus: ${error.message}`, '!');
@@ -12570,6 +12806,9 @@ async function triggerLocalPatch(payload = createLocalPatchPayload()) {
   } catch (err) {
     appendTerminalLog(`Failed to start patching: ${err.message}`, '!');
     setLocalBuildProgress(100, 'Gagal memulai proses');
+    if (typeof openSmartRecoveryModal === 'function') {
+      openSmartRecoveryModal({ error: err.message });
+    }
   }
 }
 
@@ -13274,6 +13513,10 @@ function renderStep2ChannelSection() {
   if (picker) {
     picker.disabled = !hasSource;
     picker.onclick = hasSource ? () => openPatchTagPickerModal() : null;
+  }
+
+  if (typeof renderPrereleaseWarning === 'function') {
+    renderPrereleaseWarning(loadStatus || picker);
   }
 
   bindPatchTagPickerModalEvents();
@@ -14542,6 +14785,20 @@ function renderMorpheEnginePanel(container) {
           </div>
         </div>
 
+        <div id="enginePersistentKeystoreInfo" class="engine-subpanel ${opts.keystoreMode === 'persistent' ? '' : 'hidden'}" style="margin-top: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
+            <span style="font-size: 0.85rem; color: #a1a1aa;">📁 Shared Keystore:</span>
+            <span style="font-size: 0.8rem; background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 2px 8px; border-radius: 4px;">Auto-Sync Xisr</span>
+          </div>
+          <div style="font-family: monospace; font-size: 0.8rem; color: #e4e4e7; background: rgba(0, 0, 0, 0.25); padding: 6px 10px; border-radius: 6px; word-break: break-all;">
+            /sdcard/RVX-Patcher/keystore/morphe.keystore
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 10px;">
+            <button type="button" id="btnExportKeystore" class="morphe-btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; flex: 1;">📤 Cadangkan / Ekspor</button>
+            <button type="button" id="btnImportKeystore" class="morphe-btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; flex: 1;">📥 Impor Keystore</button>
+          </div>
+        </div>
+
         <div class="engine-field-row" style="margin-top: 12px;">
           <label class="engine-label" for="inputEngineSignerName">Nama Signer APK (--signer)</label>
           <input type="text" id="inputEngineSignerName" class="morphe-input" placeholder="Morphe" value="${escapeHtml(opts.signerName || 'Morphe')}">
@@ -14635,7 +14892,37 @@ function renderMorpheEnginePanel(container) {
             <input type="checkbox" id="toggleEngineDisablePurge" class="engine-switch" ${opts.disablePurge ? 'checked' : ''}>
           </div>
         </div>
+
+        <!-- Multi-bundle sekunder -->
+        <div class="engine-field-row" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px;">
+          <label class="engine-label" for="inputSecondaryBundle">
+            <span>Bundle Patch Sekunder (Eksperimental)</span>
+            <small style="display:block; color: #71717a; margin-top: 2px;">Path berkas .mpp tambahan untuk dimuat bersamaan via -p.</small>
+          </label>
+          <input type="text" id="inputSecondaryBundle" class="morphe-input" placeholder="/sdcard/.../extra-patches.mpp" value="${escapeHtml(opts.secondaryBundlePath || '')}">
+        </div>
       </section>
+
+      <!-- 05: ROOT PERSISTENCE & UMOUNT (Khusus Mode Root) -->
+      ${STATE.targetMode === 'root' ? `
+      <section class="engine-card" aria-labelledby="headingEngineRootMount">
+        <div class="engine-card-header">
+          <span class="engine-step-badge">05 · Root Persistence</span>
+          <h4 id="headingEngineRootMount">Manajemen Mount &amp; Boot Script</h4>
+          <p class="engine-subtext">Status aktif bind-mount di sistem dan script boot otomatis Magisk/KSU/APatch.</p>
+        </div>
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px; margin-top: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span style="font-size: 0.88rem; color: #e4e4e7;">Dual-Script Boot Persistence:</span>
+            <span id="rootPersistenceBadge" style="font-size: 0.78rem; background: rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 2px 8px; border-radius: 4px;">/data/adb/service.d &amp; post-fs-data.d</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" id="btnTriggerUmount" class="morphe-btn-secondary" style="font-size: 0.82rem; padding: 8px 12px; color: #f87171; border-color: rgba(248, 113, 113, 0.3); flex: 1;">🧹 Lepas Mount (Umount)</button>
+            <button type="button" id="btnCheckMountStatus" class="morphe-btn-secondary" style="font-size: 0.82rem; padding: 8px 12px; flex: 1;">🔄 Cek Status Mount</button>
+          </div>
+        </div>
+      </section>
+      ` : ''}
     </div>
   `;
 
@@ -14655,6 +14942,8 @@ function bindMorpheEngineEvents(container) {
       });
       const subpanel = document.getElementById('engineCustomKeystorePanel');
       if (subpanel) subpanel.classList.toggle('hidden', radio.value !== 'custom');
+      const infoPersist = document.getElementById('enginePersistentKeystoreInfo');
+      if (infoPersist) infoPersist.classList.toggle('hidden', radio.value !== 'persistent');
       saveMorpheEngineOptions();
     };
   });
@@ -14752,6 +15041,463 @@ function bindMorpheEngineEvents(container) {
       STATE.morpheEngineOptions.disablePurge = togglePurge.checked;
       saveMorpheEngineOptions();
     };
+  }
+
+  // Secondary bundle input
+  const inputSecondary = document.getElementById('inputSecondaryBundle');
+  if (inputSecondary) {
+    inputSecondary.oninput = (e) => {
+      STATE.morpheEngineOptions.secondaryBundlePath = e.target.value.trim();
+      saveMorpheEngineOptions();
+    };
+  }
+
+  // Keystore export / backup
+  const btnExportKs = document.getElementById('btnExportKeystore');
+  if (btnExportKs) {
+    btnExportKs.onclick = () => {
+      if (typeof showToast === 'function') {
+        showToast('Keystore tersimpan di /sdcard/RVX-Patcher/keystore/morphe.keystore (Aman antar-install)');
+      } else {
+        alert('Keystore tersimpan di /sdcard/RVX-Patcher/keystore/morphe.keystore (Aman antar-install)');
+      }
+    };
+  }
+
+  // Keystore import trigger
+  const btnImportKs = document.getElementById('btnImportKeystore');
+  if (btnImportKs) {
+    btnImportKs.onclick = () => {
+      let ksInput = document.getElementById('inputImportKeystoreFile');
+      if (!ksInput) {
+        ksInput = document.createElement('input');
+        ksInput.type = 'file';
+        ksInput.id = 'inputImportKeystoreFile';
+        ksInput.accept = '.keystore,.jks,.p12';
+        ksInput.style.display = 'none';
+        document.body.appendChild(ksInput);
+        ksInput.onchange = (e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            STATE.morpheEngineOptions.keystoreMode = 'custom';
+            STATE.morpheEngineOptions.customKeystorePath = file.name;
+            saveMorpheEngineOptions();
+            if (typeof showToast === 'function') {
+              showToast(`Keystore kustom terpilih: ${file.name}`);
+            }
+          }
+        };
+      }
+      ksInput.click();
+    };
+  }
+
+  // Root Mount Umount & Status
+  const btnUmount = document.getElementById('btnTriggerUmount');
+  if (btnUmount) {
+    btnUmount.onclick = async () => {
+      if (!confirm('Apakah Anda yakin ingin melepas seluruh bind-mount root dan membersihkan script boot?')) return;
+      try {
+        const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/umount`, {
+          method: 'POST',
+          headers: typeof daemonAuthHeaders === 'function' ? daemonAuthHeaders() : {}
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (typeof showToast === 'function') showToast(data.message || 'Berhasil melepas mount.');
+        } else {
+          alert(data.error || 'Gagal melepas mount');
+        }
+      } catch (err) {
+        alert(`Error melepas mount: ${err.message}`);
+      }
+    };
+  }
+
+  const btnCheckMount = document.getElementById('btnCheckMountStatus');
+  if (btnCheckMount) {
+    btnCheckMount.onclick = async () => {
+      try {
+        const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/mount-status`);
+        const data = await res.json();
+        const badge = document.getElementById('rootPersistenceBadge');
+        if (badge) {
+          if (data.is_mounted) {
+            badge.textContent = `Aktif (${data.mounted_packages?.join(', ') || 'Mounted'})`;
+            badge.style.background = 'rgba(16, 185, 129, 0.2)';
+            badge.style.color = '#34d399';
+          } else {
+            badge.textContent = 'Tidak Ada Mount Aktif';
+            badge.style.background = 'rgba(239, 68, 68, 0.15)';
+            badge.style.color = '#f87171';
+          }
+        }
+        if (typeof showToast === 'function') {
+          showToast(data.is_mounted ? 'Mount terdeteksi aktif pada sistem.' : 'Tidak ada mount aktif saat ini.');
+        }
+      } catch (err) {
+        alert(`Gagal cek status mount: ${err.message}`);
+      }
+    };
+  }
+}
+
+</script>
+  <script>
+/* ==========================================================================
+   YouTube RVX — Patch Preset Manager (Revancify-Xisr Compatible Format)
+   Version: 2.1.29
+   Enables saving and loading patch selections + options in JSON format:
+   [
+     {
+       "pkgName": "com.google.android.youtube",
+       "patches": ["..."],
+       "options": [{"title": "...", "patchName": "...", "key": "...", "value": "..."}]
+     }
+   ]
+   ========================================================================== */
+
+function exportCurrentPatchPreset() {
+  const currentApp = STATE.currentApp;
+  const pkgName = currentApp?.packageName || 'com.google.android.youtube';
+  const appName = (currentApp?.name || 'YouTube').replace(/[^a-zA-Z0-9_-]/g, '');
+
+  const patches = Array.from(STATE.selectedPatches || []);
+  if (patches.length === 0) {
+    if (typeof showToast === 'function') {
+      showToast('Belum ada patch yang dipilih untuk diekspor.', 'warning');
+    } else {
+      alert('Belum ada patch yang dipilih untuk diekspor.');
+    }
+    return;
+  }
+
+  // Format options as array of { title, patchName, key, value }
+  const options = [];
+  (STATE.patches || []).forEach(patch => {
+    if (Array.isArray(patch.options)) {
+      patch.options.forEach(opt => {
+        if (STATE.selectedOptions && STATE.selectedOptions[opt.key] !== undefined) {
+          options.push({
+            title: opt.title || opt.name || opt.key,
+            patchName: patch.name,
+            key: opt.key,
+            value: STATE.selectedOptions[opt.key]
+          });
+        }
+      });
+    }
+  });
+
+  const sourceName = STATE.currentSource || 'RVX';
+  const presetData = [
+    {
+      pkgName: pkgName,
+      patches: patches,
+      options: options
+    }
+  ];
+
+  const jsonStr = JSON.stringify(presetData, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${sourceName}-${appName}-patches.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  if (typeof showToast === 'function') {
+    showToast(`Preset ${patches.length} patch berhasil diekspor (${sourceName}-${appName}-patches.json)`);
+  }
+}
+
+function triggerImportPatchPreset() {
+  let fileInput = document.getElementById('inputImportPresetFile');
+  if (!fileInput) {
+    fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.id = 'inputImportPresetFile';
+    fileInput.accept = '.json,application/json';
+    fileInput.style.display = 'none';
+    document.body.appendChild(fileInput);
+    fileInput.onchange = handlePresetFileSelected;
+  }
+  fileInput.click();
+}
+
+function handlePresetFileSelected(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      applyPatchPresetData(data);
+    } catch (err) {
+      alert(`Gagal membaca berkas preset JSON: ${err.message}`);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function applyPatchPresetData(presetArray) {
+  if (!Array.isArray(presetArray) || presetArray.length === 0) {
+    alert('Format preset tidak valid (harus array JSON standar Revancify).');
+    return;
+  }
+
+  const pkgName = STATE.currentApp?.packageName || 'com.google.android.youtube';
+  const entry = presetArray.find(item => item.pkgName === pkgName) || presetArray[0];
+
+  if (!entry || !Array.isArray(entry.patches)) {
+    alert('Tidak ditemukan data patch yang sesuai dalam file preset JSON ini.');
+    return;
+  }
+
+  // Apply patches
+  if (!STATE.selectedPatches) STATE.selectedPatches = new Set();
+  STATE.selectedPatches.clear();
+
+  const availableNames = new Set((STATE.patches || []).map(p => p.name));
+  let matched = 0;
+
+  entry.patches.forEach(name => {
+    if (availableNames.has(name)) {
+      STATE.selectedPatches.add(name);
+      matched++;
+    }
+  });
+
+  // Apply options if present
+  if (Array.isArray(entry.options)) {
+    if (!STATE.selectedOptions) STATE.selectedOptions = {};
+    entry.options.forEach(opt => {
+      if (opt.key && opt.value !== undefined) {
+        STATE.selectedOptions[opt.key] = opt.value;
+      }
+    });
+  }
+
+  // Re-render patch list and summaries
+  if (typeof renderMorphePatchList === 'function') {
+    renderMorphePatchList(STATE.wizardStep === 4 ? 'wizardPatchCategoriesContainer' : 'patchCategoriesContainer');
+  }
+  if (typeof syncAllSummaries === 'function') {
+    syncAllSummaries();
+  }
+  if (typeof updateWizardNavigationState === 'function') {
+    updateWizardNavigationState();
+  }
+
+  if (typeof showToast === 'function') {
+    showToast(`Preset berhasil dimuat: ${matched} patch aktif diterapkan!`);
+  } else {
+    alert(`Preset berhasil dimuat: ${matched} patch aktif diterapkan!`);
+  }
+}
+
+</script>
+  <script>
+/* ==========================================================================
+   YouTube RVX — Smart Failure Recovery & Pre-release Warning
+   Version: 2.1.29
+   Handles:
+     1. Early warning banner when user selects a Beta/Dev/Pre-release patch
+     2. Smart Failure Recovery Modal if patching fails during build
+        - 1-click Rollback to Latest Stable Release
+        - 1-click Retry with High Tolerances (--continue-on-error & --force)
+        - Change APK target version
+   ========================================================================== */
+
+function isCurrentReleasePreRelease() {
+  const source = STATE.sources.find(s => s.id === STATE.currentSource);
+  const releases = STATE.sourceReleases[source?.id] || STATE.patchReleases || [];
+  const activeRelease = STATE.selectedRelease || releases.find(r => (r.tag_name || r.name) === STATE.patchTag);
+  return Boolean(activeRelease?.prerelease || /(dev|beta|alpha|rc|pre)/i.test(STATE.patchTag || ''));
+}
+
+function renderPrereleaseWarning(targetElement) {
+  if (!targetElement) return;
+  const isBeta = isCurrentReleasePreRelease();
+  let existingBanner = document.getElementById('prereleaseWarningBanner');
+
+  if (!isBeta) {
+    if (existingBanner) existingBanner.remove();
+    return;
+  }
+
+  if (!existingBanner) {
+    existingBanner = document.createElement('div');
+    existingBanner.id = 'prereleaseWarningBanner';
+    existingBanner.className = 'prerelease-warning-banner';
+    targetElement.parentNode.insertBefore(existingBanner, targetElement.nextSibling);
+  }
+
+  existingBanner.innerHTML = `
+    <div class="prerelease-warning-content">
+      <span class="warning-icon" aria-hidden="true">⚠️</span>
+      <div class="warning-text">
+        <strong>Versi Pra-rilis / Dev (${escapeHtml(STATE.patchTag || 'Beta')}) Terpilih</strong>
+        <p>Versi ini mungkin memuat perubahan kode eksperimental dari pembuat patch. Jika patching gagal, Anda dapat beralih ke versi Stabil melalui tombol pemulihan cerdas.</p>
+      </div>
+    </div>
+  `;
+}
+
+function openSmartRecoveryModal({ error, details } = {}) {
+  let modal = document.getElementById('smartRecoveryModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'smartRecoveryModal';
+    modal.className = 'modal-backdrop smart-recovery-backdrop';
+    document.body.appendChild(modal);
+  }
+
+  const isBeta = isCurrentReleasePreRelease();
+  const sourceObj = STATE.sources.find(s => s.id === STATE.currentSource);
+  const sourceName = sourceObj?.name || STATE.currentSource || 'Sumber Patch';
+  const tag = STATE.patchTag || 'Pra-rilis';
+
+  modal.innerHTML = `
+    <div class="modal-card smart-recovery-card" role="dialog" aria-modal="true" aria-labelledby="recoveryTitle">
+      <div class="modal-header smart-recovery-header">
+        <div class="recovery-header-icon" aria-hidden="true">🛠️</div>
+        <div>
+          <h3 id="recoveryTitle" class="modal-title">Pemulihan Cerdas: Patching Terhenti</h3>
+          <p class="modal-subtitle">Terjadi kendala pada rilis <strong>${escapeHtml(sourceName)} (${escapeHtml(tag)})</strong></p>
+        </div>
+      </div>
+
+      <div class="modal-body smart-recovery-body">
+        <div class="recovery-error-box">
+          <div class="error-box-label">Pesan Kesalahan:</div>
+          <code class="error-box-code">${escapeHtml(error || details || 'Morphe CLI keluar dengan kode status gagal.')}</code>
+        </div>
+
+        ${isBeta ? `
+          <div class="recovery-tip-box">
+            <span class="tip-badge">Penyebab Umum</span>
+            <p>Rilis dev/beta sering kali memperkenalkan patch baru yang belum sepenuhnya kompatibel dengan struktur smali bytecode versi APK yang dipilih.</p>
+          </div>
+        ` : ''}
+
+        <div class="recovery-options-list">
+          <!-- Opsi 1: Rollback ke Stabil -->
+          <button type="button" id="btnRecoveryRollbackStable" class="recovery-action-btn primary">
+            <span class="action-icon">🌟</span>
+            <div class="action-info">
+              <strong>Beralih ke Versi Stabil Terakhir (Rekomendasi 1-Klik)</strong>
+              <small>Otomatis mengganti sumber ke rilis stabil yang telah terverifikasi aman.</small>
+            </div>
+          </button>
+
+          <!-- Opsi 2: Retry Toleransi -->
+          <button type="button" id="btnRecoveryRetryTolerant" class="recovery-action-btn secondary">
+            <span class="action-icon">⚡</span>
+            <div class="action-info">
+              <strong>Coba Lagi dengan Toleransi Tinggi (--continue-on-error &amp; --force)</strong>
+              <small>Mengabaikan patch minor yang gagal dan melanjutkan kompilasi APK.</small>
+            </div>
+          </button>
+
+          <!-- Opsi 3: Ganti Versi APK Target -->
+          <button type="button" id="btnRecoveryChangeVersion" class="recovery-action-btn outline">
+            <span class="action-icon">📦</span>
+            <div class="action-info">
+              <strong>Pilih Versi APK Target Lain (Langkah 3)</strong>
+              <small>Gunakan versi APK yang direkomendasikan secara resmi oleh patch.</small>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-footer smart-recovery-footer">
+        <button type="button" id="btnCloseSmartRecovery" class="morphe-btn-secondary">Tutup &amp; Lihat Log</button>
+      </div>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+
+  // Bind actions
+  document.getElementById('btnRecoveryRollbackStable')?.addEventListener('click', () => {
+    closeSmartRecoveryModal();
+    executeRollbackToLatestStable();
+  });
+
+  document.getElementById('btnRecoveryRetryTolerant')?.addEventListener('click', () => {
+    closeSmartRecoveryModal();
+    executeRetryWithTolerantFlags();
+  });
+
+  document.getElementById('btnRecoveryChangeVersion')?.addEventListener('click', () => {
+    closeSmartRecoveryModal();
+    if (typeof navigateToStep === 'function') {
+      navigateToStep(3);
+    }
+  });
+
+  document.getElementById('btnCloseSmartRecovery')?.addEventListener('click', closeSmartRecoveryModal);
+}
+
+function closeSmartRecoveryModal() {
+  const modal = document.getElementById('smartRecoveryModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function executeRollbackToLatestStable() {
+  const source = STATE.sources.find(s => s.id === STATE.currentSource);
+  const releases = STATE.sourceReleases[source?.id] || STATE.patchReleases || [];
+  const latestStable = releases.find(r => !r.prerelease && !r.draft && !/(dev|beta|alpha|rc|pre)/i.test(r.tag_name || r.name || ''));
+
+  if (!latestStable) {
+    if (typeof showToast === 'function') {
+      showToast('Tidak ditemukan rilis berlabel stabil murni untuk sumber ini.', 'warning');
+    } else {
+      alert('Tidak ditemukan rilis berlabel stabil murni untuk sumber ini.');
+    }
+    return;
+  }
+
+  const stableTag = latestStable.tag_name || latestStable.name;
+  STATE.patchTag = stableTag;
+  STATE.selectedRelease = latestStable;
+
+  if (typeof showToast === 'function') {
+    showToast(`Beralih ke rilis stabil: ${stableTag}... Menyiapkan metadata.`);
+  }
+
+  // Navigate back to Step 2 or re-evaluate Step 4
+  if (typeof navigateToStep === 'function') {
+    navigateToStep(2);
+    // Refresh release UI if available
+    if (typeof renderReleaseChannels === 'function') {
+      renderReleaseChannels();
+    }
+  }
+}
+
+function executeRetryWithTolerantFlags() {
+  if (!STATE.morpheEngineOptions) STATE.morpheEngineOptions = {};
+  STATE.morpheEngineOptions.continueOnError = true;
+  STATE.morpheEngineOptions.force = true;
+
+  if (typeof saveMorpheEngineOptions === 'function') {
+    saveMorpheEngineOptions();
+  }
+
+  if (typeof showToast === 'function') {
+    showToast('Toleransi diaktifkan (--continue-on-error & --force). Mencoba ulang build...');
+  }
+
+  // Trigger rebuild
+  if (typeof triggerBuildPipeline === 'function') {
+    triggerBuildPipeline();
   }
 }
 
@@ -16266,6 +17012,14 @@ function initEventListeners() {
     STATE.selectedPatches.clear();
     renderMorphePatchList('wizardPatchCategoriesContainer');
     syncAllSummaries();
+    closePatchBulkMenu();
+  });
+  document.getElementById('btnWizExportPreset')?.addEventListener('click', () => {
+    if (typeof exportCurrentPatchPreset === 'function') exportCurrentPatchPreset();
+    closePatchBulkMenu();
+  });
+  document.getElementById('btnWizImportPreset')?.addEventListener('click', () => {
+    if (typeof triggerImportPatchPreset === 'function') triggerImportPatchPreset();
     closePatchBulkMenu();
   });
   document.getElementById('btnWizStep4Back')?.addEventListener('click', () => goToWizardStep(3));
