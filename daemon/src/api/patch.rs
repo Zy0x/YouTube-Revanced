@@ -91,8 +91,8 @@ pub(crate) async fn get_app_info(
     #[cfg(unix)]
     {
         let ver_cmd = format!(
-            "dumpsys package {} 2>/dev/null | grep versionName | cut -d= -f2 | head -n 1",
-            pkg
+            "/system/bin/su -c 'dumpsys package {pkg} 2>/dev/null | grep versionName | cut -d= -f2 | head -n 1' 2>/dev/null || su -c 'dumpsys package {pkg} 2>/dev/null | grep versionName | cut -d= -f2 | head -n 1' 2>/dev/null || dumpsys package {pkg} 2>/dev/null | grep versionName | cut -d= -f2 | head -n 1",
+            pkg = pkg
         );
         if let Ok(ver) = run_shell_command(&ver_cmd).await {
             let v = ver.trim();
@@ -101,13 +101,63 @@ pub(crate) async fn get_app_info(
             }
         }
         let path_cmd = format!(
-            "pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n 1",
-            pkg
+            "/system/bin/su -c 'pm path {pkg} 2>/dev/null | grep base | cut -d: -f2 | head -n 1' 2>/dev/null || su -c 'pm path {pkg} 2>/dev/null | grep base | cut -d: -f2 | head -n 1' 2>/dev/null || pm path {pkg} 2>/dev/null | grep base | cut -d: -f2 | head -n 1",
+            pkg = pkg
         );
         if let Ok(path) = run_shell_command(&path_cmd).await {
             let p = path.trim();
             if !p.is_empty() {
                 stock_apk = p.to_string();
+            }
+        }
+
+        // Fallback: Check local storage and cache directories for stock APKs
+        if stock_apk == "Not found" {
+            let app_alias = match pkg.as_str() {
+                "com.google.android.youtube" => "youtube",
+                "com.google.android.apps.youtube.music" => "ytmusic",
+                _ => pkg.split('.').last().unwrap_or("app"),
+            };
+            let search_dirs = [
+                "/sdcard/Revancify-Xisr/cache",
+                "/sdcard/Revancify-Xisr/apps/YouTube",
+                "/sdcard/Revancify-Xisr",
+                "/sdcard/RVX-Patcher/cache",
+                "/sdcard/RVX-Patcher",
+                "/sdcard/Download",
+                "/data/data/com.termux/files/home/Revancify-Xisr/apps/YouTube",
+                "/data/data/com.termux/files/home/Revancify-Xisr/cache",
+            ];
+            for dir in &search_dirs {
+                if let Ok(mut entries) = tokio::fs::read_dir(dir).await {
+                    while let Ok(Some(entry)) = entries.next_entry().await {
+                        let name = entry.file_name().to_string_lossy().to_string();
+                        if (name.contains(app_alias) || name.starts_with("21.") || name.starts_with("stock"))
+                            && name.ends_with(".apk")
+                            && !name.contains("test-")
+                            && !name.contains("-Anddea")
+                            && !name.contains("-Patched")
+                        {
+                            let p = entry.path();
+                            if let Ok(true) = crate::apkmirror::validate_apk_file(&p) {
+                                stock_apk = p.to_string_lossy().to_string();
+                                if installed_version == "Unknown" {
+                                    let mut clean = name.replace(".apk", "");
+                                    if let Some(pos) = clean.rfind('-') {
+                                        clean = clean[pos + 1..].to_string();
+                                    }
+                                    if clean.chars().any(|c| c.is_ascii_digit()) {
+                                        installed_version = clean;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                if stock_apk != "Not found" {
+                    break;
+                }
             }
         }
     }

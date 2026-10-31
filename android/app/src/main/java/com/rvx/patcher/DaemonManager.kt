@@ -57,8 +57,29 @@ class DaemonManager(private val context: Context) {
             builder.environment()["TMPDIR"] = context.cacheDir.absolutePath
             builder.redirectErrorStream(true)
 
-            Log.i(TAG, "Spawning daemon process: ${daemonFile.absolutePath}")
-            val proc = builder.start()
+            val suCandidates = arrayOf("/system/bin/su", "/data/adb/ap/bin/su", "/data/adb/magisk/su", "su")
+            val workingSu = suCandidates.firstOrNull { bin ->
+                try {
+                    val p = ProcessBuilder(bin, "-c", "id").start()
+                    val out = p.inputStream.bufferedReader().readText()
+                    p.waitFor()
+                    out.contains("uid=0")
+                } catch (_: Exception) {
+                    false
+                }
+            }
+
+            val proc = if (workingSu != null) {
+                Log.i(TAG, "Root available ($workingSu). Spawning daemon via root shell.")
+                val suCmd = "export LD_LIBRARY_PATH=\"${context.applicationInfo.nativeLibraryDir}:/system/lib64\"; export MODPATH=\"${workingDir.absolutePath}\"; export HOME=\"${workingDir.absolutePath}\"; export TMPDIR=\"${context.cacheDir.absolutePath}\"; export RVX_STANDALONE_APP=1; export RVX_APP_PACKAGE=\"${context.packageName}\"; exec ${daemonFile.absolutePath} server --port $DEFAULT_PORT"
+                ProcessBuilder(workingSu, "-c", suCmd)
+                    .directory(workingDir)
+                    .redirectErrorStream(true)
+                    .start()
+            } else {
+                Log.i(TAG, "Spawning daemon process: ${daemonFile.absolutePath}")
+                builder.start()
+            }
             process = proc
 
             // Read daemon logs in background thread

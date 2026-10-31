@@ -5,12 +5,14 @@ use tokio::process::Command;
 pub fn is_root_available() -> bool {
     #[cfg(unix)]
     {
-        std::process::Command::new("su")
-            .arg("-c")
-            .arg("id")
-            .output()
-            .map(|o| o.status.success() && String::from_utf8_lossy(&o.stdout).contains("uid=0"))
-            .unwrap_or(false)
+        for su_bin in ["su", "/system/bin/su", "/system/xbin/su", "/data/adb/ap/bin/su", "/data/adb/magisk/su"] {
+            if let Ok(o) = std::process::Command::new(su_bin).arg("-c").arg("id").output() {
+                if o.status.success() && String::from_utf8_lossy(&o.stdout).contains("uid=0") {
+                    return true;
+                }
+            }
+        }
+        false
     }
     #[cfg(not(unix))]
     {

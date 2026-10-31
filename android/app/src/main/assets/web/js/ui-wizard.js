@@ -334,7 +334,28 @@ function renderWizardVersionStep() {
   }
   if (count) count.textContent = `${totalPatches} patch diperiksa`;
 
-  const versions = sourceVersions;
+  const installedVer = STATE.installedVersion ? String(STATE.installedVersion).trim() : null;
+  let versions = [...sourceVersions];
+  if (installedVer) {
+    const installedIdx = versions.findIndex(item => item.version === installedVer);
+    if (installedIdx >= 0) {
+      const [item] = versions.splice(installedIdx, 1);
+      item.isInstalled = true;
+      versions.unshift(item);
+    } else {
+      versions.unshift({
+        version: installedVer,
+        isInstalled: true,
+        supportedPatchCount: totalPatches,
+        totalPatchCount: totalPatches,
+        isManifest: true
+      });
+    }
+    if (!STATE.currentVersion) {
+      STATE.currentVersion = installedVer;
+      syncAllSummaries();
+    }
+  }
 
   if (versions.length === 0) {
     container.innerHTML = `<div class="version-empty-state">${escapeHtml(getSourceDisplayName(STATE.currentSource))} tidak mencantumkan versi APK yang dapat diverifikasi untuk aplikasi ini.</div>`;
@@ -344,12 +365,13 @@ function renderWizardVersionStep() {
     const ver = item.version;
     const displayVersion = /^v/i.test(ver) ? ver : `v${ver}`;
     const isSelected = ver === STATE.currentVersion;
+    const isInstalled = Boolean(item.isInstalled) || (installedVer && ver === installedVer);
     const supported = Number(item.supportedPatchCount || 0);
     const total = Number(item.totalPatchCount || totalPatches);
     const fullySupported = total > 0 && supported === total;
     const unsupported = supported === 0;
     const supportClass = fullySupported ? 'full' : unsupported ? 'none' : 'partial';
-    const supportLabel = fullySupported ? 'Didukung penuh' : unsupported ? 'Tidak didukung' : 'Didukung sebagian';
+    const supportLabel = isInstalled ? 'Terpasang & Siap' : fullySupported ? 'Didukung penuh' : unsupported ? 'Tidak didukung' : 'Didukung sebagian';
 
     const row = document.createElement('div');
     row.className = `version-choice-row ${isSelected ? 'active' : ''} ${unsupported ? 'unsupported' : ''}`;
@@ -364,11 +386,11 @@ function renderWizardVersionStep() {
         <span class="version-choice-radio" aria-hidden="true">${isSelected ? SVG_CHECK : ''}</span>
         <div class="version-choice-copy">
           <span class="version-choice-number">${escapeHtml(displayVersion)}</span>
-          ${item.isRecommended ? '<span class="version-best-label">Direkomendasikan</span>' : ''}
+          ${isInstalled ? '<span class="version-best-label" style="background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3)">Terpasang di HP</span>' : item.isRecommended ? '<span class="version-best-label">Direkomendasikan</span>' : ''}
         </div>
       </div>
       <div class="version-support-copy">
-        <span class="version-support-badge ${supportClass}">${supportLabel}</span>
+        <span class="version-support-badge ${isInstalled ? 'full' : supportClass}">${supportLabel}</span>
         <span class="version-support-count">${supported} dari ${total} patch</span>
       </div>
     `;

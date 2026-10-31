@@ -440,7 +440,11 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
         );
 
         let mut cmd = if use_su {
-            let mut c = Command::new("su");
+            let su_bin = ["/system/bin/su", "/data/adb/ap/bin/su", "su"]
+                .into_iter()
+                .find(|p| std::path::Path::new(p).exists())
+                .unwrap_or("su");
+            let mut c = Command::new(su_bin);
             c.arg("-c").arg(&inner_cmd);
             c
         } else {
@@ -682,20 +686,65 @@ async fn locate_or_download_stock(
             format!("/sdcard/Revancify-Xisr/apps/YouTube/{}.apk", version),
             format!("/sdcard/Revancify-Xisr/{}-{}.apk", app_alias, version),
             format!("/sdcard/RVX-Patcher/apps/YouTube/{}.apk", version),
+            format!("/sdcard/Download/{}-{}.apk", app_alias, version),
+            format!("/sdcard/Download/YouTube-{}.apk", version),
         ];
         for cand in &revancify_candidates {
             let cp_cmd = format!(
                 "cp \"{}\" \"{}\" 2>/dev/null; chmod 666 \"{}\" 2>/dev/null",
                 cand, target_stock.display(), target_stock.display()
             );
-            let _ = std::process::Command::new("su")
+            let _ = std::process::Command::new("/system/bin/su")
                 .arg("-c")
                 .arg(&cp_cmd)
-                .status();
+                .status()
+                .or_else(|_| std::process::Command::new("su").arg("-c").arg(&cp_cmd).status());
             if target_stock.exists() {
                 if let Ok(true) = crate::apkmirror::validate_apk_file(&target_stock) {
-                    state.log(format!("✨ Berhasil mengimpor Stock APK dari Revancify-Xisr: {}", cand));
+                    state.log(format!("✨ Berhasil mengimpor Stock APK dari cache lokal: {}", cand));
                     return Ok(target_stock);
+                }
+            }
+        }
+
+        // 2b. Auto-fallback to any available stock APK for this app
+        let wildcard_search_dirs = [
+            "/sdcard/Revancify-Xisr/cache",
+            "/sdcard/Revancify-Xisr/apps/YouTube",
+            "/sdcard/Revancify-Xisr",
+            "/sdcard/RVX-Patcher/cache",
+            "/sdcard/RVX-Patcher",
+            "/sdcard/Download",
+            "/data/data/com.termux/files/home/Revancify-Xisr/apps/YouTube",
+            "/data/data/com.termux/files/home/Revancify-Xisr/cache",
+        ];
+        for dir in &wildcard_search_dirs {
+            if let Ok(mut entries) = tokio::fs::read_dir(dir).await {
+                while let Ok(Some(entry)) = entries.next_entry().await {
+                    let name = entry.file_name().to_string_lossy().to_string();
+                    if (name.contains(app_alias) || name.starts_with("21.") || name.starts_with("stock"))
+                        && name.ends_with(".apk")
+                        && !name.contains("test-")
+                        && !name.contains("-Anddea")
+                        && !name.contains("-Patched")
+                    {
+                        let cand_path = entry.path();
+                        let cp_cmd = format!(
+                            "cp \"{}\" \"{}\" 2>/dev/null; chmod 666 \"{}\" 2>/dev/null",
+                            cand_path.display(), target_stock.display(), target_stock.display()
+                        );
+                        let _ = std::process::Command::new("/system/bin/su")
+                            .arg("-c")
+                            .arg(&cp_cmd)
+                            .status()
+                            .or_else(|_| std::process::Command::new("su").arg("-c").arg(&cp_cmd).status());
+                        if target_stock.exists() {
+                            if let Ok(true) = crate::apkmirror::validate_apk_file(&target_stock) {
+                                state.log(format!("📦 Menggunakan cache Stock APK yang tersedia: {}", cand_path.display()));
+                                return Ok(target_stock);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -705,21 +754,22 @@ async fn locate_or_download_stock(
     #[cfg(unix)]
     {
         let query_cmd = format!(
-            "su -c 'pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n1'",
-            package_name
+            "/system/bin/su -c 'pm path {pkg} 2>/dev/null | grep base | cut -d: -f2 | head -n1' 2>/dev/null || su -c 'pm path {pkg} 2>/dev/null | grep base | cut -d: -f2 | head -n1' 2>/dev/null || pm path {pkg} 2>/dev/null | grep base | cut -d: -f2 | head -n1",
+            pkg = package_name
         );
         if let Ok(output) = crate::utils::run_shell_command(&query_cmd).await {
             let path_str = output.trim();
             if !path_str.is_empty() {
                 state.log(format!("📱 Mengambil APK terpasang ({}) via root: {}", package_name, path_str));
                 let cp_cmd = format!(
-                "cp \"{}\" \"{}\" 2>/dev/null; chmod 666 \"{}\" 2>/dev/null",
+                    "cp \"{}\" \"{}\" 2>/dev/null; chmod 666 \"{}\" 2>/dev/null",
                     path_str, target_stock.display(), target_stock.display()
                 );
-                let _ = std::process::Command::new("su")
+                let _ = std::process::Command::new("/system/bin/su")
                     .arg("-c")
                     .arg(&cp_cmd)
-                    .status();
+                    .status()
+                    .or_else(|_| std::process::Command::new("su").arg("-c").arg(&cp_cmd).status());
                 if target_stock.exists() {
                     if let Ok(true) = crate::apkmirror::validate_apk_file(&target_stock) {
                         return Ok(target_stock);

@@ -780,21 +780,49 @@ function isLocalDaemonPage() {
 
 async function fetchInstalledAppInfo() {
   const text = document.getElementById('installedVerText');
+  const pkg = STATE.currentApp?.packageName || 'com.google.android.youtube';
+
+  // 1. Direct native bridge query if inside Android app
+  if (window.RVXNativeBridge?.getInstalledAppVersion) {
+    try {
+      const nativeVer = window.RVXNativeBridge.getInstalledAppVersion(pkg);
+      if (nativeVer && nativeVer.trim().length > 0) {
+        STATE.installedVersion = nativeVer.trim();
+        if (text) text.textContent = `v${STATE.installedVersion}`;
+        if (!STATE.currentVersion) {
+          STATE.currentVersion = STATE.installedVersion;
+        }
+        if (typeof renderWizardVersionStep === 'function') renderWizardVersionStep();
+        syncAllSummaries();
+        return;
+      }
+    } catch (_) {}
+  }
+
   if (!STATE.daemonOnline) {
     if (text) text.textContent = 'Pilih APK secara lokal';
     return;
   }
   try {
-    const pkg = STATE.currentApp?.packageName || 'com.google.android.youtube';
     let res = await fetch(`${STATE.daemonUrl}/api/v1/system/app-info?pkg=${encodeURIComponent(pkg)}`);
     if (!res.ok) {
       res = await fetch(`${STATE.daemonUrl}/api/v1/system/youtube-info`);
     }
     if (res.ok) {
       const data = await res.json();
-      if (data.installed_version && data.installed_version !== 'Unknown') {
-        STATE.installedVersion = data.installed_version;
-        if (text) text.textContent = `v${data.installed_version}`;
+      const detected = (data.installed_version && data.installed_version !== 'Unknown')
+        ? data.installed_version
+        : (data.cached_stock_version && data.cached_stock_version !== 'Unknown')
+          ? data.cached_stock_version
+          : null;
+
+      if (detected) {
+        STATE.installedVersion = detected;
+        if (text) text.textContent = `v${detected}`;
+        if (!STATE.currentVersion) {
+          STATE.currentVersion = detected;
+        }
+        if (typeof renderWizardVersionStep === 'function') renderWizardVersionStep();
       } else {
         STATE.installedVersion = null;
         if (text) text.textContent = 'Not installed on device';
