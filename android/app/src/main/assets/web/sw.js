@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'rvx-shell-v2.1.38';
+const SHELL_CACHE = 'rvx-shell-v2.1.39';
 const METADATA_CACHE = 'rvx-metadata-v2';
 const ARTIFACT_CACHE = 'rvx-immutable-v1';
 
@@ -29,7 +29,10 @@ const SHELL_ASSETS = [
   './js/ui-morphe.js',
   './js/ui-wizard-sources.js',
   './js/ui-wizard.js',
+  './js/ui-microg.js',
   './js/ui-morphe-engine.js',
+  './js/ui-preset.js',
+  './js/ui-smart-recovery.js',
   './js/ui-dashboard.js',
   './js/ui-tui.js',
   './js/ui-navigation.js',

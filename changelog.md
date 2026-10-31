@@ -1,3 +1,8 @@
+## v2.1.39 (2026-11-01)
+- **Modular MicroG & Stock APK Downloader Engine**: Memisahkan logika manajemen MicroG dan pengunduh stock APK ke modul mandiri (`ui-microg.js`) untuk menjaga modularitas kode dan kepatuhan penuh terhadap batas ukuran berkas.
+- **Wizard Quick Dashboard & Diagnostic Access**: Menambahkan tombol pintas navigasi langsung ke Beranda dan Diagnostik Sistem Preflight dari menu header wizard untuk memudahkan pemantauan kesiapan perangkat setiap saat.
+- **Offline Cache & Service Worker Sync**: Memperbarui manifes Service Worker dan precache shell untuk mencakup seluruh modul baru (MicroG Manager, Presets, dan Smart Recovery) demi keandalan penuh saat offline.
+
 ## v2.1.38 (2026-11-01)
 - **Preflight System Doctor**: Menambahkan kartu diagnostik kesiapan sistem otomatis real-time di Dashboard Beranda untuk memantau status Java Runtime (JRE), Morphe CLI Engine, Hak Akses Perangkat (Root/Non-Root), Kapasitas Sisa Memori Penyimpanan, dan Kesiapan MicroG/GmsCore sebelum proses patch dimulai.
 - **MicroG & GmsCore Manager Terintegrasi**: Menyediakan pengelola MicroG lengkap dengan rekomendasi varian resmi (🌟 ReVanced GmsCore [Rekomendasi Utama], ⚡ mMicroG by Inotia00, 📱 Huawei/Honor GmsCore, dan 🏛️ Vanced MicroG Legacy), deteksi otomatis instalasi paket di HP, serta opsi 1-klik unduh & pasang untuk menjamin stabilitas mode Non-Root.

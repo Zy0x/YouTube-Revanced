@@ -614,6 +614,14 @@ function initEventListeners() {
     switchScreen('wizard');
   });
 
+  document.getElementById('btnWizardOpenDashboard')?.addEventListener('click', () => {
+    document.getElementById('wizardHeaderMenu')?.classList.add('hidden');
+    document.getElementById('btnWizardHeaderMenu')?.setAttribute('aria-expanded', 'false');
+    if (typeof switchScreen === 'function') switchScreen('home');
+    if (typeof renderAppCardsWithConfigStatus === 'function') renderAppCardsWithConfigStatus();
+    if (typeof updatePreflightDoctor === 'function') updatePreflightDoctor();
+  });
+
   document.getElementById('btnWizardToggleUi')?.addEventListener('click', () => {
     document.getElementById('wizardHeaderMenu')?.classList.add('hidden');
     setUiMode(STATE.uiMode === 'morphe' ? 'tui' : 'morphe');
