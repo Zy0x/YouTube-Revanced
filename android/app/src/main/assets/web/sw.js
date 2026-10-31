@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'rvx-shell-v2.1.37';
+const SHELL_CACHE = 'rvx-shell-v2.1.38';
 const METADATA_CACHE = 'rvx-metadata-v2';
 const ARTIFACT_CACHE = 'rvx-immutable-v1';
 
@@ -7,6 +7,7 @@ const SHELL_ASSETS = [
   './style.css',
   './css/base.css',
   './css/morphe.css',
+  './css/doctor-microg.css',
   './css/wizard.css',
   './css/wizard-sources.css',
   './css/wizard-selection.css',

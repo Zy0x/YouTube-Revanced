@@ -375,3 +375,39 @@ if (document.readyState === 'loading') {
 } else {
   initRvxNavigation();
 }
+
+/* ==========================================================================
+   STORAGE CACHE CLEANER HANDLER
+   ========================================================================== */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btnCleanCache')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btnCleanCache');
+    if (btn) btn.disabled = true;
+    try {
+      const token = RVX_STORAGE.session.getItem('rvx_daemon_token') || '';
+      const res = await fetch('/api/v1/storage/clean-cache', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-rvx-token': token
+        },
+        body: JSON.stringify({ all: false })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (typeof showToast === 'function') {
+          showToast(`🧹 Berhasil membersihkan cache: ${data.freedFormatted || '0 MB'} dibebaskan!`);
+        } else {
+          alert(`Pembersihan cache berhasil: ${data.freedFormatted || '0 MB'} dibebaskan!`);
+        }
+        if (typeof updatePreflightDoctor === 'function') updatePreflightDoctor();
+      } else {
+        if (typeof showToast === 'function') showToast('Pembersihan cache tidak dapat diselesaikan.', 'warning');
+      }
+    } catch (e) {
+      if (typeof showToast === 'function') showToast(`Error membersihkan cache: ${e.message}`, 'error');
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+});

@@ -1,4 +1,7 @@
-use super::storage::{ensure_writable_directory, read_storage_selection, runtime_has_root_access, storage_defaults};
+use super::storage::{
+    ensure_writable_directory, path_available_bytes, read_storage_selection, runtime_has_root_access,
+    storage_defaults,
+};
 use crate::patcher::{execute_patch_job, PatchRequest};
 use crate::state::AppState;
 use crate::utils::get_java_binary_in;
@@ -47,6 +50,41 @@ pub(crate) async fn get_status(State(state): State<AppState>) -> impl IntoRespon
 
     let root_available = runtime_has_root_access();
 
+    let fallback_path = PathBuf::from("/sdcard");
+    let check_path = workspace.as_deref().unwrap_or(&fallback_path);
+    let storage_available_bytes = path_available_bytes(check_path);
+    let storage_available_formatted = if storage_available_bytes >= 1024 * 1024 * 1024 {
+        format!("{:.1} GB", storage_available_bytes as f64 / (1024.0 * 1024.0 * 1024.0))
+    } else {
+        format!("{:.0} MB", storage_available_bytes as f64 / (1024.0 * 1024.0))
+    };
+
+    #[allow(unused_mut)]
+    let mut microg_installed = false;
+    #[allow(unused_mut)]
+    let mut microg_package = String::new();
+    #[allow(unused_mut)]
+    let mut microg_variant = String::new();
+
+    #[cfg(unix)]
+    {
+        let mg_packages = [
+            ("app.revanced.android.gms", "ReVanced GmsCore"),
+            ("com.mgoogle.android.gms", "Vanced MicroG / mMicroG"),
+        ];
+        for (pkg, name) in mg_packages {
+            let cmd = format!("pm path {} 2>/dev/null", pkg);
+            if let Ok(res) = crate::utils::run_shell_command(&cmd).await {
+                if res.trim().starts_with("package:") {
+                    microg_installed = true;
+                    microg_package = pkg.to_string();
+                    microg_variant = name.to_string();
+                    break;
+                }
+            }
+        }
+    }
+
     let is_android = cfg!(target_os = "android");
     let is_standalone_app = std::env::var("RVX_STANDALONE_APP").map(|v| v == "1").unwrap_or(false)
         || state.modpath.to_string_lossy().contains("com.rvx.patcher");
@@ -68,6 +106,11 @@ pub(crate) async fn get_status(State(state): State<AppState>) -> impl IntoRespon
         "cli_ready": cli_ready,
         "cached_patch_bundle_url": cached_patch_bundle_url,
         "storage_selection": storage,
+        "storage_available_bytes": storage_available_bytes,
+        "storage_available_formatted": storage_available_formatted,
+        "microg_installed": microg_installed,
+        "microg_package": microg_package,
+        "microg_variant": microg_variant,
         "is_android": is_android,
         "root_available": root_available,
         "access_mode": access_mode,

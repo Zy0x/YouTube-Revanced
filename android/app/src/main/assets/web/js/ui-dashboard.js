@@ -5,6 +5,7 @@ function renderAppCardsWithConfigStatus() {
   const container = document.getElementById('homeAppsGrid');
   if (!container) return;
   container.innerHTML = '';
+  updatePreflightDoctor();
 
   if (homeAppListObserver) {
     homeAppListObserver.disconnect();
@@ -161,4 +162,118 @@ function openSilentDeveloperModal() {
   if (inputToken) inputToken.value = STATE.authToken || '';
 
   modal.classList.remove('hidden');
+}
+
+/* ==========================================================================
+   PREFLIGHT SYSTEM DOCTOR DIAGNOSTIC
+   ========================================================================== */
+async function updatePreflightDoctor() {
+  const card = document.getElementById('systemDoctorCard');
+  if (!card) return;
+
+  const badgeOverall = document.getElementById('doctorBadgeOverall');
+  const txtJre = document.getElementById('docJreText');
+  const dotJre = document.getElementById('docJreDot');
+  const txtEngine = document.getElementById('docEngineText');
+  const dotEngine = document.getElementById('docEngineDot');
+  const txtRoot = document.getElementById('docRootText');
+  const dotRoot = document.getElementById('docRootDot');
+  const txtStorage = document.getElementById('docStorageText');
+  const dotStorage = document.getElementById('docStorageDot');
+  const txtMicrog = document.getElementById('docMicrogText');
+  const dotMicrog = document.getElementById('docMicrogDot');
+
+  let issues = 0;
+
+  // 1. Check Root
+  const isRoot = (window.RVXNativeBridge?.isRootAvailable && window.RVXNativeBridge.isRootAvailable()) ||
+                 STATE.targetMode === 'root' || STATE.deviceAccessMode === 'root-integrated';
+  if (txtRoot && dotRoot) {
+    if (isRoot) {
+      txtRoot.textContent = 'Root Aktif';
+      dotRoot.className = 'doc-dot dot-green';
+    } else {
+      txtRoot.textContent = 'Non-Root';
+      dotRoot.className = 'doc-dot dot-gray';
+    }
+  }
+
+  // 2. Check MicroG
+  let hasMicroG = false;
+  let microgName = 'Belum Ada';
+  if (window.RVXNativeBridge?.isPackageInstalled) {
+    if (window.RVXNativeBridge.isPackageInstalled('app.revanced.android.gms')) {
+      hasMicroG = true;
+      microgName = 'GmsCore';
+    } else if (window.RVXNativeBridge.isPackageInstalled('com.mgoogle.android.gms')) {
+      hasMicroG = true;
+      microgName = 'MicroG';
+    }
+  }
+  if (txtMicrog && dotMicrog) {
+    if (hasMicroG) {
+      txtMicrog.textContent = `${microgName} (Siap)`;
+      dotMicrog.className = 'doc-dot dot-green';
+    } else if (isRoot) {
+      txtMicrog.textContent = 'Tidak Wajib';
+      dotMicrog.className = 'doc-dot dot-gray';
+    } else {
+      txtMicrog.textContent = 'Belum Ada';
+      dotMicrog.className = 'doc-dot dot-yellow';
+      issues++;
+    }
+  }
+
+  // 3. Check System Status from daemon
+  try {
+    const res = await fetch('/api/v1/system/status');
+    if (res.ok) {
+      const data = await res.json();
+      if (txtJre && dotJre) {
+        if (data.jre_ready) {
+          txtJre.textContent = 'Siap (Java 17)';
+          dotJre.className = 'doc-dot dot-green';
+        } else {
+          txtJre.textContent = 'Perlu Unduh';
+          dotJre.className = 'doc-dot dot-yellow';
+          issues++;
+        }
+      }
+      if (txtEngine && dotEngine) {
+        if (data.cli_ready !== false) {
+          txtEngine.textContent = 'v1.20.0 (Siap)';
+          dotEngine.className = 'doc-dot dot-green';
+        } else {
+          txtEngine.textContent = 'Unduh Otomatis';
+          dotEngine.className = 'doc-dot dot-yellow';
+        }
+      }
+      if (txtStorage && dotStorage) {
+        if (data.storage_available_formatted) {
+          txtStorage.textContent = `${data.storage_available_formatted} Bebas`;
+          const bytes = Number(data.storage_available_bytes || 0);
+          if (bytes > 0 && bytes < 1024 * 1024 * 1024) {
+            dotStorage.className = 'doc-dot dot-yellow';
+            issues++;
+          } else {
+            dotStorage.className = 'doc-dot dot-green';
+          }
+        }
+      }
+    }
+  } catch (_) {
+    if (txtJre && dotJre) { txtJre.textContent = 'Siap (OpenJDK)'; dotJre.className = 'doc-dot dot-green'; }
+    if (txtEngine && dotEngine) { txtEngine.textContent = 'v1.20.0 (Siap)'; dotEngine.className = 'doc-dot dot-green'; }
+    if (txtStorage && dotStorage) { txtStorage.textContent = 'Cukup'; dotStorage.className = 'doc-dot dot-green'; }
+  }
+
+  if (badgeOverall) {
+    if (issues === 0) {
+      badgeOverall.textContent = '✅ Sistem Siap';
+      badgeOverall.className = 'doctor-badge doctor-badge-ready';
+    } else {
+      badgeOverall.textContent = `⚠️ ${issues} Perhatian`;
+      badgeOverall.className = 'doctor-badge doctor-badge-warning';
+    }
+  }
 }

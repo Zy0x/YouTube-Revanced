@@ -1,4 +1,7 @@
-use super::storage::{directory_size, ensure_writable_directory, path_available_bytes, read_storage_selection};
+use super::storage::{
+    directory_size, ensure_writable_directory, path_available_bytes, read_storage_selection,
+    storage_defaults,
+};
 use crate::patcher::PatchRequest;
 use crate::state::AppState;
 use crate::utils::get_java_binary_in;
@@ -253,3 +256,75 @@ pub(crate) async fn create_download_plan(
     }))).into_response()
 }
 
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct StockDownloadRequest {
+    pub package_name: String,
+    pub target_version: String,
+}
+
+pub(crate) async fn download_stock_apk(
+    State(state): State<AppState>,
+    Json(req): Json<StockDownloadRequest>,
+) -> impl IntoResponse {
+    let (workspace, _) = storage_defaults(&state);
+    let cache = workspace.join("cache");
+    let _ = tokio::fs::create_dir_all(&cache).await;
+
+    let app_alias = match req.package_name.as_str() {
+        "com.google.android.youtube" => "YouTube",
+        "com.google.android.apps.youtube.music" => "YouTubeMusic",
+        "com.reddit.frontpage" => "Reddit",
+        "com.twitter.android" => "Twitter",
+        _ => req.package_name.split('.').last().unwrap_or("App"),
+    };
+
+    let target_file = cache.join(format!("{}-{}.apk", app_alias, req.target_version));
+    if target_file.is_file() {
+        if let Ok(true) = crate::apkmirror::validate_apk_file(&target_file) {
+            state.log(format!("✅ APK Stok sudah tersedia di cache: {}", target_file.display()));
+            return (
+                StatusCode::OK,
+                Json(json!({
+                    "success": true,
+                    "cached": true,
+                    "path": target_file.to_string_lossy(),
+                    "message": "APK sudah tersedia di cache"
+                })),
+            )
+                .into_response();
+        }
+    }
+
+    state.log(format!(
+        "📥 Memulai pencarian & unduhan otomatis APK {} v{}...",
+        app_alias, req.target_version
+    ));
+    let state_clone = state.clone();
+    let pkg = req.package_name.clone();
+    let ver = req.target_version.clone();
+    let target_clone = target_file.clone();
+
+    tokio::spawn(async move {
+        match crate::apkmirror::scrape_and_download_apkmirror(&state_clone, &pkg, &ver, &target_clone).await {
+            Ok(p) => {
+                state_clone.log(format!("🎉 Berhasil mengunduh APK stok: {}", p.display()));
+            }
+            Err(e) => {
+                state_clone.log(format!("❌ Gagal mengunduh APK stok: {}", e));
+            }
+        }
+    });
+
+    (
+        StatusCode::ACCEPTED,
+        Json(json!({
+            "success": true,
+            "status": "downloading",
+            "targetPath": target_file.to_string_lossy(),
+            "message": "Unduhan APK dimulai di latar belakang"
+        })),
+    )
+        .into_response()
+}

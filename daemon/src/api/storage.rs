@@ -610,3 +610,73 @@ pub(crate) async fn file_operation(
         }
     }
 }
+
+#[derive(serde::Deserialize)]
+pub(crate) struct CleanCacheRequest {
+    pub all: Option<bool>,
+}
+
+pub(crate) async fn clean_storage_cache(
+    State(state): State<AppState>,
+    Json(payload): Json<CleanCacheRequest>,
+) -> impl IntoResponse {
+    let (ws, _) = storage_defaults(&state);
+    let cache_dir = ws.join("cache");
+    let mut freed_bytes: u64 = 0;
+
+    if let Ok(mut entries) = tokio::fs::read_dir(&cache_dir).await {
+        while let Ok(Some(entry)) = entries.next_entry().await {
+            let path = entry.path();
+            let name = entry.file_name().to_string_lossy().to_string();
+            if name == "patches.mpp"
+                || name == "patches.mpp.url"
+                || name == "morphe-cli.jar"
+                || name == "keystore.jks"
+            {
+                continue;
+            }
+            if let Ok(meta) = entry.metadata().await {
+                let len = meta.len();
+                if meta.is_dir() {
+                    let dir_size = directory_size(&path).await.unwrap_or(0);
+                    if tokio::fs::remove_dir_all(&path).await.is_ok() {
+                        freed_bytes = freed_bytes.saturating_add(dir_size);
+                    }
+                } else if name.ends_with(".tmp")
+                    || name.ends_with(".dex")
+                    || name.contains("temp")
+                    || (payload.all.unwrap_or(false)
+                        && name.ends_with(".apk")
+                        && !name.starts_with("stock-"))
+                {
+                    if tokio::fs::remove_file(&path).await.is_ok() {
+                        freed_bytes = freed_bytes.saturating_add(len);
+                    }
+                }
+            }
+        }
+    }
+
+    #[cfg(unix)]
+    {
+        let _ = crate::utils::run_shell_command("rm -f /data/local/tmp/install_temp.apk").await;
+    }
+
+    let formatted = if freed_bytes >= 1024 * 1024 * 1024 {
+        format!("{:.2} GB", freed_bytes as f64 / (1024.0 * 1024.0 * 1024.0))
+    } else {
+        format!("{:.1} MB", freed_bytes as f64 / (1024.0 * 1024.0))
+    };
+
+    state.log(format!("🧹 Pembersihan berkas sampah selesai: {} dibebaskan", formatted));
+
+    (
+        StatusCode::OK,
+        Json(json!({
+            "success": true,
+            "freedBytes": freed_bytes,
+            "freedFormatted": formatted
+        })),
+    )
+        .into_response()
+}

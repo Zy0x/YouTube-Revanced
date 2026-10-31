@@ -1,3 +1,12 @@
+## v2.1.38 (2026-11-01)
+- **Preflight System Doctor**: Menambahkan kartu diagnostik kesiapan sistem otomatis real-time di Dashboard Beranda untuk memantau status Java Runtime (JRE), Morphe CLI Engine, Hak Akses Perangkat (Root/Non-Root), Kapasitas Sisa Memori Penyimpanan, dan Kesiapan MicroG/GmsCore sebelum proses patch dimulai.
+- **MicroG & GmsCore Manager Terintegrasi**: Menyediakan pengelola MicroG lengkap dengan rekomendasi varian resmi (🌟 ReVanced GmsCore [Rekomendasi Utama], ⚡ mMicroG by Inotia00, 📱 Huawei/Honor GmsCore, dan 🏛️ Vanced MicroG Legacy), deteksi otomatis instalasi paket di HP, serta opsi 1-klik unduh & pasang untuk menjamin stabilitas mode Non-Root.
+- **In-App Recommended Stock APK Downloader**: Menambahkan tombol unduh langsung APK stok unpatched versi rekomendasi resmi pada Langkah 3 (Versi Target) dengan integrasi background downloader daemon (`/api/v1/downloads/stock-apk`).
+- **Smart Signature Mismatch Interceptor**: Menambahkan pendeteksian cerdas error konflik signature (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`) pada instalasi root, dengan peringatan dan panduan otomatis untuk beralih ke Live Hot-Mount atau mengaktifkan modul CorePatch.
+- **Curated Patch Presets (1-Sentuh)**: Menambahkan tombol preset kurasi instan: *🌟 Rekomendasi Utama (Balanced)*, *⚡ Minimalis & Performa (Adblock & Background Play)*, serta *🛠️ Power User (Lengkap)* pada kurasi patch Langkah 4.
+- **Keep-Screen-On & Process Stability**: Mengintegrasikan `FLAG_KEEP_SCREEN_ON` pada Android native bridge selama proses kompilasi smali Morphe CLI untuk mencegah OS Android mematikan proses akibat sleep/hemat daya.
+- **Storage Junk & Cache Cleaner**: Menambahkan endpoint backend (`/api/v1/storage/clean-cache`) dan tombol antarmuka untuk membersihkan berkas dex, smali sementara, dan cache yang membebani memori internal.
+
 ## v2.1.37 (2026-10-31)
 - **Direct Silent Root Installation**: Menambahkan opsi instalasi langsung dengan hak akses root (`pm install -r -d`) yang dieksekusi secara senyap di background melalui penyalinan sementara ke `/data/local/tmp` untuk menghindari pembatasan SELinux FUSE, dengan fallback mulus ke Package Installer jika hak root tidak tersedia.
 - **Fixed Automatic Package Installer Popup**: Memperbaiki evaluasi kondisi status root pada antarmuka patcher (`ui-morphe.js`) agar proses selesai di mode root tidak lagi salah membuka jendela Package Installer sistem secara otomatis.

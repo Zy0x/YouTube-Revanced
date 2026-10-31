@@ -621,6 +621,7 @@ async function triggerLocalPatch(payload = createLocalPatchPayload()) {
 
   const appName = STATE.currentApp?.name || 'Aplikasi';
   appendTerminalLog(`Memulai patch ${appName} v${STATE.currentVersion}`, 'I');
+  window.RVXNativeBridge?.setKeepScreenOn?.(true);
 
   try {
     const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/start`, {
@@ -679,10 +680,12 @@ async function triggerLocalPatch(payload = createLocalPatchPayload()) {
       else if (line.includes('Output APK generated')) setLocalBuildProgress(96, 'Menyelesaikan APK hasil patch');
 
       if (line.includes('Patching process completed successfully')) {
+        window.RVXNativeBridge?.setKeepScreenOn?.(false);
         if (heroCard) heroCard.classList.remove('hidden');
         setLocalBuildProgress(100, 'Selesai');
         if (STATE.eventSource) STATE.eventSource.close();
       } else if (line.includes('Patching failed')) {
+        window.RVXNativeBridge?.setKeepScreenOn?.(false);
         setLocalBuildProgress(100, 'Proses dihentikan karena kesalahan');
         if (STATE.eventSource) STATE.eventSource.close();
         if (typeof openSmartRecoveryModal === 'function') {
@@ -690,9 +693,11 @@ async function triggerLocalPatch(payload = createLocalPatchPayload()) {
         }
       }
     }).catch(error => {
+      window.RVXNativeBridge?.setKeepScreenOn?.(false);
       if (error.name !== 'AbortError') appendTerminalLog(`Log stream terputus: ${error.message}`, '!');
     });
   } catch (err) {
+    window.RVXNativeBridge?.setKeepScreenOn?.(false);
     appendTerminalLog(`Failed to start patching: ${err.message}`, '!');
     setLocalBuildProgress(100, 'Gagal memulai proses');
     if (typeof openSmartRecoveryModal === 'function') {
@@ -890,3 +895,11 @@ function showPatchNotesModal(specificTag) {
 
   modal.classList.remove('hidden');
 }
+
+window.addEventListener('rvx:signature_mismatch', () => {
+  const alert = document.getElementById('signatureConflictAlert');
+  if (alert) {
+    alert.classList.remove('hidden');
+    alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+});

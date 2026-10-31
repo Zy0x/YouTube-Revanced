@@ -154,3 +154,81 @@ function applyPatchPresetData(presetArray) {
     alert(`Preset berhasil dimuat: ${matched} patch aktif diterapkan!`);
   }
 }
+
+/* ==========================================================================
+   CURATED PATCH PRESETS (BALANCED, MINIMAL, POWER)
+   ========================================================================== */
+function applyCuratedPreset(type) {
+  if (!Array.isArray(STATE.patches) || STATE.patches.length === 0) return;
+  if (!STATE.selectedPatches) STATE.selectedPatches = new Set();
+  STATE.selectedPatches.clear();
+
+  const isNonRoot = STATE.targetMode === 'non-root';
+
+  if (type === 'minimal') {
+    const minimalKeywords = [
+      'ads', 'ad-block', 'video-ads', 'general-ads',
+      'background', 'playback', 'minimized',
+      'return-youtube-dislike', 'dislike',
+      'spoof-client', 'client-spoof'
+    ];
+    if (isNonRoot) minimalKeywords.push('microg', 'gmscore');
+
+    STATE.patches.forEach(p => {
+      const name = p.name.toLowerCase();
+      if (minimalKeywords.some(kw => name.includes(kw))) {
+        STATE.selectedPatches.add(p.name);
+      }
+    });
+  } else if (type === 'power') {
+    STATE.patches.forEach(p => {
+      const name = p.name.toLowerCase();
+      if (!name.includes('debug') && !name.includes('test') && !name.includes('rip')) {
+        STATE.selectedPatches.add(p.name);
+      }
+    });
+    if (!isNonRoot) {
+      const mgPatch = STATE.patches.find(p => p.name.toLowerCase().includes('microg') || p.name.toLowerCase().includes('gmscore'));
+      if (mgPatch) STATE.selectedPatches.delete(mgPatch.name);
+    }
+  } else {
+    STATE.patches.forEach(p => {
+      if (p.enabledByDefault || p.default) {
+        STATE.selectedPatches.add(p.name);
+      }
+    });
+    if (typeof adjustMicrogForMode === 'function') {
+      adjustMicrogForMode(STATE.targetMode);
+    }
+  }
+
+  ['btnPresetBalanced', 'btnPresetMinimal', 'btnPresetPower'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    const match = (type === 'minimal' && id === 'btnPresetMinimal') ||
+                  (type === 'power' && id === 'btnPresetPower') ||
+                  (type === 'balanced' && id === 'btnPresetBalanced');
+    btn.classList.toggle('active', match);
+  });
+
+  const containerId = STATE.wizardStep === 4 ? 'wizardPatchCategoriesContainer' : 'patchCategoriesContainer';
+  if (typeof renderMorphePatchList === 'function') {
+    renderMorphePatchList(containerId);
+  }
+  if (typeof syncAllSummaries === 'function') {
+    syncAllSummaries();
+  }
+  if (typeof updateWizardNavigationState === 'function') {
+    updateWizardNavigationState();
+  }
+  if (typeof showToast === 'function') {
+    const label = type === 'minimal' ? '⚡ Minimalis (Performa)' : type === 'power' ? '🛠️ Power User (Lengkap)' : '🌟 Rekomendasi Utama';
+    showToast(`Preset diterapkan: ${label} (${STATE.selectedPatches.size} patch)`);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btnPresetBalanced')?.addEventListener('click', () => applyCuratedPreset('balanced'));
+  document.getElementById('btnPresetMinimal')?.addEventListener('click', () => applyCuratedPreset('minimal'));
+  document.getElementById('btnPresetPower')?.addEventListener('click', () => applyCuratedPreset('power'));
+});

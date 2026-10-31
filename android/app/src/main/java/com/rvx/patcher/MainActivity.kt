@@ -274,9 +274,22 @@ class MainActivity : AppCompatActivity() {
                     withContext(Dispatchers.Main) {
                         if (exitCode == 0 && out.contains("Success")) {
                             Toast.makeText(this@MainActivity, "Aplikasi berhasil dipasang dengan hak root!", Toast.LENGTH_LONG).show()
+                            webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('rvx:root_install_success'));", null)
                         } else {
-                            Toast.makeText(this@MainActivity, "Root install gagal: $out\nMembuka installer sistem...", Toast.LENGTH_LONG).show()
-                            installApk(filePath)
+                            val isSignatureConflict = out.contains("INSTALL_FAILED_UPDATE_INCOMPATIBLE", ignoreCase = true) ||
+                                    out.contains("signatures do not match", ignoreCase = true) ||
+                                    out.contains("signatures differ", ignoreCase = true)
+                            if (isSignatureConflict) {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "Perbedaan tanda tangan (Signature Mismatch) dengan YouTube Play Store!\nGunakan 'Metode A • Live Hot-Mount' atau aktifkan CorePatch.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                                webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('rvx:signature_mismatch'));", null)
+                            } else {
+                                Toast.makeText(this@MainActivity, "Root install gagal: $out\nMembuka installer sistem...", Toast.LENGTH_LONG).show()
+                                installApk(filePath)
+                            }
                         }
                     }
                 } catch (e: Exception) {
@@ -335,6 +348,27 @@ class MainActivity : AppCompatActivity() {
                         Toast.makeText(this@MainActivity, "Error berkas: ${e.message}", Toast.LENGTH_LONG).show()
                     }
                 }
+            }
+        }
+
+        @JavascriptInterface
+        fun setKeepScreenOn(enabled: Boolean) {
+            runOnUiThread {
+                if (enabled) {
+                    window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                } else {
+                    window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun isPackageInstalled(packageName: String): Boolean {
+            return try {
+                packageManager.getPackageInfo(packageName, 0)
+                true
+            } catch (_: Exception) {
+                false
             }
         }
 

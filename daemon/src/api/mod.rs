@@ -17,7 +17,7 @@ use axum::{
 };
 use serde_json::json;
 
-use downloads::create_download_plan;
+use downloads::{create_download_plan, download_stock_apk};
 use patch::{
     export_zip, get_app_info, get_mount_status, get_status, get_youtube_info, install_jre,
     install_root, mount_apps, start_patch, stream_logs, umount_apps,
@@ -29,7 +29,8 @@ use sources::{
     get_source_catalog_patches,
 };
 use storage::{
-    browse_storage_directories, file_operation, get_storage_locations, save_storage_selection,
+    browse_storage_directories, clean_storage_cache, file_operation, get_storage_locations,
+    save_storage_selection,
 };
 
 pub fn router(state: AppState) -> Router {
@@ -38,7 +39,9 @@ pub fn router(state: AppState) -> Router {
         .route("/storage/browse", get(browse_storage_directories))
         .route("/storage/selection", put(save_storage_selection))
         .route("/storage/file-op", post(file_operation))
+        .route("/storage/clean-cache", post(clean_storage_cache))
         .route("/downloads/plan", post(create_download_plan))
+        .route("/downloads/stock-apk", post(download_stock_apk))
         .route("/setup/install-jre", post(install_jre))
         .route(
             "/assets/upload",
