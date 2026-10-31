@@ -468,6 +468,137 @@ function initEventListeners() {
       }
     }
   });
+  // Direct Root Install Handler
+  document.getElementById('btnHeroDirectInstall')?.addEventListener('click', async () => {
+    const alertBox = document.getElementById('heroMountAlert');
+    if (alertBox) {
+      alertBox.textContent = 'Memasang APK via hak root...';
+      alertBox.className = 'morphe-alert';
+      alertBox.classList.remove('hidden');
+    }
+    const apkPath = STATE.lastOutputApkPath || '/sdcard/RVX-Patcher/YouTubeRevanced.apk';
+    const isRoot = STATE.targetMode === 'root' || STATE.deviceAccessMode === 'root-integrated' || (window.RVXNativeBridge?.isRootAvailable && window.RVXNativeBridge.isRootAvailable());
+
+    if (window.RVXNativeBridge?.installApkRoot && isRoot) {
+      try {
+        window.RVXNativeBridge.installApkRoot(apkPath);
+        if (alertBox) {
+          alertBox.textContent = 'Perintah pasang root dikirim ke sistem.';
+          alertBox.className = 'morphe-alert text-success';
+        }
+        return;
+      } catch (_) {}
+    }
+
+    try {
+      const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/install-root`, {
+        method: 'POST',
+        headers: daemonAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ apk_path: apkPath })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (alertBox) {
+          alertBox.textContent = 'Aplikasi berhasil dipasang dengan hak root!';
+          alertBox.className = 'morphe-alert text-success';
+        }
+      } else {
+        throw new Error(data.error || 'Gagal root install');
+      }
+    } catch (err) {
+      if (window.RVXNativeBridge?.installApk) {
+        if (alertBox) {
+          alertBox.textContent = `Root install gagal (${err.message}). Membuka Package Installer...`;
+          alertBox.className = 'morphe-alert';
+        }
+        window.RVXNativeBridge.installApk(apkPath);
+      } else if (alertBox) {
+        alertBox.textContent = `Kesalahan: ${err.message}`;
+        alertBox.className = 'morphe-alert text-danger';
+      }
+    }
+  });
+
+  // Output File Operations Modal & Actions
+  document.getElementById('btnHeroOpenCopyMove')?.addEventListener('click', () => {
+    const modal = document.getElementById('modalFileOperations');
+    if (modal) modal.classList.remove('hidden');
+  });
+
+  document.getElementById('btnCloseFileOpModal')?.addEventListener('click', () => {
+    document.getElementById('modalFileOperations')?.classList.add('hidden');
+  });
+
+  document.getElementById('btnQuickDestDownload')?.addEventListener('click', () => {
+    const input = document.getElementById('inputFileOpDestDir');
+    if (input) input.value = '/sdcard/Download';
+  });
+
+  document.getElementById('btnQuickDestXisr')?.addEventListener('click', () => {
+    const input = document.getElementById('inputFileOpDestDir');
+    if (input) input.value = '/sdcard/Revancify-Xisr';
+  });
+
+  document.getElementById('btnExecuteFileOp')?.addEventListener('click', async () => {
+    const alertBox = document.getElementById('fileOpAlert');
+    const fileKind = document.getElementById('selectFileOpTargetFile')?.value || 'apk';
+    const actionEl = document.querySelector('input[name="radFileOpAction"]:checked');
+    const action = actionEl ? actionEl.value : 'copy';
+    const destDir = (document.getElementById('inputFileOpDestDir')?.value || '').trim();
+
+    if (!destDir) {
+      if (alertBox) {
+        alertBox.textContent = 'Harap isi direktori tujuan.';
+        alertBox.className = 'morphe-alert text-danger';
+        alertBox.classList.remove('hidden');
+      }
+      return;
+    }
+
+    const srcPath = fileKind === 'zip'
+      ? '/sdcard/RVX-Patcher/RVX-MultiApp-Flashable.zip'
+      : (STATE.lastOutputApkPath || '/sdcard/RVX-Patcher/YouTubeRevanced.apk');
+
+    if (alertBox) {
+      alertBox.textContent = `Sedang ${action === 'move' ? 'memindahkan' : 'menyalin'} berkas...`;
+      alertBox.className = 'morphe-alert';
+      alertBox.classList.remove('hidden');
+    }
+
+    if (window.RVXNativeBridge?.copyOrMoveFile) {
+      try {
+        window.RVXNativeBridge.copyOrMoveFile(srcPath, destDir, action === 'move');
+        if (alertBox) {
+          alertBox.textContent = `Proses ${action === 'move' ? 'pindah' : 'salin'} dikirim ke sistem.`;
+          alertBox.className = 'morphe-alert text-success';
+        }
+        return;
+      } catch (_) {}
+    }
+
+    try {
+      const res = await fetch(`${STATE.daemonUrl}/api/v1/storage/file-op`, {
+        method: 'POST',
+        headers: daemonAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ source_path: srcPath, target_dir: destDir, action })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (alertBox) {
+          alertBox.textContent = `Selesai! Berkas tersimpan di: ${data.path}`;
+          alertBox.className = 'morphe-alert text-success';
+        }
+      } else {
+        throw new Error(data.error || 'Gagal memproses berkas');
+      }
+    } catch (err) {
+      if (alertBox) {
+        alertBox.textContent = `Error: ${err.message}`;
+        alertBox.className = 'morphe-alert text-danger';
+      }
+    }
+  });
+
 
   // Setup Wizard & Returning Dashboard Event Handlers
   document.querySelectorAll('.wizard-step-node').forEach(btn => {

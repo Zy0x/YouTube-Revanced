@@ -523,3 +523,90 @@ pub(crate) async fn save_storage_selection(
     )
         .into_response()
 }
+
+#[derive(serde::Deserialize)]
+pub(crate) struct FileOpRequest {
+    pub source_path: String,
+    pub target_dir: String,
+    pub action: String,
+}
+
+pub(crate) async fn file_operation(
+    State(state): State<AppState>,
+    Json(payload): Json<FileOpRequest>,
+) -> impl IntoResponse {
+    let src = PathBuf::from(&payload.source_path);
+    if !src.exists() {
+        return (
+            StatusCode::NOT_FOUND,
+            Json(json!({ "error": format!("Berkas sumber tidak ditemukan: {}", payload.source_path) })),
+        )
+            .into_response();
+    }
+    let filename = match src.file_name() {
+        Some(name) => name,
+        None => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(json!({ "error": "Nama berkas tidak valid" })),
+            )
+                .into_response();
+        }
+    };
+    let dest_dir = PathBuf::from(&payload.target_dir);
+    if let Err(_) = tokio::fs::create_dir_all(&dest_dir).await {
+        let _ = crate::utils::run_shell_command(&format!("mkdir -p \"{}\"", dest_dir.display())).await;
+    }
+
+    let dest_file = dest_dir.join(filename);
+    let is_move = payload.action.trim().eq_ignore_ascii_case("move");
+
+    let op_res = if is_move {
+        state.log(format!("📦 Memindahkan {} ke {}", src.display(), dest_file.display()));
+        match tokio::fs::rename(&src, &dest_file).await {
+            Ok(_) => Ok(()),
+            Err(_) => {
+                let cmd = format!("mv -f \"{}\" \"{}\"", src.display(), dest_file.display());
+                crate::utils::run_shell_command(&cmd).await.map(|_| ())
+            }
+        }
+    } else {
+        state.log(format!("📋 Menyalin {} ke {}", src.display(), dest_file.display()));
+        match tokio::fs::copy(&src, &dest_file).await {
+            Ok(_) => Ok(()),
+            Err(_) => {
+                let cmd = format!("cp -f \"{}\" \"{}\"", src.display(), dest_file.display());
+                crate::utils::run_shell_command(&cmd).await.map(|_| ())
+            }
+        }
+    };
+
+    match op_res {
+        Ok(_) => {
+            state.log(format!(
+                "✅ Berkas berhasil di-{}: {}",
+                if is_move { "pindahkan" } else { "salin" },
+                dest_file.display()
+            ));
+            (
+                StatusCode::OK,
+                Json(json!({
+                    "success": true,
+                    "action": if is_move { "move" } else { "copy" },
+                    "path": dest_file.to_string_lossy()
+                })),
+            )
+                .into_response()
+        }
+        Err(e) => {
+            state.log(format!("❌ Gagal memproses berkas: {}", e));
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({
+                    "error": format!("Gagal memproses berkas: {}", e)
+                })),
+            )
+                .into_response()
+        }
+    }
+}

@@ -20,7 +20,7 @@ use serde_json::json;
 use downloads::create_download_plan;
 use patch::{
     export_zip, get_app_info, get_mount_status, get_status, get_youtube_info, install_jre,
-    mount_apps, start_patch, stream_logs, umount_apps,
+    install_root, mount_apps, start_patch, stream_logs, umount_apps,
 };
 use previews::{get_option_previews, upload_option_assets};
 use releases::get_source_releases;
@@ -28,13 +28,16 @@ use sources::{
     get_app_icon, get_app_versions, get_source_catalog, get_source_catalog_apps,
     get_source_catalog_patches,
 };
-use storage::{browse_storage_directories, get_storage_locations, save_storage_selection};
+use storage::{
+    browse_storage_directories, file_operation, get_storage_locations, save_storage_selection,
+};
 
 pub fn router(state: AppState) -> Router {
     let protected = Router::new()
         .route("/storage/locations", get(get_storage_locations))
         .route("/storage/browse", get(browse_storage_directories))
         .route("/storage/selection", put(save_storage_selection))
+        .route("/storage/file-op", post(file_operation))
         .route("/downloads/plan", post(create_download_plan))
         .route("/setup/install-jre", post(install_jre))
         .route(
@@ -47,6 +50,7 @@ pub fn router(state: AppState) -> Router {
         .route("/patch/umount", post(umount_apps))
         .route("/patch/mount-status", get(get_mount_status))
         .route("/patch/export-zip", post(export_zip))
+        .route("/patch/install-root", post(install_root))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             require_daemon_token,

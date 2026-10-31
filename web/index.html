@@ -427,11 +427,29 @@
           </div>
 
           <div class="method-card">
-            <div class="method-card-header"><span class="method-pill-badge method-pill-zip">Metode B • Permanen (Magisk / KSU / APatch)</span><h4 class="method-title">Flashable ZIP Modul</h4></div>
+            <div class="method-card-header"><span class="method-pill-badge method-pill-instant">Metode B • Pasang Langsung</span><h4 class="method-title">Direct Install</h4></div>
+            <p class="method-desc">Memasang berkas APK langsung ke perangkat menggunakan hak akses root (senyap via pm install) atau Package Installer sistem.</p>
+            <button type="button" id="btnHeroDirectInstall" class="morphe-pill-btn morphe-pill-slate-blue btn-block">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Install Langsung (Hak Root)</span></button>
+          </div>
+
+          <div class="method-card">
+            <div class="method-card-header"><span class="method-pill-badge method-pill-zip">Metode C • Permanen Root Module</span><h4 class="method-title">Flashable ZIP Modul</h4></div>
             <p class="method-desc">Menyimpan arsip modul ZIP standar yang siap di-flash secara permanen di semua root manager.</p>
             <div class="method-steps-box"><ol class="method-steps-list"><li>Simpan file ZIP modul &rarr; Buka Root Manager (<strong>Magisk / KSU / APatch</strong>).</li><li>Pilih <strong>Modules</strong> &rarr; <strong>Install from storage</strong> &rarr; pilih ZIP &rarr; <strong>Reboot</strong>.</li></ol></div>
             <button type="button" id="btnHeroExportZip" class="morphe-pill-btn morphe-pill-outline btn-block"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Save ZIP Module</span></button>
           </div>
+        </div>
+
+        <div style="margin-top:14px;padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div>
+            <div style="font-weight:600;font-size:13px;color:var(--text-main,#fff);">📁 Manajemen Berkas Output</div>
+            <div style="font-size:12px;color:var(--text-muted,#888);">Salin atau pindahkan APK / ZIP ke folder Download atau folder kustom</div>
+          </div>
+          <button type="button" id="btnHeroOpenCopyMove" class="morphe-pill-btn morphe-pill-outline btn-sm">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+            <span>Salin / Pindahkan Berkas</span>
+          </button>
         </div>
 
         <div id="heroMountAlert" class="morphe-alert hidden" role="alert"></div>
@@ -960,6 +978,52 @@
       </div>
     </div>
   </div>
+
+  <div id="modalFileOperations" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalFileOpTitle">
+    <div class="modal-card morphe-sheet-card">
+      <div class="modal-header">
+        <h3 id="modalFileOpTitle" class="modal-title">Salin / Pindahkan Berkas Output</h3>
+        <button type="button" id="btnCloseFileOpModal" class="btn-close" aria-label="Tutup">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-group">
+          <label class="settings-group-title" for="selectFileOpTargetFile">Pilih Berkas</label>
+          <select id="selectFileOpTargetFile" class="morphe-input">
+            <option value="apk">APK Hasil Patch (YouTubeRevanced.apk)</option>
+            <option value="zip">Modul ZIP Flashable (RVX-MultiApp-Flashable.zip)</option>
+          </select>
+        </div>
+
+        <div class="settings-group">
+          <label class="settings-group-title">Jenis Operasi</label>
+          <div style="display:flex;gap:16px;margin-top:6px;">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-main,#fff);">
+              <input type="radio" name="radFileOpAction" value="copy" checked> Salin (Copy - Cadangan Aman)
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-main,#fff);">
+              <input type="radio" name="radFileOpAction" value="move"> Pindahkan (Move)
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <label class="settings-group-title" for="inputFileOpDestDir">Direktori Tujuan</label>
+          <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+            <button type="button" class="morphe-pill-btn morphe-pill-outline btn-sm" id="btnQuickDestDownload">📁 /sdcard/Download</button>
+            <button type="button" class="morphe-pill-btn morphe-pill-outline btn-sm" id="btnQuickDestXisr">📁 /sdcard/Revancify-Xisr</button>
+          </div>
+          <input type="text" id="inputFileOpDestDir" class="morphe-input" value="/sdcard/Download" placeholder="/sdcard/Download">
+        </div>
+
+        <div id="fileOpAlert" class="morphe-alert hidden" role="alert"></div>
+
+        <div class="morphe-version-actions">
+          <button type="button" id="btnExecuteFileOp" class="morphe-pill-btn morphe-pill-sky btn-block">Eksekusi Operasi Berkas</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="js/runtime.js?v=2.1.32"></script>
   <script src="js/state.js?v=2.1.32"></script>
   <script src="js/artifact-store.js?v=2.1.32"></script>

@@ -654,9 +654,11 @@ async function triggerLocalPatch(payload = createLocalPatchPayload()) {
       if (line.startsWith('OUTPUT_FILE|')) {
         const [, path, sizeRaw] = line.split('|');
         const size = Number(sizeRaw || 0);
+        STATE.lastOutputApkPath = path;
         setLocalBuildProgress(99, `Hasil ${formatDownloadBytes(size)} disimpan ke ${path}`);
         appendTerminalLog(`Hasil akhir: ${path} (${formatDownloadBytes(size)})`, 'I');
-        if (window.RVXNativeBridge?.installApk && !STATE.isRoot) {
+        const isRoot = STATE.targetMode === 'root' || STATE.deviceAccessMode === 'root-integrated' || (window.RVXNativeBridge?.isRootAvailable && window.RVXNativeBridge.isRootAvailable());
+        if (window.RVXNativeBridge?.installApk && !isRoot) {
           setTimeout(() => {
             try { window.RVXNativeBridge.installApk(path); } catch (_) {}
           }, 600);

@@ -1,3 +1,8 @@
+## v2.1.37 (2026-10-31)
+- **Direct Silent Root Installation**: Menambahkan opsi instalasi langsung dengan hak akses root (`pm install -r -d`) yang dieksekusi secara senyap di background melalui penyalinan sementara ke `/data/local/tmp` untuk menghindari pembatasan SELinux FUSE, dengan fallback mulus ke Package Installer jika hak root tidak tersedia.
+- **Fixed Automatic Package Installer Popup**: Memperbaiki evaluasi kondisi status root pada antarmuka patcher (`ui-morphe.js`) agar proses selesai di mode root tidak lagi salah membuka jendela Package Installer sistem secara otomatis.
+- **Integrated Output File Management (Copy & Move)**: Menambahkan modal antarmuka dan endpoint backend (`/api/v1/storage/file-op` serta `copyOrMoveFile` native bridge) untuk memudahkan pengguna menyalin atau memindahkan APK hasil patch maupun modul ZIP flashable ke folder Download (`/sdcard/Download`), folder Revancify-Xisr, atau direktori kustom lainnya.
+
 ## v2.1.36 (2026-10-31)
 - **Morphe CLI v1.20.0 ABI Compatibility Upgrade**: Memperbarui URL rilis Morphe CLI engine dari v1.18.0 ke versi resmi terbaru v1.20.0 (`morphe-desktop-1.20.0-all.jar`). Menyelesaikan error runtime kritis `java.lang.NoSuchMethodError: 'void app.morphe.patcher.patch.Compatibility.<init>(..., FormFactor, ...)'` akibat ketidakcocokan ABI antara bundle patch Kotlin (`patches.mpp`) dan CLI patcher.
 - **Robust Multi-Path SU & Termux JRE Integration**: Memperbarui mekanisme deteksi dan sinkronisasi runtime Java pada `daemon/src/jre.rs` dengan resolusi dinamis binary root (`/system/bin/su`, `/data/adb/ap/bin/su`) sehingga sinkronisasi OpenJDK 21 dari lingkungan Termux ke internal module partition berjalan mulus tanpa terhalang isolasi permission Bionic.

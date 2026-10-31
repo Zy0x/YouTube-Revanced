@@ -517,3 +517,90 @@ pub(crate) async fn export_zip(State(state): State<AppState>) -> impl IntoRespon
         }
     }
 }
+
+#[derive(serde::Deserialize)]
+pub(crate) struct InstallRootRequest {
+    pub apk_path: Option<String>,
+}
+
+pub(crate) async fn install_root(
+    State(state): State<AppState>,
+    Json(payload): Json<InstallRootRequest>,
+) -> impl IntoResponse {
+    let target_apk = if let Some(ref path) = payload.apk_path {
+        PathBuf::from(path)
+    } else {
+        let app_dir = state.modpath.join("app");
+        let mut candidate = None;
+        if app_dir.exists() {
+            if let Ok(mut entries) = tokio::fs::read_dir(&app_dir).await {
+                while let Ok(Some(entry)) = entries.next_entry().await {
+                    if entry.path().extension().map_or(false, |ext| ext == "apk") {
+                        candidate = Some(entry.path());
+                        break;
+                    }
+                }
+            }
+        }
+        match candidate {
+            Some(p) => p,
+            None => {
+                return (
+                    StatusCode::NOT_FOUND,
+                    Json(json!({ "error": "Berkas APK hasil patch tidak ditemukan." })),
+                );
+            }
+        }
+    };
+
+    if !target_apk.exists() {
+        return (
+            StatusCode::NOT_FOUND,
+            Json(json!({ "error": format!("Berkas APK tidak ada di {}", target_apk.display()) })),
+        );
+    }
+
+    state.log(format!("📲 Memulai instalasi langsung via hak root untuk: {}", target_apk.display()));
+
+    let cmd = format!(
+        "cp \"{src}\" /data/local/tmp/install_temp.apk && chmod 644 /data/local/tmp/install_temp.apk && pm install -r -d /data/local/tmp/install_temp.apk; RET=$?; rm -f /data/local/tmp/install_temp.apk; exit $RET",
+        src = target_apk.display()
+    );
+
+    let output = crate::utils::run_shell_command(&cmd).await;
+    match output {
+        Ok(out) if out.contains("Success") => {
+            state.log("✅ Aplikasi berhasil dipasang dengan hak root!");
+            (
+                StatusCode::OK,
+                Json(json!({
+                    "success": true,
+                    "message": "Aplikasi berhasil dipasang dengan hak root!",
+                    "output": out
+                })),
+            )
+        }
+        Ok(out) => {
+            state.log(format!("⚠️ Instalasi root menghasilkan keluaran: {}", out));
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({
+                    "success": false,
+                    "error": format!("Gagal memasang APK via root: {}", out),
+                    "output": out
+                })),
+            )
+        }
+        Err(e) => {
+            state.log(format!("❌ Gagal mengeksekusi instalasi root: {}", e));
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({
+                    "success": false,
+                    "error": format!("Gagal mengeksekusi shell root: {}", e)
+                })),
+            )
+        }
+    }
+}
+

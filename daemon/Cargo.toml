@@ -1,6 +1,6 @@
 [package]
 name = "rvx-daemon"
-version = "2.1.36"
+version = "2.1.37"
 edition = "2021"
 authors = ["ReVanced Team"]
 description = "High-performance on-device patcher daemon for YouTube RVX Magisk/KernelSU/APatch modules"

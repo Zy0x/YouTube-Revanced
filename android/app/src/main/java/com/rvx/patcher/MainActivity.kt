@@ -22,7 +22,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
@@ -219,6 +221,119 @@ class MainActivity : AppCompatActivity() {
                     startActivity(intent)
                 } catch (e: Exception) {
                     Toast.makeText(this@MainActivity, "Gagal membuka installer: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun isRootAvailable(): Boolean {
+            val suCandidates = arrayOf("/system/bin/su", "/data/adb/ap/bin/su", "/data/adb/magisk/su", "su")
+            return suCandidates.any { bin ->
+                try {
+                    val p = ProcessBuilder(bin, "-c", "id").start()
+                    val out = p.inputStream.bufferedReader().readText()
+                    p.waitFor()
+                    out.contains("uid=0")
+                } catch (_: Exception) {
+                    false
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun installApkRoot(filePath: String) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val file = File(filePath)
+                    if (!file.exists()) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@MainActivity, "Berkas APK tidak ditemukan: $filePath", Toast.LENGTH_LONG).show()
+                        }
+                        return@launch
+                    }
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@MainActivity, "Memasang langsung dengan hak root...", Toast.LENGTH_SHORT).show()
+                    }
+                    val suCandidates = arrayOf("/system/bin/su", "/data/adb/ap/bin/su", "/data/adb/magisk/su", "su")
+                    val suBin = suCandidates.firstOrNull { bin ->
+                        try {
+                            val p = ProcessBuilder(bin, "-c", "id").start()
+                            val out = p.inputStream.bufferedReader().readText()
+                            p.waitFor()
+                            out.contains("uid=0")
+                        } catch (_: Exception) {
+                            false
+                        }
+                    } ?: "su"
+
+                    val cmd = "cp \"${file.absolutePath}\" /data/local/tmp/install_temp.apk && chmod 644 /data/local/tmp/install_temp.apk && pm install -r -d /data/local/tmp/install_temp.apk; RET=$?; rm -f /data/local/tmp/install_temp.apk; exit $RET"
+                    val p = ProcessBuilder(suBin, "-c", cmd).start()
+                    val out = p.inputStream.bufferedReader().readText() + "\n" + p.errorStream.bufferedReader().readText()
+                    val exitCode = p.waitFor()
+
+                    withContext(Dispatchers.Main) {
+                        if (exitCode == 0 && out.contains("Success")) {
+                            Toast.makeText(this@MainActivity, "Aplikasi berhasil dipasang dengan hak root!", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(this@MainActivity, "Root install gagal: $out\nMembuka installer sistem...", Toast.LENGTH_LONG).show()
+                            installApk(filePath)
+                        }
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@MainActivity, "Kesalahan root install: ${e.message}\nMembuka installer sistem...", Toast.LENGTH_LONG).show()
+                        installApk(filePath)
+                    }
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun copyOrMoveFile(sourcePath: String, destDirPath: String, isMove: Boolean) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val src = File(sourcePath)
+                    if (!src.exists()) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@MainActivity, "Berkas sumber tidak ditemukan: $sourcePath", Toast.LENGTH_LONG).show()
+                        }
+                        return@launch
+                    }
+                    val destDir = File(destDirPath)
+                    if (!destDir.exists()) destDir.mkdirs()
+                    val destFile = File(destDir, src.name)
+
+                    val success = try {
+                        if (isMove) {
+                            if (!src.renameTo(destFile)) {
+                                src.copyTo(destFile, overwrite = true)
+                                src.delete()
+                            }
+                            true
+                        } else {
+                            src.copyTo(destFile, overwrite = true)
+                            true
+                        }
+                    } catch (_: Exception) {
+                        val suCandidates = arrayOf("/system/bin/su", "/data/adb/ap/bin/su", "/data/adb/magisk/su", "su")
+                        val suBin = suCandidates.firstOrNull { File(it).exists() } ?: "su"
+                        val opCmd = if (isMove) "mv -f \"${src.absolutePath}\" \"${destFile.absolutePath}\"" else "cp -f \"${src.absolutePath}\" \"${destFile.absolutePath}\""
+                        val proc = ProcessBuilder(suBin, "-c", opCmd).start()
+                        proc.waitFor() == 0 && destFile.exists()
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        if (success) {
+                            val actionName = if (isMove) "dipindahkan" else "disalin"
+                            Toast.makeText(this@MainActivity, "Berkas berhasil $actionName ke: ${destFile.absolutePath}", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(this@MainActivity, "Gagal memproses berkas ke: ${destDir.absolutePath}", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@MainActivity, "Error berkas: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
                 }
             }
         }
