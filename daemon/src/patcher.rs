@@ -9,7 +9,7 @@ use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 
-pub const MORPHE_CLI_URL: &str = "https://github.com/MorpheApp/morphe-cli/releases/download/v1.18.0/morphe-desktop-1.18.0-all.jar";
+pub const MORPHE_CLI_URL: &str = "https://github.com/MorpheApp/morphe-desktop/releases/download/v1.20.0/morphe-desktop-1.20.0-all.jar";
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct MorpheEngineOptions {

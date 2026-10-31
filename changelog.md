@@ -1,4 +1,9 @@
-﻿## v2.1.35 (2026-10-31)
+## v2.1.36 (2026-10-31)
+- **Morphe CLI v1.20.0 ABI Compatibility Upgrade**: Memperbarui URL rilis Morphe CLI engine dari v1.18.0 ke versi resmi terbaru v1.20.0 (`morphe-desktop-1.20.0-all.jar`). Menyelesaikan error runtime kritis `java.lang.NoSuchMethodError: 'void app.morphe.patcher.patch.Compatibility.<init>(..., FormFactor, ...)'` akibat ketidakcocokan ABI antara bundle patch Kotlin (`patches.mpp`) dan CLI patcher.
+- **Robust Multi-Path SU & Termux JRE Integration**: Memperbarui mekanisme deteksi dan sinkronisasi runtime Java pada `daemon/src/jre.rs` dengan resolusi dinamis binary root (`/system/bin/su`, `/data/adb/ap/bin/su`) sehingga sinkronisasi OpenJDK 21 dari lingkungan Termux ke internal module partition berjalan mulus tanpa terhalang isolasi permission Bionic.
+- **Direct Full-Patch Verification**: Memverifikasi keberhasilan end-to-end patching langsung pada perangkat Infinix NOTE 10 Pro dengan 84 patches diaplikasikan tanpa error dan menghasilkan berkas APK 194MB valid dan ter-sign.
+
+## v2.1.35 (2026-10-31)
 - **Automatic Installed & Local Stock APK Prioritization**: Wizard langkah 3 (Versi APK) kini secara otomatis mendeteksi versi aplikasi yang telah terpasang di perangkat (PackageManager) serta berkas stock APK lokal yang tersedia di penyimpanan (/sdcard/Revancify-Xisr, /sdcard/RVX-Patcher, /sdcard/Download), menempatkannya di posisi teratas dengan label Terpasang di HP dan otomatis memilihnya agar proses patching berjalan instan tanpa perlu unduhan 180MB.
 - **Intelligent Stock APK Local Fallback**: Memperluas mekanisme pencarian stock APK pada daemon patcher untuk secara otomatis menggunakan berkas APK lokal yang valid dari penyimpanan jika versi target daring tidak ditemukan atau terhalang Cloudflare.
 - **Native Android Bridge Enhancements**: Menambahkan method getInstalledAppVersion dan openBrowser pada AndroidBridge (MainActivity.kt) untuk pembacaan paket Android instan tanpa latency dan dukungan pembukaan tautan unduh APKMirror langsung via browser sistem.

@@ -25,18 +25,33 @@ pub async fn ensure_jre_installed(
             "/data/data/com.termux/files/usr/lib/jvm/openjdk-17",
         ];
         for src_str in termux_candidates {
-            let src = Path::new(src_str);
-            if src.exists() {
+            let exists = Path::new(src_str).exists() || {
+                let su_bin = ["/system/bin/su", "/data/adb/ap/bin/su", "su"]
+                    .into_iter()
+                    .find(|p| std::path::Path::new(p).exists())
+                    .unwrap_or("su");
+                std::process::Command::new(su_bin)
+                    .arg("-c")
+                    .arg(format!("[ -e \"{}/bin/java\" ]", src_str))
+                    .status()
+                    .map(|s| s.success())
+                    .unwrap_or(false)
+            };
+            if exists {
                 state.log("☕ Menemukan Java dari instalasi Termux lokal, menyinkronkan JRE...");
                 let dest_jre = state.modpath.join("jre");
                 let _ = tokio::fs::create_dir_all(&dest_jre).await;
+                let su_bin = ["/system/bin/su", "/data/adb/ap/bin/su", "su"]
+                    .into_iter()
+                    .find(|p| std::path::Path::new(p).exists())
+                    .unwrap_or("su");
                 let cp_cmd = format!(
-                    "su -c 'cp -a \"{src}/\"* \"{dest}/\" 2>/dev/null; cp -a /data/data/com.termux/files/usr/lib/libz.so* /data/data/com.termux/files/usr/lib/libandroid-*.so /data/data/com.termux/files/usr/lib/libc++_shared.so /data/data/com.termux/files/usr/lib/libiconv.so* \"{dest}/lib/\" 2>/dev/null; chmod -R 755 \"{dest}\"; chown -R $(stat -c %u:%g \"{parent}\") \"{dest}\" 2>/dev/null'",
-                    src = src.display(),
+                    "cp -a \"{src}/\"* \"{dest}/\" 2>/dev/null; cp -a /data/data/com.termux/files/usr/lib/libz.so* /data/data/com.termux/files/usr/lib/libandroid-*.so /data/data/com.termux/files/usr/lib/libc++_shared.so /data/data/com.termux/files/usr/lib/libiconv.so* \"{dest}/lib/\" 2>/dev/null; chmod -R 755 \"{dest}\"; chown -R $(stat -c %u:%g \"{parent}\") \"{dest}\" 2>/dev/null",
+                    src = src_str,
                     dest = dest_jre.display(),
                     parent = state.modpath.display()
                 );
-                let _ = std::process::Command::new("/system/bin/sh")
+                let _ = std::process::Command::new(su_bin)
                     .arg("-c")
                     .arg(&cp_cmd)
                     .status();
