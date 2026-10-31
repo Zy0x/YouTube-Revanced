@@ -266,7 +266,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     } ?: "su"
 
-                    val cmd = "cp \"${file.absolutePath}\" /data/local/tmp/install_temp.apk && chmod 644 /data/local/tmp/install_temp.apk && pm install -r -d /data/local/tmp/install_temp.apk; RET=$?; rm -f /data/local/tmp/install_temp.apk; exit $RET"
+                    val cmd = "cp -f \"${file.absolutePath}\" /data/local/tmp/install_temp.apk && chmod 644 /data/local/tmp/install_temp.apk && pm install -r -d /data/local/tmp/install_temp.apk; ret=\$?; rm -f /data/local/tmp/install_temp.apk; exit \$ret"
                     val p = ProcessBuilder(suBin, "-c", cmd).start()
                     val out = p.inputStream.bufferedReader().readText() + "\n" + p.errorStream.bufferedReader().readText()
                     val exitCode = p.waitFor()
