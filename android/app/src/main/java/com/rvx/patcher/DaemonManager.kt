@@ -11,6 +11,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStreamReader
 import java.util.concurrent.TimeUnit
+import org.json.JSONObject
 
 class DaemonManager(private val context: Context) {
     companion object {
@@ -19,7 +20,9 @@ class DaemonManager(private val context: Context) {
     }
 
     private var process: Process? = null
-    private var activePort: Int = DEFAULT_PORT
+    @Volatile var hasVerifiedRootAccess: Boolean = false
+        private set
+    private var activePort: Int = if (context.packageName.endsWith(".qa")) 8098 else DEFAULT_PORT
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(500, TimeUnit.MILLISECONDS)
         .readTimeout(800, TimeUnit.MILLISECONDS)
@@ -30,12 +33,12 @@ class DaemonManager(private val context: Context) {
 
     suspend fun startDaemon(): Boolean = withContext(Dispatchers.IO) {
         try {
+            // Refresh the on-disk UI even when this app's helper is already alive.
+            extractWebAssets()
             if (isDaemonAlive()) {
-                Log.i(TAG, "Daemon is already running on port $DEFAULT_PORT")
+                Log.i(TAG, "Daemon is already running on port $activePort")
                 return@withContext true
             }
-
-            extractWebAssets()
 
             val daemonFile = getDaemonExecutable()
             if (!daemonFile.exists() || !daemonFile.canExecute()) {
@@ -46,19 +49,21 @@ class DaemonManager(private val context: Context) {
             val workingDir = context.filesDir
             val builder = ProcessBuilder(
                 daemonFile.absolutePath,
+                "--modpath", workingDir.absolutePath,
                 "server",
-                "--port", DEFAULT_PORT.toString()
+                "--port", activePort.toString()
             )
             builder.directory(workingDir)
             builder.environment()["RVX_STANDALONE_APP"] = "1"
             builder.environment()["RVX_APP_PACKAGE"] = context.packageName
+            builder.environment()["RVX_NATIVE_LIBDIR"] = context.applicationInfo.nativeLibraryDir
             builder.environment()["MODPATH"] = workingDir.absolutePath
             builder.environment()["HOME"] = workingDir.absolutePath
             builder.environment()["TMPDIR"] = context.cacheDir.absolutePath
             builder.redirectErrorStream(true)
 
             val suCandidates = arrayOf("/system/bin/su", "/data/adb/ap/bin/su", "/data/adb/magisk/su", "su")
-            val workingSu = suCandidates.firstOrNull { bin ->
+            val workingSu = if (!BuildConfig.PREFER_ROOT) null else suCandidates.firstOrNull { bin ->
                 try {
                     val p = ProcessBuilder(bin, "-c", "id").start()
                     val out = p.inputStream.bufferedReader().readText()
@@ -71,7 +76,7 @@ class DaemonManager(private val context: Context) {
 
             val proc = if (workingSu != null) {
                 Log.i(TAG, "Root available ($workingSu). Spawning daemon via root shell.")
-                val suCmd = "export LD_LIBRARY_PATH=\"${context.applicationInfo.nativeLibraryDir}:/system/lib64\"; export MODPATH=\"${workingDir.absolutePath}\"; export HOME=\"${workingDir.absolutePath}\"; export TMPDIR=\"${context.cacheDir.absolutePath}\"; export RVX_STANDALONE_APP=1; export RVX_APP_PACKAGE=\"${context.packageName}\"; exec ${daemonFile.absolutePath} server --port $DEFAULT_PORT"
+                val suCmd = "export LD_LIBRARY_PATH=\"${context.applicationInfo.nativeLibraryDir}:/system/lib64\"; export RVX_NATIVE_LIBDIR=\"${context.applicationInfo.nativeLibraryDir}\"; export MODPATH=\"${workingDir.absolutePath}\"; export HOME=\"${workingDir.absolutePath}\"; export TMPDIR=\"${context.cacheDir.absolutePath}\"; export RVX_STANDALONE_APP=1; export RVX_APP_PACKAGE=\"${context.packageName}\"; exec \"${daemonFile.absolutePath}\" --modpath \"${workingDir.absolutePath}\" server --port $activePort"
                 ProcessBuilder(workingSu, "-c", suCmd)
                     .directory(workingDir)
                     .redirectErrorStream(true)
@@ -203,7 +208,13 @@ class DaemonManager(private val context: Context) {
             .build()
         try {
             httpClient.newCall(request).execute().use { response ->
-                response.isSuccessful
+                if (!response.isSuccessful) return@use false
+                val status = JSONObject(response.body?.string() ?: return@use false)
+                val owned = status.optString("web_runtime") == "local-daemon" &&
+                    status.optString("daemon_version") == BuildConfig.VERSION_NAME &&
+                    File(status.optString("modpath")).canonicalPath == context.filesDir.canonicalPath
+                if (owned) hasVerifiedRootAccess = status.optBoolean("root_available", false)
+                owned
             }
         } catch (_: Exception) {
             false
@@ -213,12 +224,7 @@ class DaemonManager(private val context: Context) {
     private suspend fun pollUntilReady(maxWaitMs: Long): Boolean {
         val startTime = System.currentTimeMillis()
         while (System.currentTimeMillis() - startTime < maxWaitMs) {
-            for (p in listOf(activePort, 8088, 8089, 8090)) {
-                if (isDaemonAlive(p)) {
-                    activePort = p
-                    return true
-                }
-            }
+            if (isDaemonAlive(activePort)) return true
             kotlinx.coroutines.delay(200)
         }
         return false

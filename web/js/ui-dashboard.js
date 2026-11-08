@@ -5,19 +5,26 @@ function renderAppCardsWithConfigStatus() {
   const container = document.getElementById('homeAppsGrid');
   if (!container) return;
   container.innerHTML = '';
-  updatePreflightDoctor();
+  if (!STATE.homeAppQuery) updatePreflightDoctor();
 
   if (homeAppListObserver) {
     homeAppListObserver.disconnect();
     homeAppListObserver = null;
   }
 
-  const apps = STATE.availableApps || [];
+  const query = STATE.homeAppQuery || '';
+  const apps = (STATE.availableApps || []).filter(app => `${app.name} ${app.packageName}`.toLowerCase().includes(query));
+  const count = document.getElementById('homeAppCount');
+  if (count) count.textContent = `${apps.length} aplikasi`;
+  if (!apps.length) container.innerHTML = '<p class="wizard-patch-empty">Tidak ada aplikasi yang cocok. Coba kata lain.</p>';
   const createCard = app => {
     const isConfigured = isAppConfigured(app.packageName);
     const savedConfig = getAppConfig(app.packageName);
     const card = document.createElement('div');
     card.className = 'morphe-app-card';
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `Konfigurasi ${app.name}`);
 
     const statusBadge = isConfigured
       ? `<span class="badge-configured">Terkonfigurasi</span>`
@@ -25,7 +32,7 @@ function renderAppCardsWithConfigStatus() {
 
     const versionPrefix = app.recommendedVersion ? `v${app.recommendedVersion} • ` : '';
     const subText = isConfigured
-      ? `v${savedConfig.targetVersion || app.recommendedVersion} • ${savedConfig.mode === 'root' ? 'Mode Root' : 'Non-Root'} (${savedConfig.selectedPatches?.length || app.patchCount} patches)`
+      ? `v${savedConfig.targetVersion || app.recommendedVersion} • ${savedConfig.mode === 'root' ? 'Mode Root' : 'Non-Root'} (${savedConfig.selectedPatches?.length || app.patchCount} patch)`
       : `${versionPrefix}${formatAppCoverage(app)}`;
 
     card.innerHTML = `
@@ -38,7 +45,7 @@ function renderAppCardsWithConfigStatus() {
         <p class="yt-card-sub">${escapeHtml(subText)}</p>
       </div>
       ${isConfigured ? `
-        <button type="button" class="btn-card-edit" title="Edit konfigurasi aplikasi ini" aria-label="Edit Setup">⋮</button>
+        <button type="button" class="btn-card-edit" title="Edit konfigurasi aplikasi ini" aria-label="Ubah konfigurasi">⋮</button>
       ` : `
         <div class="app-card-arrow">›</div>
       `}
@@ -52,16 +59,14 @@ function renderAppCardsWithConfigStatus() {
         return;
       }
 
-      if (isConfigured) {
-        // Instant Quick Patch with saved configuration
-        selectApp(app.packageName);
-        applySavedAppConfig(savedConfig);
-        triggerBuildPipeline();
-      } else {
-        openAppSetupWizard(app.packageName);
-      }
+      openAppSetupWizard(app.packageName);
     });
 
+    card.addEventListener('keydown', event => {
+      if (event.target !== card || !['Enter', ' '].includes(event.key)) return;
+      event.preventDefault();
+      openAppSetupWizard(app.packageName);
+    });
     return card;
   };
 
@@ -100,14 +105,26 @@ function renderAppCardsWithConfigStatus() {
   appendBatch();
 }
 
-function openAppSetupWizard(pkgId) {
+async function openAppSetupWizard(pkgId) {
+  resetWizardSelections();
   selectApp(pkgId);
   const saved = getAppConfig(pkgId);
-  if (saved) {
-    applySavedAppConfig(saved);
-  }
-  goToWizardStep(3); // Start at target version
+  goToWizardStep(2);
   switchScreen('wizard');
+  if (!saved) return;
+  try {
+    const selected = await selectPatchSource(saved.source);
+    if (STATE.currentApp?.packageName !== pkgId) return;
+    if (!selected) throw new Error('Sumber tidak tersedia');
+    const ready = await selectPatchChannel(saved.patchTag);
+    if (!ready) throw new Error('Rilis tidak tersedia');
+    if (STATE.currentApp?.packageName !== pkgId) return;
+    applySavedAppConfig(saved);
+    goToWizardStep(8);
+  } catch (_) {
+    showRvxToast('Periksa kembali sumber dan rilis konfigurasi tersimpan.');
+    goToWizardStep(2);
+  }
 }
 
 function applySavedAppConfig(config) {
@@ -120,10 +137,23 @@ function applySavedAppConfig(config) {
     STATE.modeEditorExpanded = false;
   }
   if (Array.isArray(config.selectedPatches) && config.selectedPatches.length > 0) {
-    STATE.selectedPatches = new Set(config.selectedPatches);
+    const available = new Set(STATE.patches.map(patch => patch.name));
+    STATE.selectedPatches = new Set(config.selectedPatches.filter(name => available.has(name)));
   }
   if (config.selectedOptions) {
     STATE.selectedOptions = { ...config.selectedOptions };
+  }
+  if (config.storageFolders) {
+    STATE.wizardStorageDraft = config.storageFolders;
+    STATE.wizardStorageValidated = false;
+  }
+  if (config.engineOptions) {
+    const engine = config.engineOptions;
+    STATE.morpheEngineOptions = {
+      ...STATE.morpheEngineOptions, ...engine, executionPolicyVersion: 2,
+      continueOnError: engine.executionPolicyVersion === 2 && engine.continueOnError === true,
+      force: engine.executionPolicyVersion === 2 && engine.force === true
+    };
   }
   syncAllSummaries();
 }
@@ -167,113 +197,60 @@ function openSilentDeveloperModal() {
 /* ==========================================================================
    PREFLIGHT SYSTEM DOCTOR DIAGNOSTIC
    ========================================================================== */
+let doctorRequest = 0;
 async function updatePreflightDoctor() {
-  const card = document.getElementById('systemDoctorCard');
-  if (!card) return;
-
-  const badgeOverall = document.getElementById('doctorBadgeOverall');
-  const txtJre = document.getElementById('docJreText');
-  const dotJre = document.getElementById('docJreDot');
-  const txtEngine = document.getElementById('docEngineText');
-  const dotEngine = document.getElementById('docEngineDot');
-  const txtRoot = document.getElementById('docRootText');
-  const dotRoot = document.getElementById('docRootDot');
-  const txtStorage = document.getElementById('docStorageText');
-  const dotStorage = document.getElementById('docStorageDot');
-  const txtMicrog = document.getElementById('docMicrogText');
-  const dotMicrog = document.getElementById('docMicrogDot');
-
-  let issues = 0;
-
-  // 1. Check Root
-  const isRoot = (window.RVXNativeBridge?.isRootAvailable && window.RVXNativeBridge.isRootAvailable()) ||
-                 STATE.targetMode === 'root' || STATE.deviceAccessMode === 'root-integrated';
-  if (txtRoot && dotRoot) {
-    if (isRoot) {
-      txtRoot.textContent = 'Root Aktif';
-      dotRoot.className = 'doc-dot dot-green';
-    } else {
-      txtRoot.textContent = 'Non-Root';
-      dotRoot.className = 'doc-dot dot-gray';
-    }
-  }
-
-  // 2. Check MicroG
-  let hasMicroG = false;
-  let microgName = 'Belum Ada';
-  if (window.RVXNativeBridge?.isPackageInstalled) {
-    if (window.RVXNativeBridge.isPackageInstalled('app.revanced.android.gms')) {
-      hasMicroG = true;
-      microgName = 'GmsCore';
-    } else if (window.RVXNativeBridge.isPackageInstalled('com.mgoogle.android.gms')) {
-      hasMicroG = true;
-      microgName = 'MicroG';
-    }
-  }
-  if (txtMicrog && dotMicrog) {
-    if (hasMicroG) {
-      txtMicrog.textContent = `${microgName} (Siap)`;
-      dotMicrog.className = 'doc-dot dot-green';
-    } else if (isRoot) {
-      txtMicrog.textContent = 'Tidak Wajib';
-      dotMicrog.className = 'doc-dot dot-gray';
-    } else {
-      txtMicrog.textContent = 'Belum Ada';
-      dotMicrog.className = 'doc-dot dot-yellow';
-      issues++;
-    }
-  }
-
-  // 3. Check System Status from daemon
+  const request = ++doctorRequest;
+  const badge = document.getElementById('doctorBadgeOverall');
+  const note = document.getElementById('doctorStatusNote');
+  const retry = document.getElementById('btnRetryDiagnostics');
+  if (!badge) return;
+  badge.textContent = 'Memeriksa…';
+  badge.className = 'doctor-badge doctor-badge-checking';
+  if (retry) retry.disabled = true;
+  if (note) note.textContent = 'Memeriksa kemampuan lingkungan ini.';
+  const ids = { jre: 'Jre', engine: 'Engine', root: 'Root', storage: 'Storage', microg: 'Microg' };
+  const applyRow = (key, row) => {
+    setText(`doc${ids[key]}Text`, row.text);
+    const dot = document.getElementById(`doc${ids[key]}Dot`);
+    if (dot) dot.className = `doc-dot ${{ ready: 'dot-green', attention: 'dot-yellow', neutral: 'dot-gray', unknown: 'dot-gray' }[row.state]}`;
+  };
+  Object.keys(ids).forEach(key => applyRow(key, { text: 'Memeriksa…', state: 'unknown' }));
+  let data = null;
+  let error = '';
   try {
-    const res = await fetch('/api/v1/system/status');
-    if (res.ok) {
-      const data = await res.json();
-      if (txtJre && dotJre) {
-        if (data.jre_ready) {
-          txtJre.textContent = 'Siap (Java 17)';
-          dotJre.className = 'doc-dot dot-green';
-        } else {
-          txtJre.textContent = 'Perlu Unduh';
-          dotJre.className = 'doc-dot dot-yellow';
-          issues++;
-        }
-      }
-      if (txtEngine && dotEngine) {
-        if (data.cli_ready !== false) {
-          txtEngine.textContent = 'v1.20.0 (Siap)';
-          dotEngine.className = 'doc-dot dot-green';
-        } else {
-          txtEngine.textContent = 'Unduh Otomatis';
-          dotEngine.className = 'doc-dot dot-yellow';
-        }
-      }
-      if (txtStorage && dotStorage) {
-        if (data.storage_available_formatted) {
-          txtStorage.textContent = `${data.storage_available_formatted} Bebas`;
-          const bytes = Number(data.storage_available_bytes || 0);
-          if (bytes > 0 && bytes < 1024 * 1024 * 1024) {
-            dotStorage.className = 'doc-dot dot-yellow';
-            issues++;
-          } else {
-            dotStorage.className = 'doc-dot dot-green';
-          }
-        }
-      }
+    if (window.RVX_RUNTIME?.allowsNativeBridge) {
+      const response = await fetch(`${STATE.daemonUrl}/api/v1/system/status`, { headers: daemonAuthHeaders(), signal: rvxTimeoutSignal(4000) });
+      if (!response.ok) throw new Error('Helper perangkat belum terhubung.');
+      data = await response.json();
+      if (data.web_runtime !== 'local-daemon') throw new Error('Helper perangkat tidak dapat diverifikasi.');
+      STATE.daemonStatus = data;
+      STATE.daemonOnline = true;
     }
-  } catch (_) {
-    if (txtJre && dotJre) { txtJre.textContent = 'Siap (OpenJDK)'; dotJre.className = 'doc-dot dot-green'; }
-    if (txtEngine && dotEngine) { txtEngine.textContent = 'v1.20.0 (Siap)'; dotEngine.className = 'doc-dot dot-green'; }
-    if (txtStorage && dotStorage) { txtStorage.textContent = 'Cukup'; dotStorage.className = 'doc-dot dot-green'; }
+  } catch (failure) { error = failure.message; }
+  if (request !== doctorRequest) return;
+  let nativeRoot = null;
+  let nativeMicrog = null;
+  try {
+    if (window.RVXNativeBridge?.isRootAvailable) nativeRoot = Boolean(window.RVXNativeBridge.isRootAvailable());
+    if (window.RVXNativeBridge?.isPackageInstalled) nativeMicrog = Boolean(window.RVXNativeBridge.isPackageInstalled('app.revanced.android.gms') || window.RVXNativeBridge.isPackageInstalled('com.mgoogle.android.gms'));
+  } catch (_) { /* An unavailable bridge is unknown, never ready. */ }
+  const report = RVX_UI.diagnostics(data, { mode: STATE.targetMode, nativeRoot, nativeMicrog });
+  Object.entries(report.rows).forEach(([key, row]) => applyRow(key, row));
+  badge.textContent = report.label;
+  badge.className = `doctor-badge doctor-badge-${report.state === 'ready' ? 'ready' : report.state === 'attention' ? 'warning' : 'checking'}`;
+  if (note) note.textContent = error
+    ? `${error} Muat ulang pemeriksaan atau buka aplikasi melalui modul di perangkat.`
+    : data ? 'Status berasal dari pemeriksaan perangkat. Pilihan mode tidak mengubah hasil pemeriksaan.'
+    : 'Browser tidak dapat memeriksa akses root atau aplikasi yang terpasang pada perangkat.';
+  if (!data && !window.RVX_RUNTIME?.isRootWebUI && !window.RVX_RUNTIME?.isAppEmbedded) {
+    let engine = null;
+    try { engine = await RVX_LOCAL_ENGINE.loadManifest(); } catch (_) {}
+    if (request !== doctorRequest) return;
+    applyRow('jre', { text: 'Tidak diperlukan', state: 'neutral' });
+    applyRow('engine', { text: engine?.available === true ? 'Mesin browser tersedia' : 'Mesin browser belum tersedia', state: engine?.available === true ? 'ready' : 'attention' });
+    badge.textContent = engine?.available === true ? 'Periksa konfigurasi' : 'Build browser belum tersedia';
+    badge.className = 'doctor-badge doctor-badge-warning';
+    if (note) note.textContent = 'Anda dapat menyiapkan dan menyimpan konfigurasi. Untuk membuat APK saat ini, gunakan aplikasi atau WebUI modul pada perangkat yang didukung.';
   }
-
-  if (badgeOverall) {
-    if (issues === 0) {
-      badgeOverall.textContent = '✅ Sistem Siap';
-      badgeOverall.className = 'doctor-badge doctor-badge-ready';
-    } else {
-      badgeOverall.textContent = `⚠️ ${issues} Perhatian`;
-      badgeOverall.className = 'doctor-badge doctor-badge-warning';
-    }
-  }
+  if (retry) retry.disabled = false;
 }

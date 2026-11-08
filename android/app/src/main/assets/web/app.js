@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   initSecurity();
   initViewportTracker();
   initEventListeners();
+  initWorkflowUI();
+  initWizardFlowUI();
   initKeyboardNavigation();
   setUiMode(STATE.uiMode);
   document.getElementById('btnDownloadSingleHtml')?.classList.toggle('hidden', Boolean(window.RVX_RUNTIME?.isSingleFile));
@@ -17,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkDaemonStatus(),
     loadSourcesAndPresets()
   ]);
+  renderRuntimeAvailability();
   // A new setup starts blank. Saved values are restored only when the user
   // explicitly opens an existing app configuration from the dashboard.
   syncAllSummaries();
@@ -349,10 +352,7 @@ function initEventListeners() {
 
   // Trigger Patch & Progress Controls
   document.getElementById('btnTriggerBuild')?.addEventListener('click', triggerBuildPipeline);
-  document.getElementById('btnProgressBackHome')?.addEventListener('click', () => {
-    if (STATE.eventSource) STATE.eventSource.close();
-    switchScreen('home');
-  });
+  document.getElementById('btnProgressBackHome')?.addEventListener('click', cancelBuildSession);
 
   // Release Channel & Notes
   document.getElementById('selectPatchRelease')?.addEventListener('change', async (e) => {
@@ -393,13 +393,13 @@ function initEventListeners() {
   });
 
   document.getElementById('btnClearLogs')?.addEventListener('click', () => {
-    STATE.logHistory = [{ type: 'I', text: 'Logs cleared.' }];
+    STATE.logHistory = [{ type: 'I', text: 'Log dibersihkan.' }];
     const list = document.getElementById('morpheStructuredLogs');
     if (list) {
       list.innerHTML = `
         <div class="morphe-log-row">
           <span class="log-badge log-badge-info">I</span>
-          <span class="log-msg">Logs cleared.</span>
+          <span class="log-msg">Log dibersihkan.</span>
         </div>
       `;
     }
@@ -410,26 +410,31 @@ function initEventListeners() {
     const text = STATE.logHistory.map(x => `[${x.type}] ${x.text}`).join('\n');
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text).then(() => {
-        setText('copyBtnLabel', 'Copied');
-        setTimeout(() => setText('copyBtnLabel', 'Copy'), 1500);
+        setText('copyBtnLabel', 'Tersalin');
+        setTimeout(() => setText('copyBtnLabel', 'Salin log'), 1500);
       });
     }
   });
 
   // Post-Patch Mount & Export ZIP
   document.getElementById('btnHeroHotMount')?.addEventListener('click', async () => {
+    if (!hasCurrentBuildResult()) return;
     const alertBox = document.getElementById('heroMountAlert');
     if (alertBox) {
-      alertBox.textContent = 'Mounting YouTube RVX...';
+      alertBox.textContent = 'Memasang hasil ke perangkat…';
       alertBox.className = 'morphe-alert';
       alertBox.classList.remove('hidden');
     }
     try {
-      const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/mount`, { method: 'POST', headers: daemonAuthHeaders() });
+      if (STATE.daemonStatus?.is_android !== true || !(STATE.daemonStatus?.root_available || STATE.daemonStatus?.root_installer_available)) throw new Error('Pengelola root tidak tersedia.');
+      const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/mount`, {
+        method: 'POST', headers: daemonAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ apk_path: STATE.buildSession.path })
+      });
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data.verified === true) {
         if (alertBox) {
-          alertBox.textContent = 'Mounted! YouTube restarted.';
+          alertBox.textContent = 'Hasil berhasil dipasang. Aplikasi dimulai ulang.';
           alertBox.className = 'morphe-alert text-success';
         }
       } else {
@@ -437,16 +442,17 @@ function initEventListeners() {
       }
     } catch (err) {
       if (alertBox) {
-        alertBox.textContent = `Mount error: ${err.message}`;
+        alertBox.textContent = `Pemasangan gagal: ${err.message}`;
         alertBox.className = 'morphe-alert text-danger';
       }
     }
   });
 
   document.getElementById('btnHeroExportZip')?.addEventListener('click', async () => {
+    if (!hasCurrentBuildResult()) return;
     const alertBox = document.getElementById('heroMountAlert');
     if (alertBox) {
-      alertBox.textContent = 'Packaging flashable ZIP...';
+      alertBox.textContent = 'Menyiapkan modul ZIP…';
       alertBox.className = 'morphe-alert';
       alertBox.classList.remove('hidden');
     }
@@ -455,7 +461,7 @@ function initEventListeners() {
       const data = await res.json();
       if (res.ok) {
         if (alertBox) {
-          alertBox.textContent = `Saved to: ${data.path || '/sdcard/Download/YouTube-RVX-Flashable.zip'}`;
+          alertBox.textContent = `Disimpan di: ${data.path || '/sdcard/Download/YouTube-RVX-Flashable.zip'}`;
           alertBox.className = 'morphe-alert text-success';
         }
       } else {
@@ -463,33 +469,22 @@ function initEventListeners() {
       }
     } catch (err) {
       if (alertBox) {
-        alertBox.textContent = `Export error: ${err.message}`;
+        alertBox.textContent = `Ekspor gagal: ${err.message}`;
         alertBox.className = 'morphe-alert text-danger';
       }
     }
   });
   // Direct Root Install Handler
   document.getElementById('btnHeroDirectInstall')?.addEventListener('click', async () => {
+    if (!hasCurrentBuildResult()) return;
     const alertBox = document.getElementById('heroMountAlert');
     if (alertBox) {
       alertBox.textContent = 'Memasang APK via hak root...';
       alertBox.className = 'morphe-alert';
       alertBox.classList.remove('hidden');
     }
-    const apkPath = STATE.lastOutputApkPath || '/sdcard/RVX-Patcher/YouTubeRevanced.apk';
-    const isRoot = STATE.targetMode === 'root' || STATE.deviceAccessMode === 'root-integrated' || (window.RVXNativeBridge?.isRootAvailable && window.RVXNativeBridge.isRootAvailable());
-
-    if (window.RVXNativeBridge?.installApkRoot && isRoot) {
-      try {
-        window.RVXNativeBridge.installApkRoot(apkPath);
-        if (alertBox) {
-          alertBox.textContent = 'Perintah pasang root dikirim ke sistem.';
-          alertBox.className = 'morphe-alert text-success';
-        }
-        return;
-      } catch (_) {}
-    }
-
+    if (!hasCurrentBuildResult()) return;
+    const apkPath = STATE.buildSession.path;
     try {
       const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/install-root`, {
         method: 'POST',
@@ -506,14 +501,8 @@ function initEventListeners() {
         throw new Error(data.error || 'Gagal root install');
       }
     } catch (err) {
-      if (window.RVXNativeBridge?.installApk) {
-        if (alertBox) {
-          alertBox.textContent = `Root install gagal (${err.message}). Membuka Package Installer...`;
-          alertBox.className = 'morphe-alert';
-        }
-        window.RVXNativeBridge.installApk(apkPath);
-      } else if (alertBox) {
-        alertBox.textContent = `Kesalahan: ${err.message}`;
+      if (alertBox) {
+        alertBox.textContent = `Pemasangan root gagal: ${err.message}`;
         alertBox.className = 'morphe-alert text-danger';
       }
     }
@@ -604,7 +593,7 @@ function initEventListeners() {
   document.querySelectorAll('.wizard-step-node').forEach(btn => {
     btn.addEventListener('click', () => {
       const step = parseInt(btn.dataset.step, 10);
-      if (step) goToWizardStep(step);
+      if (step && step <= STATE.wizardStep) goToWizardStep(step);
     });
   });
 
@@ -737,13 +726,7 @@ function initEventListeners() {
     }
   });
   document.getElementById('btnWizPatchesDefault')?.addEventListener('click', () => {
-    STATE.selectedPatches.clear();
-    STATE.patches.forEach(p => {
-      if (p.use !== false) STATE.selectedPatches.add(p.name);
-    });
-    adjustMicrogForMode(STATE.targetMode);
-    renderMorphePatchList('wizardPatchCategoriesContainer');
-    syncAllSummaries();
+    applyCuratedPreset('balanced');
     closePatchBulkMenu();
   });
   document.getElementById('btnWizPatchesAll')?.addEventListener('click', () => {
@@ -768,66 +751,12 @@ function initEventListeners() {
   });
   document.getElementById('btnWizStep4Back')?.addEventListener('click', () => goToWizardStep(3));
   document.getElementById('btnWizStep4Next')?.addEventListener('click', () => {
-    if (STATE.targetMode && STATE.selectedPatches.size > 0) goToWizardStep(5);
+    if (STATE.targetMode) goToWizardStep(5);
   });
 
   // Wizard Step 5 Handlers
   document.getElementById('btnWizardStartBuild')?.addEventListener('click', () => {
-    triggerBuildPipeline();
-  });
-  document.getElementById('btnCloseDownloadConsent')?.addEventListener('click', closeDownloadConsentModal);
-  document.getElementById('btnCancelDownloadConsent')?.addEventListener('click', closeDownloadConsentModal);
-  document.getElementById('btnConfirmDownloadConsent')?.addEventListener('click', confirmLocalPatchBuild);
-  document.getElementById('inputBrowserApk')?.addEventListener('change', event => {
-    const file = event.target.files?.[0] || null;
-    STATE.selectedApkFile = file;
-    const panel = document.getElementById('browserApkInputPanel');
-    const status = document.getElementById('browserApkInputStatus');
-    panel?.classList.toggle('is-ready', Boolean(file));
-    if (status) {
-      status.textContent = file
-        ? `${file.name} · ${formatDownloadBytes(file.size)}`
-        : 'Pilih APK yang versinya sesuai dengan konfigurasi.';
-    }
-    if (STATE.engineMode === 'browser') openDownloadConsentModal();
-  });
-  document.getElementById('btnPrepareOnWifi')?.addEventListener('click', () => {
-    RVX_STORAGE.local.setItem('rvx_prepare_on_wifi', JSON.stringify({
-      packageName: STATE.currentApp?.packageName || '',
-      source: STATE.currentSource || '',
-      tag: STATE.patchTag || '',
-      savedAt: Date.now()
-    }));
-    const total = document.getElementById('downloadPlanTotal');
-    if (total) total.textContent = 'Disimpan; buka kembali saat terhubung ke Wi-Fi';
-  });
-  document.getElementById('btnChangeStorageLocations')?.addEventListener('click', () => {
-    STATE.pendingDownloadPlan = null;
-    document.getElementById('btnConfirmDownloadConsent').disabled = true;
-    renderStorageLocations({ edit: true });
-  });
-  document.getElementById('selectStorageLocation')?.addEventListener('change', syncCustomStorageFields);
-  document.getElementById('selectWorkspaceLocation')?.addEventListener('change', syncCustomStorageFields);
-  document.getElementById('selectOutputLocation')?.addEventListener('change', syncCustomStorageFields);
-  document.getElementById('btnBrowseStorage')?.addEventListener('click', () => openStorageBrowser('storage'));
-  document.getElementById('btnBrowseWorkspace')?.addEventListener('click', () => openStorageBrowser('workspace'));
-  document.getElementById('btnBrowseOutput')?.addEventListener('click', () => openStorageBrowser('output'));
-  document.getElementById('btnStorageBrowserUp')?.addEventListener('click', () => {
-    if (STATE.storageBrowseParent) fetchStorageDirectory(STATE.storageBrowseParent);
-  });
-  document.getElementById('btnUseStorageFolder')?.addEventListener('click', useSelectedStorageFolder);
-  document.getElementById('btnCloseStorageBrowser')?.addEventListener('click', closeStorageBrowser);
-  document.getElementById('btnCancelStorageBrowser')?.addEventListener('click', closeStorageBrowser);
-  document.getElementById('storageBrowserModal')?.addEventListener('click', event => {
-    if (event.target.id === 'storageBrowserModal') closeStorageBrowser();
-  });
-  document.getElementById('btnSaveStorageLocations')?.addEventListener('click', saveStorageLocations);
-  document.getElementById('checkUnknownSizeConsent')?.addEventListener('change', event => {
-    const button = document.getElementById('btnConfirmDownloadConsent');
-    if (button && STATE.pendingDownloadPlan) button.disabled = !event.target.checked;
-  });
-  document.getElementById('downloadConsentModal')?.addEventListener('click', event => {
-    if (event.target.id === 'downloadConsentModal') closeDownloadConsentModal();
+    if (updateWizardBuildValidation()) triggerBuildPipeline();
   });
   document.getElementById('btnWizardRootInstall')?.addEventListener('click', () => {
     document.getElementById('btnHeroHotMount')?.click();
@@ -838,7 +767,7 @@ function initEventListeners() {
   document.getElementById('btnWizardFinish')?.addEventListener('click', () => {
     completeWizardAndEnterDashboard();
   });
-  document.getElementById('btnWizStep5Back')?.addEventListener('click', () => goToWizardStep(4));
+  document.getElementById('btnWizStep8Back')?.addEventListener('click', () => goToWizardStep(7));
 
   // Silent Developer Listener & Dispatch
   const infoVerEl = document.getElementById('infoEngineStatus');

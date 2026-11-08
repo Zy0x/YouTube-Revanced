@@ -137,5 +137,3 @@ async fn bootstrap_session(State(state): State<AppState>, headers: HeaderMap) ->
     Json(json!({"token":state.token, "paired":true, "automatic":true, "scope":"same-origin-root-webui"}))
         .into_response()
 }
-
-

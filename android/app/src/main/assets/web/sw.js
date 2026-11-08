@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'rvx-shell-v2.1.39';
+const SHELL_CACHE = 'rvx-shell-v2.1.48';
 const METADATA_CACHE = 'rvx-metadata-v2';
 const ARTIFACT_CACHE = 'rvx-immutable-v1';
 
@@ -12,14 +12,21 @@ const SHELL_ASSETS = [
   './css/wizard-sources.css',
   './css/wizard-selection.css',
   './css/tui.css',
+  './css/smart-recovery.css',
   './css/responsive.css',
   './css/editorial.css',
   './css/editorial-base.css',
   './css/editorial-overlays.css',
   './css/editorial-curation.css',
   './css/editorial-workbench.css',
+  './css/storage.css',
+  './css/wizard-flow.css',
   './js/runtime.js',
   './js/state.js',
+  './js/ui-model.js',
+  './js/ui-workflow.js',
+  './js/ui-dependencies.js',
+  './js/ui-wizard-flow.js',
   './js/artifact-store.js',
   './js/local-engine.js',
   './js/api-registry.js',
@@ -113,5 +120,5 @@ self.addEventListener('fetch', event => {
     event.respondWith(staleWhileRevalidate(request));
     return;
   }
-  event.respondWith(caches.match(request).then(cached => cached || fetch(request)));
+  event.respondWith(caches.match(request, { cacheName: SHELL_CACHE, ignoreSearch: true }).then(cached => cached || fetch(request)));
 });

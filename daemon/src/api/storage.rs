@@ -10,7 +10,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 pub(crate) const STORAGE_CONFIG_FILE: &str = "config/storage.json";
 
-
 pub(crate) fn runtime_has_root_access() -> bool {
     #[cfg(unix)]
     {
@@ -47,6 +46,12 @@ pub(crate) struct StorageBrowseQuery {
 }
 
 pub(crate) fn storage_defaults(state: &AppState) -> (PathBuf, PathBuf) {
+    // A non-root Android wrapper can build inside its own sandbox without
+    // requesting broad access to shared storage at startup.
+    if std::env::var("RVX_STANDALONE_APP").as_deref() == Ok("1") && !runtime_has_root_access() {
+        let private = state.modpath.join("storage");
+        return (private.clone(), private);
+    }
     let rvx_dir = PathBuf::from("/sdcard/RVX-Patcher");
     let xisr_dir = PathBuf::from("/sdcard/Revancify-Xisr");
     let dl_dir = PathBuf::from("/sdcard/Download/RVX-Patcher");
@@ -111,6 +116,12 @@ fn safe_storage_path(state: &AppState, raw: &str, kind: &str) -> Result<PathBuf,
     if !path.is_absolute() {
         return Err(format!("{} path must be absolute", kind));
     }
+    if path
+        .components()
+        .any(|part| matches!(part, std::path::Component::ParentDir))
+    {
+        return Err("Alamat folder tidak boleh memuat '..'".to_string());
+    }
     let text = path.to_string_lossy().replace('\\', "/");
     if text == "/"
         || text.starts_with("/proc/")
@@ -121,38 +132,24 @@ fn safe_storage_path(state: &AppState, raw: &str, kind: &str) -> Result<PathBuf,
     }
     let web = state.modpath.join("web");
     let webroot = state.modpath.join("webroot");
-    if kind == "Workspace" && (path.starts_with(&web) || path.starts_with(&webroot)) {
-        return Err("Workspace cannot be stored inside the public webroot".to_string());
+    if path.starts_with(&web) || path.starts_with(&webroot) {
+        return Err("Folder kerja dan hasil tidak boleh berada di webroot publik".to_string());
     }
     Ok(path)
 }
 
 pub(crate) async fn ensure_writable_directory(path: &Path) -> Result<(), String> {
-    if let Err(e) = tokio::fs::create_dir_all(path).await {
-        #[cfg(unix)]
-        {
-            let _ = std::process::Command::new("su")
-                .arg("-c")
-                .arg(format!("mkdir -p '{}'", path.display()))
-                .status();
-        }
-        if !path.exists() {
-            return Err(format!("Cannot create {}: {}", path.display(), e));
-        }
-    }
+    tokio::fs::create_dir_all(path)
+        .await
+        .map_err(|error| format!("Tidak dapat membuat folder {}: {}", path.display(), error))?;
     let marker = path.join(format!(".rvx-write-check-{}", std::process::id()));
-    if let Err(_e) = tokio::fs::write(&marker, b"ok").await {
-        #[cfg(unix)]
-        {
-            let _ = std::process::Command::new("su")
-                .arg("-c")
-                .arg(format!("chmod 777 '{}' 2>/dev/null", path.display()))
-                .status();
-        }
-        tokio::fs::write(&marker, b"ok")
-            .await
-            .map_err(|e| format!("{} is not writable: {}", path.display(), e))?;
-    }
+    tokio::fs::write(&marker, b"ok").await.map_err(|error| {
+        format!(
+            "Folder {} tidak dapat ditulis oleh mesin build: {}",
+            path.display(),
+            error
+        )
+    })?;
     let _ = tokio::fs::remove_file(marker).await;
     Ok(())
 }
@@ -179,15 +176,14 @@ fn storage_path_is_available(path: &Path) -> bool {
 
 pub(crate) async fn get_storage_locations(State(state): State<AppState>) -> impl IntoResponse {
     let (default_workspace, default_output) = storage_defaults(&state);
+    let standalone = std::env::var("RVX_STANDALONE_APP").as_deref() == Ok("1");
     let selection = read_storage_selection(&state).await;
-    let mut locations = vec![
-        json!({
-            "id": "rvx-unified", "kind": "storage", "label": "Folder RVX-Patcher",
-            "path": default_workspace.to_string_lossy(), "recommended": true,
-            "writable": storage_path_is_available(&default_workspace),
-            "availableBytes": path_available_bytes(&default_workspace)
-        }),
-    ];
+    let mut locations = vec![json!({
+        "id": "rvx-unified", "kind": "storage", "label": if standalone && default_workspace.starts_with(&state.modpath) { "Folder privat aplikasi (disarankan)" } else { "Folder RVX-Patcher (disarankan)" },
+        "path": default_workspace.to_string_lossy(), "recommended": true,
+        "writable": storage_path_is_available(&default_workspace),
+        "availableBytes": path_available_bytes(&default_workspace)
+    })];
     if Path::new("/sdcard/Revancify-Xisr").exists() {
         let xisr = PathBuf::from("/sdcard/Revancify-Xisr");
         locations.push(json!({
@@ -208,7 +204,7 @@ pub(crate) async fn get_storage_locations(State(state): State<AppState>) -> impl
     }
     let mod_storage = state.modpath.join("storage");
     locations.push(json!({
-        "id": "module-storage", "kind": "storage", "label": "Penyimpanan Internal Modul",
+        "id": "module-storage", "kind": "storage", "label": if standalone { "Folder privat aplikasi" } else { "Penyimpanan modul" },
         "path": mod_storage.to_string_lossy(), "recommended": false,
         "writable": storage_path_is_available(&mod_storage),
         "availableBytes": path_available_bytes(&state.modpath)
@@ -235,7 +231,11 @@ pub(crate) async fn get_storage_locations(State(state): State<AppState>) -> impl
     }));
 
     if let Some(saved) = selection.as_ref() {
-        if let Some(path) = saved.get("storagePath").or_else(|| saved.get("outputPath")).and_then(Value::as_str) {
+        if let Some(path) = saved
+            .get("storagePath")
+            .or_else(|| saved.get("outputPath"))
+            .and_then(Value::as_str)
+        {
             let path_buf = PathBuf::from(path);
             locations.push(json!({
                 "id": "custom-storage", "kind": "storage", "label": "Lokasi tersimpan",
@@ -246,13 +246,15 @@ pub(crate) async fn get_storage_locations(State(state): State<AppState>) -> impl
     }
 
     let selection_valid = selection.as_ref().is_some_and(|saved| {
-        let p = saved.get("storagePath")
-            .or_else(|| saved.get("outputPath"))
-            .or_else(|| saved.get("workspacePath"))
-            .and_then(Value::as_str);
-        p.is_some_and(|raw| {
-            let path = PathBuf::from(raw);
-            path.exists() && storage_path_is_available(&path)
+        ["workspacePath", "outputPath"].iter().all(|key| {
+            saved
+                .get(*key)
+                .or_else(|| saved.get("storagePath"))
+                .and_then(Value::as_str)
+                .is_some_and(|raw| {
+                    let path = PathBuf::from(raw);
+                    path.is_dir() && storage_path_is_available(&path)
+                })
         })
     });
     Json(
@@ -338,12 +340,33 @@ pub(crate) async fn browse_storage_directories(
     }
 
     let roots = storage_browse_roots(&state, &query.kind);
-    let root_items: Vec<Value> = roots.iter().map(|path| json!({
-        "name": path.file_name().and_then(|name| name.to_str()).filter(|name| !name.is_empty()).unwrap_or_else(|| path.to_str().unwrap_or("/")),
-        "path": storage_path_text(path),
-        "writable": storage_path_is_available(path),
-        "availableBytes": path_available_bytes(path),
-    })).collect();
+    let root_items: Vec<Value> = roots
+        .iter()
+        .map(|path| {
+            let name = if path == Path::new("/sdcard") {
+                "Penyimpanan perangkat"
+            } else if path == Path::new("/sdcard/Download") {
+                "Unduhan"
+            } else if path == &state.modpath {
+                if std::env::var("RVX_STANDALONE_APP").as_deref() == Ok("1") {
+                    "Data aplikasi"
+                } else {
+                    "Modul RVX"
+                }
+            } else {
+                path.file_name()
+                    .and_then(|name| name.to_str())
+                    .filter(|name| !name.is_empty())
+                    .unwrap_or_else(|| path.to_str().unwrap_or("/"))
+            };
+            json!({
+                "name": name,
+                "path": storage_path_text(path),
+                "writable": storage_path_is_available(path),
+                "availableBytes": path_available_bytes(path),
+            })
+        })
+        .collect();
 
     let Some(raw_path) = query
         .path
@@ -447,51 +470,72 @@ pub(crate) async fn save_storage_selection(
     State(state): State<AppState>,
     Json(input): Json<StorageSelectionInput>,
 ) -> Response {
-    let (default_workspace, _default_output) = storage_defaults(&state);
-
-    let unified_res = if let Some(sid) = input.storage_id.as_deref() {
-        match sid {
-            "rvx-unified" => Ok(default_workspace.clone()),
-            "xisr-unified" => Ok(PathBuf::from("/sdcard/Revancify-Xisr")),
-            "downloads-unified" | "downloads" => Ok(PathBuf::from("/sdcard/Download/RVX-Patcher")),
-            "module-storage" | "module-workspace" => Ok(state.modpath.join("storage")),
-            "custom-storage" => match input.storage_path.as_deref().map(|p| safe_storage_path(&state, p, "Storage")) {
-                Some(Ok(p)) => Ok(p),
-                Some(Err(e)) => Err(e),
-                None => Err("Custom storage path is required".to_string()),
-            },
-            _ => Ok(default_workspace.clone()),
-        }
-    } else if let Some(wid) = input.workspace_id.as_deref() {
-        match wid {
-            "custom-workspace" => match input.workspace_path.as_deref().map(|p| safe_storage_path(&state, p, "Workspace")) {
-                Some(Ok(p)) => Ok(p),
-                Some(Err(e)) => Err(e),
-                None => Err("Custom workspace path is required".to_string()),
-            },
-            _ => Ok(default_workspace.clone()),
+    let (default_workspace, default_output) = storage_defaults(&state);
+    let resolved = if input.storage_id.is_none()
+        && (input.workspace_path.is_some() || input.output_path.is_some())
+    {
+        match (
+            input.workspace_path.as_deref(),
+            input.output_path.as_deref(),
+        ) {
+            (Some(workspace), Some(output)) => safe_storage_path(&state, workspace, "Workspace")
+                .and_then(|workspace| {
+                    safe_storage_path(&state, output, "Output").map(|output| (workspace, output))
+                }),
+            _ => Err("Pilih folder Workspace dan Output terlebih dahulu".to_string()),
         }
     } else {
-        Ok(default_workspace.clone())
+        let unified = match input
+            .storage_id
+            .as_deref()
+            .or(input.workspace_id.as_deref())
+        {
+            Some("custom-storage") => input
+                .storage_path
+                .as_deref()
+                .ok_or_else(|| "Pilih folder penyimpanan".to_string())
+                .and_then(|path| safe_storage_path(&state, path, "Storage")),
+            Some("module-storage" | "module-workspace") => Ok(state.modpath.join("storage")),
+            Some("xisr-unified") => Ok(PathBuf::from("/sdcard/Revancify-Xisr")),
+            Some("downloads-unified" | "downloads") => {
+                Ok(PathBuf::from("/sdcard/Download/RVX-Patcher"))
+            }
+            Some("rvx-unified") | None => Ok(default_workspace.clone()),
+            Some(_) => Err("Pilihan penyimpanan tidak dikenal".to_string()),
+        };
+        unified.map(|path| {
+            (
+                path.clone(),
+                if input.storage_id.is_none() {
+                    default_output
+                } else {
+                    path
+                },
+            )
+        })
     };
-
-    let target_dir = match unified_res {
-        Ok(dir) => dir,
-        Err(e) => return (StatusCode::BAD_REQUEST, Json(json!({"error": e}))).into_response(),
+    let (workspace, output) = match resolved {
+        Ok(paths) => paths,
+        Err(error) => {
+            return (StatusCode::BAD_REQUEST, Json(json!({"error": error}))).into_response()
+        }
     };
-
-    if let Err(error) = ensure_writable_directory(&target_dir).await {
-        return (StatusCode::BAD_REQUEST, Json(json!({"error": error}))).into_response();
+    for path in [&workspace, &output] {
+        if let Err(error) = ensure_writable_directory(path).await {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(json!({"error": error, "code": "storage_unwritable"})),
+            )
+                .into_response();
+        }
     }
-
-    let storage_id_val = input.storage_id.clone().unwrap_or_else(|| "custom-storage".to_string());
     let value = json!({
-        "storageId": storage_id_val,
-        "storagePath": target_dir.to_string_lossy(),
-        "workspaceId": storage_id_val,
-        "workspacePath": target_dir.to_string_lossy(),
-        "outputId": storage_id_val,
-        "outputPath": target_dir.to_string_lossy(),
+        "storageId": input.storage_id.as_deref().unwrap_or("split-storage"),
+        "storagePath": workspace.to_string_lossy(),
+        "workspaceId": input.workspace_id.as_deref().or(input.storage_id.as_deref()).unwrap_or("custom-workspace"),
+        "workspacePath": workspace.to_string_lossy(),
+        "outputId": input.output_id.as_deref().or(input.storage_id.as_deref()).unwrap_or("custom-output"),
+        "outputPath": output.to_string_lossy(),
         "updatedAt": SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis()
     });
 
@@ -516,9 +560,9 @@ pub(crate) async fn save_storage_selection(
         StatusCode::OK,
         Json(json!({
             "selection": value,
-            "storageAvailableBytes": path_available_bytes(&target_dir),
-            "workspaceAvailableBytes": path_available_bytes(&target_dir),
-            "outputAvailableBytes": path_available_bytes(&target_dir)
+            "storageAvailableBytes": path_available_bytes(&workspace),
+            "workspaceAvailableBytes": path_available_bytes(&workspace),
+            "outputAvailableBytes": path_available_bytes(&output)
         })),
     )
         .into_response()
@@ -555,14 +599,19 @@ pub(crate) async fn file_operation(
     };
     let dest_dir = PathBuf::from(&payload.target_dir);
     if let Err(_) = tokio::fs::create_dir_all(&dest_dir).await {
-        let _ = crate::utils::run_shell_command(&format!("mkdir -p \"{}\"", dest_dir.display())).await;
+        let _ =
+            crate::utils::run_shell_command(&format!("mkdir -p \"{}\"", dest_dir.display())).await;
     }
 
     let dest_file = dest_dir.join(filename);
     let is_move = payload.action.trim().eq_ignore_ascii_case("move");
 
     let op_res = if is_move {
-        state.log(format!("📦 Memindahkan {} ke {}", src.display(), dest_file.display()));
+        state.log(format!(
+            "📦 Memindahkan {} ke {}",
+            src.display(),
+            dest_file.display()
+        ));
         match tokio::fs::rename(&src, &dest_file).await {
             Ok(_) => Ok(()),
             Err(_) => {
@@ -571,7 +620,11 @@ pub(crate) async fn file_operation(
             }
         }
     } else {
-        state.log(format!("📋 Menyalin {} ke {}", src.display(), dest_file.display()));
+        state.log(format!(
+            "📋 Menyalin {} ke {}",
+            src.display(),
+            dest_file.display()
+        ));
         match tokio::fs::copy(&src, &dest_file).await {
             Ok(_) => Ok(()),
             Err(_) => {
@@ -668,7 +721,10 @@ pub(crate) async fn clean_storage_cache(
         format!("{:.1} MB", freed_bytes as f64 / (1024.0 * 1024.0))
     };
 
-    state.log(format!("🧹 Pembersihan berkas sampah selesai: {} dibebaskan", formatted));
+    state.log(format!(
+        "🧹 Pembersihan berkas sampah selesai: {} dibebaskan",
+        formatted
+    ));
 
     (
         StatusCode::OK,
@@ -679,4 +735,83 @@ pub(crate) async fn clean_storage_cache(
         })),
     )
         .into_response()
+}
+
+#[cfg(test)]
+mod storage_tests {
+    use super::*;
+
+    fn test_state() -> AppState {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        AppState::new(
+            std::env::temp_dir().join(format!(
+                "rvx-storage-test-{}-{}",
+                std::process::id(),
+                unique
+            )),
+            String::new(),
+            vec![],
+        )
+    }
+
+    async fn select_paths(state: &AppState, workspace: &Path, output: &Path) -> Response {
+        let input: StorageSelectionInput = serde_json::from_value(json!({
+            "workspaceId": "custom-workspace", "outputId": "custom-output",
+            "workspacePath": workspace.to_string_lossy(), "outputPath": output.to_string_lossy()
+        }))
+        .unwrap();
+        save_storage_selection(State(state.clone()), Json(input)).await
+    }
+
+    #[tokio::test]
+    async fn separate_workspace_and_output_are_preserved() {
+        let state = test_state();
+        let workspace = state.modpath.join("Workspace");
+        let output = state.modpath.join("Output");
+        assert_eq!(
+            select_paths(&state, &workspace, &output).await.status(),
+            StatusCode::OK
+        );
+        let saved = read_storage_selection(&state).await.unwrap();
+        assert_eq!(saved["workspacePath"], workspace.to_string_lossy().as_ref());
+        assert_eq!(saved["outputPath"], output.to_string_lossy().as_ref());
+        assert_eq!(saved["workspaceId"], "custom-workspace");
+        assert_eq!(saved["outputId"], "custom-output");
+        assert!(workspace.is_dir() && output.is_dir());
+        assert!(state.modpath.starts_with(std::env::temp_dir()));
+        tokio::fs::remove_dir_all(&state.modpath).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn invalid_output_does_not_replace_a_valid_saved_selection() {
+        let state = test_state();
+        let workspace = state.modpath.join("Workspace");
+        let output = state.modpath.join("Output");
+        assert_eq!(
+            select_paths(&state, &workspace, &output).await.status(),
+            StatusCode::OK
+        );
+        let before = read_storage_selection(&state).await;
+        let invalid_output = state.modpath.join("a-file");
+        tokio::fs::write(&invalid_output, b"keep").await.unwrap();
+        assert_eq!(
+            select_paths(&state, &workspace, &invalid_output)
+                .await
+                .status(),
+            StatusCode::BAD_REQUEST
+        );
+        assert_eq!(read_storage_selection(&state).await, before);
+        assert_eq!(tokio::fs::read(&invalid_output).await.unwrap(), b"keep");
+        assert!(safe_storage_path(
+            &state,
+            &state.modpath.join("web").join("output").to_string_lossy(),
+            "Output"
+        )
+        .is_err());
+        assert!(state.modpath.starts_with(std::env::temp_dir()));
+        tokio::fs::remove_dir_all(&state.modpath).await.unwrap();
+    }
 }

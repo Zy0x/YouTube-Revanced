@@ -1,21 +1,25 @@
 /* RVX Editorial Workbench — visual layer only, flow and behavior stay intact. */
 :root {
-  --rvx-canvas: #121110;
-  --rvx-canvas-raised: #171614;
-  --rvx-panel: #1c1a18;
-  --rvx-panel-hover: #24211e;
+  --rvx-canvas: #151412;
+  --rvx-canvas-raised: #191815;
+  --rvx-panel: #1d1c19;
+  --rvx-panel-hover: #282621;
   --rvx-line: #34302b;
   --rvx-line-soft: #292622;
-  --rvx-ink: #f3eee5;
-  --rvx-ink-2: #b5ada2;
-  --rvx-ink-3: #7f786f;
-  --rvx-accent: #ff5b4d;
-  --rvx-accent-hover: #ff7064;
+  --rvx-ink: #f0eee9;
+  --rvx-ink-2: #c2bdb4;
+  --rvx-ink-3: #a6a096;
+  --rvx-accent: #f07866;
+  --rvx-accent-hover: #f58d7e;
   --rvx-accent-soft: rgba(255, 91, 77, 0.11);
   --rvx-positive: #a8c997;
   --rvx-warning: #e4b96f;
   --rvx-danger: #e88378;
-  --rvx-radius: 10px;
+  --rvx-radius: 9px;
+  --rvx-surface-2: var(--rvx-panel);
+  --font-ui: var(--font-sans);
+  --morphe-blue-check: var(--rvx-accent);
+  color-scheme: dark;
   --morphe-bg: var(--rvx-canvas);
   --morphe-surface: var(--rvx-canvas-raised);
   --morphe-card: var(--rvx-panel);
@@ -41,28 +45,17 @@ body {
   letter-spacing: -0.006em;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(90deg, rgba(255,255,255,.016) 1px, transparent 1px),
-    linear-gradient(rgba(255,255,255,.012) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: linear-gradient(to bottom, #000, transparent 72%);
-  opacity: .34;
-}
+body::before { content: none; }
 
 .morphe-bokeh-bg { display: none; }
 
 .morphe-shell {
-  max-width: 720px;
-  background: rgba(18, 17, 16, .94);
+  max-width: 960px;
+  background: var(--rvx-canvas);
 }
 
 .wizard-screen {
-  max-width: 720px;
+  max-width: 960px;
   padding: 0 28px;
   animation: none;
 }
@@ -150,7 +143,7 @@ body::before {
   background: none;
   border-radius: 0;
   color: var(--rvx-accent);
-  font: 600 11px/1.2 var(--font-mono);
+  font: 600 12px/1.2 var(--font-mono);
   letter-spacing: .08em;
 }
 
@@ -159,10 +152,10 @@ body::before {
   grid-row: 1;
   justify-self: end;
   color: var(--rvx-ink-3);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
   letter-spacing: .09em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .wizard-step-pane { animation: rvx-pane-in .24s ease-out; }
@@ -180,10 +173,10 @@ body::before {
 .wizard-pane-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(25px, 5.5vw, 34px);
+  font-size: clamp(24px, 4vw, 30px);
   line-height: 1.08;
-  font-weight: 560;
-  letter-spacing: -.045em;
+  font-weight: 600;
+  letter-spacing: -.025em;
   color: var(--rvx-ink);
 }
 
@@ -191,7 +184,7 @@ body::before {
   max-width: 520px;
   margin-top: 9px;
   color: var(--rvx-ink-2);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.55;
 }
 
@@ -200,12 +193,12 @@ body::before {
 
 .wizard-pane-scrollable {
   padding-right: 7px;
-  scrollbar-width: none;
+  scrollbar-width: thin;
 }
 
 .wizard-pane-scrollable::-webkit-scrollbar,
 .wizard-picker-body::-webkit-scrollbar,
-.modal-tags-scroll-list::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.modal-tags-scroll-list::-webkit-scrollbar { width: 4px; }
 
 /* App catalog: one continuous list, with rhythm instead of stacked cards. */
 .wizard-app-toolbar {
@@ -239,7 +232,7 @@ body::before {
 #wizardAppSearch,
 .tag-search-input {
   color: var(--rvx-ink);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 #wizardAppSearch::placeholder,
@@ -248,7 +241,7 @@ body::before {
 .wizard-app-count {
   padding-bottom: 11px;
   color: var(--rvx-ink-3);
-  font: 500 10px/1 var(--font-mono);
+  font: 500 12px/1 var(--font-mono);
   letter-spacing: .03em;
 }
 
@@ -293,7 +286,7 @@ body::before {
 }
 
 .yt-card-title {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 620;
   color: var(--rvx-ink);
 }
@@ -301,7 +294,7 @@ body::before {
 .yt-card-sub {
   margin-top: 3px;
   color: var(--rvx-ink-3);
-  font: 500 10.5px/1.35 var(--font-mono);
+  font: 500 12px/1.35 var(--font-mono);
 }
 
 .app-card-arrow,
@@ -321,7 +314,7 @@ body::before {
   border-radius: 0;
   background: transparent;
   color: var(--rvx-ink-2);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: .02em;
 }
 
@@ -333,9 +326,9 @@ body::before {
   border-radius: 4px;
   background: transparent;
   color: var(--rvx-positive);
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: .05em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 /* Step 2: two deliberate selection fields. */
@@ -348,10 +341,10 @@ body::before {
 .settings-group-title,
 .summary-item-label {
   color: var(--rvx-ink-3);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 650;
   letter-spacing: .11em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .step2-summary-card {
@@ -383,9 +376,9 @@ body::before {
 .summary-card-avatar { background: var(--rvx-accent); }
 .summary-card-channel-icon { color: var(--rvx-accent); }
 
-.summary-card-title { color: var(--rvx-ink); font-size: 13.5px; font-weight: 640; }
-.summary-card-subtitle { color: var(--rvx-ink-3); font-size: 10px; }
-.summary-card-meta { color: var(--rvx-positive); font-size: 10px; }
+.summary-card-title { color: var(--rvx-ink); font-size: 14px; font-weight: 640; }
+.summary-card-subtitle { color: var(--rvx-ink-3); font-size: 12px; }
+.summary-card-meta { color: var(--rvx-positive); font-size: 12px; }
 
 .choice-badge-rec,
 .source-item-tag,
@@ -396,10 +389,10 @@ body::before {
   border-color: transparent;
   background: #292723;
   color: var(--rvx-ink-2);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 650;
   letter-spacing: .04em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .channel-load-status {
@@ -432,8 +425,8 @@ body::before {
 .channel-load-status.is-ready .channel-load-indicator { background: var(--rvx-positive); }
 .channel-load-status.is-error .channel-load-indicator { background: var(--rvx-accent); }
 .channel-load-copy { display: grid; gap: 2px; min-width: 0; }
-.channel-load-copy strong { color: var(--rvx-ink); font-size: 11px; font-weight: 620; }
-.channel-load-copy small { color: var(--rvx-ink-3); font-size: 9.5px; line-height: 1.35; }
+.channel-load-copy strong { color: var(--rvx-ink); font-size: 12px; font-weight: 620; }
+.channel-load-copy small { color: var(--rvx-ink-3); font-size: 12px; line-height: 1.35; }
 
 @keyframes rvx-spin { to { transform: rotate(360deg); } }
 
@@ -441,7 +434,7 @@ body::before {
 .download-consent-kicker {
   margin: 0 0 5px;
   color: var(--rvx-accent);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: .13em;
 }
@@ -457,8 +450,8 @@ body::before {
   background: var(--rvx-accent-soft);
 }
 .download-plan-summary > div { display: grid; gap: 3px; }
-.download-plan-summary span { color: var(--rvx-ink-3); font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
-.download-plan-summary strong { color: var(--rvx-ink); font-size: 13px; font-weight: 640; }
+.download-plan-summary span { color: var(--rvx-ink-3); font-size: 12px; text-transform: none; letter-spacing: .08em; }
+.download-plan-summary strong { color: var(--rvx-ink); font-size: 14px; font-weight: 640; }
 .download-network-badge { padding: 5px 7px; border-radius: 5px; background: #292723; color: var(--rvx-ink-2) !important; }
 .download-plan-list { display: grid; margin-top: 12px; }
 .download-plan-item {
@@ -469,14 +462,14 @@ body::before {
   min-height: 52px;
   border-bottom: 1px solid var(--rvx-line-soft);
 }
-.download-plan-icon { color: var(--rvx-ink-3); font-size: 13px; text-align: center; }
+.download-plan-icon { color: var(--rvx-ink-3); font-size: 14px; text-align: center; }
 .download-plan-copy { display: grid; gap: 2px; min-width: 0; }
-.download-plan-copy strong { color: var(--rvx-ink); font-size: 11.5px; font-weight: 610; }
-.download-plan-copy small { color: var(--rvx-ink-3); font-size: 9.5px; line-height: 1.35; }
-.download-plan-state { color: var(--rvx-ink-2); font-size: 9.5px; white-space: nowrap; }
+.download-plan-copy strong { color: var(--rvx-ink); font-size: 12px; font-weight: 610; }
+.download-plan-copy small { color: var(--rvx-ink-3); font-size: 12px; line-height: 1.35; }
+.download-plan-state { color: var(--rvx-ink-2); font-size: 12px; white-space: nowrap; }
 .download-plan-state.is-download { color: var(--rvx-accent); }
 .download-plan-state.is-cached { color: var(--rvx-positive); }
-.download-consent-note { margin: 14px 0 0; color: var(--rvx-ink-3); font-size: 10px; line-height: 1.5; }
+.download-consent-note { margin: 14px 0 0; color: var(--rvx-ink-3); font-size: 12px; line-height: 1.5; }
 .download-consent-actions { display: grid; grid-template-columns: 1fr 1.45fr; gap: 9px; }
 .download-consent-actions button { min-height: 42px; }
 
@@ -497,7 +490,7 @@ body::before {
 
 .version-rec-tag {
   color: var(--rvx-accent);
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: .12em;
 }
 
@@ -530,7 +523,7 @@ body::before {
   border-radius: 8px;
   background: rgba(255, 255, 255, .018);
   color: var(--rvx-ink-3);
-  font-size: 10.5px;
+  font-size: 12px;
 }
 
 #wizardVersionCatalogCount {
@@ -545,10 +538,10 @@ body::before {
   gap: 16px;
   padding: 0 14px 8px;
   color: var(--rvx-ink-3);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 650;
   letter-spacing: .09em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .version-choice-list {
@@ -633,10 +626,10 @@ body::before {
 
 .version-best-label {
   color: var(--rvx-accent);
-  font-size: 8.5px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: .07em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .version-support-copy {
@@ -651,11 +644,11 @@ body::before {
   padding: 3px 6px;
   border: 1px solid transparent;
   border-radius: 4px;
-  font-size: 8.5px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: .055em;
   line-height: 1;
-  text-transform: uppercase;
+  text-transform: none;
   white-space: nowrap;
 }
 
@@ -679,7 +672,7 @@ body::before {
 .version-support-count,
 .version-visible-count {
   color: var(--rvx-ink-3);
-  font-size: 9.5px;
+  font-size: 12px;
 }
 
 .version-more-row {
@@ -696,13 +689,13 @@ body::before {
   min-height: 40px;
   padding-inline: 0;
   color: var(--rvx-ink-2);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .version-empty-state {
   padding: 24px 16px;
   color: var(--rvx-ink-3);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.55;
   text-align: center;
 }
@@ -716,7 +709,7 @@ body::before {
 
   .version-choice-row { gap: 10px; padding-inline: 12px; }
   .version-choice-number { font-size: 14px; }
-  .version-support-count { font-size: 9px; }
+  .version-support-count { font-size: 12px; }
 }
 
 .morphe-version-list,
@@ -758,7 +751,7 @@ body::before {
   border: 1px solid var(--rvx-line);
   border-radius: 7px;
   color: var(--rvx-ink-3);
-  font: 650 11px/1 var(--font-mono);
+  font: 650 12px/1 var(--font-mono);
 }
 
 .m3-mode-segment-btn.active .m3-mode-segment-icon {
@@ -779,7 +772,7 @@ body::before {
   border-radius: 7px;
   background: transparent;
   color: var(--rvx-ink-2);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .m3-chip-btn:hover { border-color: #5b534c; background: var(--rvx-panel); }
@@ -805,7 +798,7 @@ body::before {
   border-bottom: 1px solid var(--rvx-line-soft);
 }
 
-.summary-item-value { color: var(--rvx-ink); font-size: 13px; font-weight: 600; text-align: right; }
+.summary-item-value { color: var(--rvx-ink); font-size: 14px; font-weight: 600; text-align: right; }
 
 .morphe-version-actions { gap: 8px; }
 
@@ -824,7 +817,7 @@ body::before {
 .step2-tool-btn {
   min-height: 44px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 640;
   box-shadow: none;
 }

@@ -2,14 +2,15 @@ name: Build & Package RVX Daemon and Apps
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - 'daemon/**'
-      - 'web/**'
-      - 'android/**'
-      - '.github/workflows/build-daemon.yml'
+  # CI/CD push trigger disabled temporarily per user request
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - 'daemon/**'
+  #     - 'web/**'
+  #     - 'android/**'
+  #     - '.github/workflows/build-daemon.yml'
 
 jobs:
   build-all:

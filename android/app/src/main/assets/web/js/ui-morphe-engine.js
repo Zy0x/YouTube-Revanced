@@ -42,24 +42,7 @@ function getMorpheEngineSummaryText() {
 }
 
 function switchCurateTab(tab) {
-  STATE.wizardStep4ActiveTab = tab;
-  const tabPatches = document.getElementById('tabCuratePatches');
-  const tabEngine = document.getElementById('tabCurateEngine');
-  const viewPatches = document.getElementById('viewCuratePatches');
-  const viewEngine = document.getElementById('viewCurateEngine');
-
-  const isPatches = tab === 'patches';
-  tabPatches?.classList.toggle('active', isPatches);
-  tabPatches?.setAttribute('aria-selected', String(isPatches));
-  tabEngine?.classList.toggle('active', !isPatches);
-  tabEngine?.setAttribute('aria-selected', String(!isPatches));
-
-  viewPatches?.classList.toggle('hidden', !isPatches);
-  viewEngine?.classList.toggle('hidden', isPatches);
-
-  if (!isPatches && viewEngine) {
-    renderMorpheEnginePanel(viewEngine);
-  }
+  goToWizardStep(tab === 'engine' ? 6 : 5);
 }
 
 function renderMorpheEnginePanel(container) {
@@ -121,15 +104,15 @@ function renderMorpheEnginePanel(container) {
 
         <div id="enginePersistentKeystoreInfo" class="engine-subpanel ${opts.keystoreMode === 'persistent' ? '' : 'hidden'}" style="margin-top: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px;">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
-            <span style="font-size: 0.85rem; color: #a1a1aa;">📁 Shared Keystore:</span>
+            <span style="font-size: 0.85rem; color: #a1a1aa;"> Keystore bersama:</span>
             <span style="font-size: 0.8rem; background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 2px 8px; border-radius: 4px;">Auto-Sync Xisr</span>
           </div>
           <div style="font-family: monospace; font-size: 0.8rem; color: #e4e4e7; background: rgba(0, 0, 0, 0.25); padding: 6px 10px; border-radius: 6px; word-break: break-all;">
             /sdcard/RVX-Patcher/keystore/morphe.keystore
           </div>
           <div style="display: flex; gap: 8px; margin-top: 10px;">
-            <button type="button" id="btnExportKeystore" class="morphe-btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; flex: 1;">📤 Cadangkan / Ekspor</button>
-            <button type="button" id="btnImportKeystore" class="morphe-btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; flex: 1;">📥 Impor Keystore</button>
+            <button type="button" id="btnExportKeystore" class="morphe-btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; flex: 1;"> Cadangkan / Ekspor</button>
+            <button type="button" id="btnImportKeystore" class="morphe-btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; flex: 1;"> Impor Keystore</button>
           </div>
         </div>
 
@@ -156,7 +139,7 @@ function renderMorpheEnginePanel(container) {
         <div id="engineArchChipsContainer" class="engine-chips-wrapper ${opts.stripLibs ? '' : 'disabled'}">
           ${archs.map(arch => `
             <button type="button" class="engine-chip-btn ${selectedArchs.has(arch) ? 'active' : ''}" data-arch="${arch}">
-              <span class="chip-check">${selectedArchs.has(arch) ? '✓' : '+'}</span>
+              <span class="chip-check">${selectedArchs.has(arch) ? '' : '+'}</span>
               <span>${arch}</span>
               ${arch === 'arm64-v8a' ? '<span class="chip-badge">Umum</span>' : ''}
             </button>
@@ -207,7 +190,7 @@ function renderMorpheEnginePanel(container) {
           <div class="engine-toggle-row">
             <label class="engine-toggle-label" for="toggleEngineContinueOnError">
               <span>Lanjutkan jika ada patch gagal (--continue-on-error)</span>
-              <small>Proses patching tidak langsung dibatalkan jika hanya 1 patch non-kritis yang bermasalah (standar Revancify Termux).</small>
+              <small>Nonaktif secara bawaan. Jika diaktifkan, APK dapat kehilangan fitur dari patch yang gagal.</small>
             </label>
             <input type="checkbox" id="toggleEngineContinueOnError" class="engine-switch" ${opts.continueOnError ? 'checked' : ''}>
           </div>
@@ -251,8 +234,8 @@ function renderMorpheEnginePanel(container) {
             <span id="rootPersistenceBadge" style="font-size: 0.78rem; background: rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 2px 8px; border-radius: 4px;">/data/adb/service.d &amp; post-fs-data.d</span>
           </div>
           <div style="display: flex; gap: 8px;">
-            <button type="button" id="btnTriggerUmount" class="morphe-btn-secondary" style="font-size: 0.82rem; padding: 8px 12px; color: #f87171; border-color: rgba(248, 113, 113, 0.3); flex: 1;">🧹 Lepas Mount (Umount)</button>
-            <button type="button" id="btnCheckMountStatus" class="morphe-btn-secondary" style="font-size: 0.82rem; padding: 8px 12px; flex: 1;">🔄 Cek Status Mount</button>
+            <button type="button" id="btnTriggerUmount" class="morphe-btn-secondary" style="font-size: 0.82rem; padding: 8px 12px; color: #f87171; border-color: rgba(248, 113, 113, 0.3); flex: 1;"> Lepas Mount (Umount)</button>
+            <button type="button" id="btnCheckMountStatus" class="morphe-btn-secondary" style="font-size: 0.82rem; padding: 8px 12px; flex: 1;"> Cek Status Mount</button>
           </div>
         </div>
       </section>
@@ -337,7 +320,7 @@ function bindMorpheEngineEvents(container) {
       STATE.morpheEngineOptions.selectedArchs = Array.from(set);
       btn.classList.toggle('active', set.has(arch));
       const checkEl = btn.querySelector('.chip-check');
-      if (checkEl) checkEl.textContent = set.has(arch) ? '✓' : '+';
+      if (checkEl) checkEl.textContent = set.has(arch) ? '' : '+';
       saveMorpheEngineOptions();
     };
   });
@@ -452,7 +435,7 @@ function bindMorpheEngineEvents(container) {
   if (btnCheckMount) {
     btnCheckMount.onclick = async () => {
       try {
-        const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/mount-status`);
+        const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/mount-status`, { headers: daemonAuthHeaders() });
         const data = await res.json();
         const badge = document.getElementById('rootPersistenceBadge');
         if (badge) {

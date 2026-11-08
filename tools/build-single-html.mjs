@@ -56,17 +56,17 @@ window.__RVX_ENGINE_WORKER_SOURCE__ = ${workerSource};
 </script>`;
 
 let html = read('index.html');
-html = html.replace(/\s*<link rel="manifest"[^>]*>/, '');
+html = html.replace(/\s*<link\b(?=[^>]*\brel=["']manifest["'])[^>]*>/, '');
 html = html.replace(
-  /\s*<link rel="stylesheet" href="style\.css\?v=[^"]+">/,
+  /\s*<link\b(?=[^>]*\brel=["']stylesheet["'])(?=[^>]*\bhref=["']style\.css(?:\?[^"']*)?["'])[^>]*>/,
   `\n  <meta name="rvx-distribution" content="single-html">\n  <style>\n${inlineCss('style.css')}\n  </style>`,
 );
 html = html.replace('</head>', `${runtimeBootstrap}\n</head>`);
 html = html.replace(
-  /<script src="([^"?]+)(?:\?v=[^"]+)?"><\/script>/g,
+  /<script\b[^>]*\bsrc=["']([^"'?]+)(?:\?[^"']*)?["'][^>]*>\s*<\/script>/g,
   (_, source) => `<script>\n${read(source).replaceAll('</script>', '<\\/script>')}\n</script>`,
 );
 
-fs.writeFileSync(outputPath, html);
+fs.writeFileSync(outputPath, html.replace(/[ \t]+$/gm, ''));
 const size = fs.statSync(outputPath).size;
 console.log(`Created ${path.relative(projectRoot, outputPath)} (${(size / 1024 / 1024).toFixed(2)} MiB)`);

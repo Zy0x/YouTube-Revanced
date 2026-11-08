@@ -47,14 +47,20 @@ function openMicrogManagerModal() {
     }
   }
 
+  if (!installedPkg && STATE.daemonOnline && STATE.daemonStatus?.is_android && STATE.daemonStatus?.microg_installed) { installedPkg = STATE.daemonStatus.microg_package; installedName = STATE.daemonStatus.microg_variant || 'GmsCore'; }
+  const canInspect = Boolean(window.RVXNativeBridge?.isPackageInstalled || (STATE.daemonOnline && STATE.daemonStatus?.is_android));
   if (installedPkg) {
     if (detectTitle) detectTitle.textContent = `Terpasang: ${installedName}`;
     if (detectSub) detectSub.textContent = 'MicroG sudah aktif di perangkat Anda. YouTube RVX siap digunakan untuk login Google.';
-    if (detectIcon) detectIcon.textContent = '✅';
+    if (detectIcon) detectIcon.textContent = '✓';
+  } else if (!canInspect) {
+    if (detectTitle) detectTitle.textContent = 'GmsCore belum dapat diperiksa';
+    if (detectSub) detectSub.textContent = 'Buka melalui aplikasi atau WebUI modul untuk memeriksa paket yang terpasang. Anda juga dapat mengunduh GmsCore di bawah.';
+    if (detectIcon) detectIcon.textContent = 'i';
   } else {
-    if (detectTitle) detectTitle.textContent = 'MicroG Belum Terpasang';
+    if (detectTitle) detectTitle.textContent = 'GmsCore belum terpasang';
     if (detectSub) detectSub.textContent = 'YouTube RVX Non-Root wajib memerlukan MicroG agar tidak crash dan dapat masuk ke akun Google Anda.';
-    if (detectIcon) detectIcon.textContent = '⚠️';
+    if (detectIcon) detectIcon.textContent = '!';
   }
 
   const variantCards = modal.querySelectorAll('.microg-variant-card');
@@ -98,59 +104,3 @@ function openMicrogManagerModal() {
 
   modal.classList.remove('hidden');
 }
-
-function setupStockApkDownloadHandler() {
-  const btn = document.getElementById('btnWizardDownloadStockApk');
-  if (!btn) return;
-
-  btn.addEventListener('click', async () => {
-    const pkg = STATE.currentApp?.packageName || 'com.google.android.youtube';
-    const ver = STATE.currentVersion;
-    if (!ver) {
-      if (typeof showToast === 'function') showToast('Pilih versi target APK terlebih dahulu.', 'warning');
-      return;
-    }
-
-    const btnText = document.getElementById('btnWizardDownloadStockApkText');
-    if (btnText) btnText.textContent = '⏳ Memulai unduhan APK...';
-    btn.disabled = true;
-
-    try {
-      const token = RVX_STORAGE.session.getItem('rvx_daemon_token') || '';
-      const res = await fetch('/api/v1/downloads/stock-apk', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-rvx-token': token
-        },
-        body: JSON.stringify({ packageName: pkg, targetVersion: ver })
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (typeof showToast === 'function') {
-          showToast(data.message || `Unduhan APK stok v${ver} dimulai!`);
-        }
-        if (data.cached) {
-          if (btnText) btnText.textContent = '✅ APK Tersedia di Cache';
-        } else {
-          if (btnText) btnText.textContent = '⬇️ Mengunduh di latar belakang...';
-        }
-      } else {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `HTTP ${res.status}`);
-      }
-    } catch (e) {
-      if (typeof showToast === 'function') {
-        showToast(`Gagal memulai unduhan: ${e.message}`, 'error');
-      }
-      if (btnText) btnText.textContent = '⬇️ Unduh APK Rekomendasi Resmi';
-    } finally {
-      btn.disabled = false;
-    }
-  });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  setupStockApkDownloadHandler();
-});

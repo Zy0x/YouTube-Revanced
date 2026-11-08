@@ -106,13 +106,14 @@ function applyPatchPresetData(presetArray) {
   }
 
   const pkgName = STATE.currentApp?.packageName || 'com.google.android.youtube';
-  const entry = presetArray.find(item => item.pkgName === pkgName) || presetArray[0];
+  const entry = presetArray.find(item => item.pkgName === pkgName);
 
   if (!entry || !Array.isArray(entry.patches)) {
     alert('Tidak ditemukan data patch yang sesuai dalam file preset JSON ini.');
     return;
   }
 
+  STATE.activePreset = '';
   // Apply patches
   if (!STATE.selectedPatches) STATE.selectedPatches = new Set();
   STATE.selectedPatches.clear();
@@ -139,7 +140,7 @@ function applyPatchPresetData(presetArray) {
 
   // Re-render patch list and summaries
   if (typeof renderMorphePatchList === 'function') {
-    renderMorphePatchList(STATE.wizardStep === 4 ? 'wizardPatchCategoriesContainer' : 'patchCategoriesContainer');
+    renderMorphePatchList(STATE.activeScreen === 'wizard' ? 'wizardPatchCategoriesContainer' : 'patchCategoriesContainer');
   }
   if (typeof syncAllSummaries === 'function') {
     syncAllSummaries();
@@ -159,48 +160,16 @@ function applyPatchPresetData(presetArray) {
    CURATED PATCH PRESETS (BALANCED, MINIMAL, POWER)
    ========================================================================== */
 function applyCuratedPreset(type) {
-  if (!Array.isArray(STATE.patches) || STATE.patches.length === 0) return;
-  if (!STATE.selectedPatches) STATE.selectedPatches = new Set();
-  STATE.selectedPatches.clear();
-
-  const isNonRoot = STATE.targetMode === 'non-root';
-
-  if (type === 'minimal') {
-    const minimalKeywords = [
-      'ads', 'ad-block', 'video-ads', 'general-ads',
-      'background', 'playback', 'minimized',
-      'return-youtube-dislike', 'dislike',
-      'spoof-client', 'client-spoof'
-    ];
-    if (isNonRoot) minimalKeywords.push('microg', 'gmscore');
-
-    STATE.patches.forEach(p => {
-      const name = p.name.toLowerCase();
-      if (minimalKeywords.some(kw => name.includes(kw))) {
-        STATE.selectedPatches.add(p.name);
-      }
-    });
-  } else if (type === 'power') {
-    STATE.patches.forEach(p => {
-      const name = p.name.toLowerCase();
-      if (!name.includes('debug') && !name.includes('test') && !name.includes('rip')) {
-        STATE.selectedPatches.add(p.name);
-      }
-    });
-    if (!isNonRoot) {
-      const mgPatch = STATE.patches.find(p => p.name.toLowerCase().includes('microg') || p.name.toLowerCase().includes('gmscore'));
-      if (mgPatch) STATE.selectedPatches.delete(mgPatch.name);
-    }
-  } else {
-    STATE.patches.forEach(p => {
-      if (p.enabledByDefault || p.default) {
-        STATE.selectedPatches.add(p.name);
-      }
-    });
-    if (typeof adjustMicrogForMode === 'function') {
-      adjustMicrogForMode(STATE.targetMode);
-    }
+  if (!Array.isArray(STATE.patches) || !STATE.patches.length) return;
+  const selection = RVX_UI.preset(STATE.patches, type, STATE.targetMode);
+  if (!selection.size) {
+    const message = 'Preset ini belum tersedia untuk sumber ini. Pilih fitur secara manual.';
+    setText('presetSelectionStatus', message);
+    if (typeof showRvxToast === 'function') showRvxToast(message);
+    return;
   }
+  STATE.selectedPatches = selection;
+  STATE.activePreset = type;
 
   ['btnPresetBalanced', 'btnPresetMinimal', 'btnPresetPower'].forEach(id => {
     const btn = document.getElementById(id);
@@ -209,9 +178,11 @@ function applyCuratedPreset(type) {
                   (type === 'power' && id === 'btnPresetPower') ||
                   (type === 'balanced' && id === 'btnPresetBalanced');
     btn.classList.toggle('active', match);
+    btn.setAttribute('aria-pressed', String(match));
   });
 
-  const containerId = STATE.wizardStep === 4 ? 'wizardPatchCategoriesContainer' : 'patchCategoriesContainer';
+  setText('presetSelectionStatus', `${type === 'minimal' ? 'Minimalis' : type === 'power' ? 'Lengkap' : 'Rekomendasi'} diterapkan · ${selection.size} patch aktif`);
+  const containerId = STATE.activeScreen === 'wizard' ? 'wizardPatchCategoriesContainer' : 'patchCategoriesContainer';
   if (typeof renderMorphePatchList === 'function') {
     renderMorphePatchList(containerId);
   }
@@ -222,7 +193,7 @@ function applyCuratedPreset(type) {
     updateWizardNavigationState();
   }
   if (typeof showToast === 'function') {
-    const label = type === 'minimal' ? '⚡ Minimalis (Performa)' : type === 'power' ? '🛠️ Power User (Lengkap)' : '🌟 Rekomendasi Utama';
+    const label = type === 'minimal' ? 'Minimalis' : type === 'power' ? 'Lengkap' : 'Rekomendasi';
     showToast(`Preset diterapkan: ${label} (${STATE.selectedPatches.size} patch)`);
   }
 }

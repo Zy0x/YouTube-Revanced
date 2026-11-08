@@ -13,3 +13,12 @@ bin/
 .daemon_port
 
 imported-xisr/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/jniLibs/
+*.jks
+*.keystore
+*.p12
+signing.properties

@@ -42,7 +42,7 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #E53935 0%, #B71C1C 100%);
+  background: var(--rvx-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -79,7 +79,7 @@
 
 .m3-progress-indicator {
   height: 100%;
-  background: #38BDF8;
+  background: var(--rvx-accent);
   border-radius: 2px;
   transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -92,10 +92,10 @@
 }
 
 .m3-step-pill {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  color: #38BDF8;
-  background: rgba(56, 189, 248, 0.12);
+  color: var(--rvx-accent);
+  background: rgba(240, 120, 102, 0.12);
   padding: 3px 8px;
   border-radius: 6px;
   font-family: var(--font-mono, monospace);
@@ -103,9 +103,9 @@
 }
 
 .m3-step-name {
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 500;
-  color: var(--morphe-muted, #94A3B8);
+  color: var(--morphe-muted, var(--rvx-accent));
 }
 
 /* Stepper Progress Bar (Legacy hidden) */
@@ -142,15 +142,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   font-family: var(--font-mono);
   transition: all 0.15s ease;
 }
 
 .wizard-step-node.active .step-node-bubble {
-  background: #2563EB;
-  border-color: #3B82F6;
+  background: var(--rvx-accent);
+  border-color: var(--rvx-accent);
   color: #FFFFFF;
   box-shadow: none;
   transform: none;
@@ -163,7 +163,7 @@
 }
 
 .step-node-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--morphe-muted);
   text-align: center;
@@ -193,7 +193,7 @@
 
 .wizard-stepper-progress {
   height: 100%;
-  background: #2563EB;
+  background: var(--rvx-accent);
   width: 0%;
   transition: width 0.25s ease;
 }
@@ -226,7 +226,7 @@
 }
 
 .wizard-pane-desc {
-  font-size: 13.5px;
+  font-size: 14px;
   color: var(--morphe-muted);
   line-height: 1.45;
 }
@@ -260,7 +260,7 @@
 /* Step 3: Recommended Version Card */
 .version-rec-hero {
   background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(59, 130, 246, 0.35);
+  border: 1px solid rgba(240, 120, 102, 0.35);
   border-radius: 10px;
   padding: 12px 14px;
   margin-bottom: 14px;
@@ -273,12 +273,12 @@
 
 .version-rec-hero:hover {
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(96, 165, 250, 0.6);
+  border-color: rgba(240, 120, 102, 0.6);
 }
 
 .version-rec-hero.selected {
-  border-color: #38BDF8;
-  background: rgba(59, 130, 246, 0.06);
+  border-color: var(--rvx-accent);
+  background: rgba(240, 120, 102, 0.06);
 }
 
 .version-rec-left {
@@ -291,10 +291,10 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  color: #38BDF8;
-  text-transform: uppercase;
+  color: var(--rvx-accent);
+  text-transform: none;
   letter-spacing: 0.06em;
 }
 
@@ -306,8 +306,8 @@
 }
 
 .version-rec-sub {
-  font-size: 12px;
-  color: #94A3B8;
+  font-size: 14px;
+  color: var(--rvx-accent);
 }
 
 .version-badges-row {
@@ -318,11 +318,11 @@
 
 /* Version Classification Badges */
 .badge-version {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 6px;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.04em;
 }
 
@@ -345,9 +345,9 @@
 }
 
 .badge-pre {
-  background: rgba(168, 85, 247, 0.2);
-  color: #C084FC;
-  border: 1px solid rgba(168, 85, 247, 0.35);
+  background: rgba(240, 120, 102, 0.2);
+  color: var(--rvx-ink-2);
+  border: 1px solid rgba(240, 120, 102, 0.35);
 }
 
 /* Step 4: Target Mode Switcher */
@@ -379,8 +379,8 @@
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
-  color: #E2E8F0;
-  font-size: 12px;
+  color: var(--rvx-ink-2);
+  font-size: 14px;
   font-weight: 500;
   padding: 6px 12px;
   cursor: pointer;
@@ -404,8 +404,8 @@
 }
 
 .m3-mode-segment-btn.active {
-  background: rgba(56, 189, 248, 0.08);
-  border-color: #38BDF8;
+  background: rgba(240, 120, 102, 0.08);
+  border-color: var(--rvx-accent);
 }
 
 .m3-mode-segment-icon {
@@ -422,14 +422,14 @@
 }
 
 .m3-mode-segment-title {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
   color: #FFFFFF;
 }
 
 .m3-mode-segment-sub {
-  font-size: 11px;
-  color: var(--morphe-muted, #94A3B8);
+  font-size: 12px;
+  color: var(--morphe-muted, var(--rvx-accent));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -438,7 +438,7 @@
 .m3-mode-segment-check {
   font-size: 14px;
   font-weight: 800;
-  color: #38BDF8;
+  color: var(--rvx-accent);
   width: 16px;
   text-align: center;
 }
@@ -471,8 +471,8 @@
 }
 
 .mode-pill-card.active {
-  background: rgba(59, 130, 246, 0.08);
-  border-color: #38BDF8;
+  background: rgba(240, 120, 102, 0.08);
+  border-color: var(--rvx-accent);
 }
 
 .mode-card-header {
@@ -494,7 +494,7 @@
 }
 
 .mode-pill-card.active .mode-icon-circle {
-  background: #2563EB;
+  background: var(--rvx-accent);
   color: #FFFFFF;
 }
 
@@ -506,7 +506,7 @@
 }
 
 .mode-card-desc {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--morphe-muted);
   line-height: 1.4;
 }
@@ -533,10 +533,10 @@
 }
 
 .summary-item-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--morphe-muted);
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.04em;
 }
 
@@ -556,7 +556,7 @@
   padding-top: 12px;
   padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-  background: var(--morphe-bg, #0B0C10);
+  background: var(--morphe-bg, var(--rvx-panel));
   z-index: 10;
 }
 
@@ -587,8 +587,8 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--morphe-border-strong);
-  color: #E2E8F0;
-  font-size: 13px;
+  color: var(--rvx-ink-2);
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -597,34 +597,34 @@
 
 .btn-setup-ulang:hover {
   background: rgba(255, 255, 255, 0.12);
-  border-color: #60A5FA;
-  color: #60A5FA;
+  border-color: var(--rvx-accent);
+  color: var(--rvx-accent);
 }
 
 .badge-configured {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 999px;
   background: rgba(16, 185, 129, 0.2);
   color: #34D399;
   border: 1px solid rgba(16, 185, 129, 0.35);
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+  box-shadow: none;
 }
 
 .badge-needs-setup {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   padding: 3px 8px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
-  color: #94A3B8;
+  color: var(--rvx-accent);
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
@@ -634,7 +634,7 @@
   border-radius: 10px;
   background: rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #E2E8F0;
+  color: var(--rvx-ink-2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -674,8 +674,8 @@
 }
 
 .modal-warning-text {
-  font-size: 13.5px;
-  color: #CBD5E1;
+  font-size: 14px;
+  color: var(--rvx-ink-2);
   line-height: 1.5;
   text-align: center;
   margin-bottom: 20px;

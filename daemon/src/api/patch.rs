@@ -1,6 +1,6 @@
 use super::storage::{
-    ensure_writable_directory, path_available_bytes, read_storage_selection, runtime_has_root_access,
-    storage_defaults,
+    ensure_writable_directory, path_available_bytes, read_storage_selection,
+    runtime_has_root_access, storage_defaults,
 };
 use crate::patcher::{execute_patch_job, PatchRequest};
 use crate::state::AppState;
@@ -35,13 +35,32 @@ pub(crate) async fn get_status(State(state): State<AppState>) -> impl IntoRespon
         .and_then(|value| value.get("workspacePath"))
         .and_then(Value::as_str)
         .map(PathBuf::from);
-    let jre_ready = get_java_binary_in(&state.modpath, workspace.as_deref()).is_some();
+    let java = get_java_binary_in(&state.modpath, workspace.as_deref());
+    let jre_ready = match &java {
+        Some(path) => {
+            if crate::dependencies::last_verified("java", path) {
+                true
+            } else if path.exists() {
+                crate::dependencies::probe_java(path).await.is_ok()
+            } else {
+                false
+            }
+        }
+        None => false,
+    };
     let is_patching = state.is_patching();
     let build_dir = workspace
         .as_ref()
         .map(|path| path.join("cache"))
         .unwrap_or_else(|| state.modpath.join("build_out"));
-    let cli_ready = build_dir.join("morphe-cli.jar").exists();
+    let cli = build_dir.join("morphe-cli.jar");
+    let cli_ready = if crate::dependencies::last_verified("cli", &cli) {
+        true
+    } else if cli.exists() {
+        crate::dependencies::cli_valid(&cli).await.is_ok()
+    } else {
+        false
+    };
     let cached_patch_bundle_url = tokio::fs::read_to_string(build_dir.join("patches.mpp.url"))
         .await
         .ok()
@@ -54,9 +73,15 @@ pub(crate) async fn get_status(State(state): State<AppState>) -> impl IntoRespon
     let check_path = workspace.as_deref().unwrap_or(&fallback_path);
     let storage_available_bytes = path_available_bytes(check_path);
     let storage_available_formatted = if storage_available_bytes >= 1024 * 1024 * 1024 {
-        format!("{:.1} GB", storage_available_bytes as f64 / (1024.0 * 1024.0 * 1024.0))
+        format!(
+            "{:.1} GB",
+            storage_available_bytes as f64 / (1024.0 * 1024.0 * 1024.0)
+        )
     } else {
-        format!("{:.0} MB", storage_available_bytes as f64 / (1024.0 * 1024.0))
+        format!(
+            "{:.0} MB",
+            storage_available_bytes as f64 / (1024.0 * 1024.0)
+        )
     };
 
     #[allow(unused_mut)]
@@ -86,7 +111,9 @@ pub(crate) async fn get_status(State(state): State<AppState>) -> impl IntoRespon
     }
 
     let is_android = cfg!(target_os = "android");
-    let is_standalone_app = std::env::var("RVX_STANDALONE_APP").map(|v| v == "1").unwrap_or(false)
+    let is_standalone_app = std::env::var("RVX_STANDALONE_APP")
+        .map(|v| v == "1")
+        .unwrap_or(false)
         || state.modpath.to_string_lossy().contains("com.rvx.patcher");
     let access_mode = if is_android && root_available {
         "root-integrated"
@@ -103,7 +130,9 @@ pub(crate) async fn get_status(State(state): State<AppState>) -> impl IntoRespon
         "daemon_version": env!("CARGO_PKG_VERSION"),
         "is_patching": is_patching,
         "jre_ready": jre_ready,
+        "jre_present": java.is_some(),
         "cli_ready": cli_ready,
+        "cli_present": cli.is_file(),
         "cached_patch_bundle_url": cached_patch_bundle_url,
         "storage_selection": storage,
         "storage_available_bytes": storage_available_bytes,
@@ -113,6 +142,7 @@ pub(crate) async fn get_status(State(state): State<AppState>) -> impl IntoRespon
         "microg_variant": microg_variant,
         "is_android": is_android,
         "root_available": root_available,
+        "root_installer_available": root_available || crate::root_install::installer_present(),
         "access_mode": access_mode,
         "web_runtime": "local-daemon",
         "pairing_required_for_local_web": false,
@@ -175,7 +205,9 @@ pub(crate) async fn get_app_info(
                 if let Ok(mut entries) = tokio::fs::read_dir(dir).await {
                     while let Ok(Some(entry)) = entries.next_entry().await {
                         let name = entry.file_name().to_string_lossy().to_string();
-                        if (name.contains(app_alias) || name.starts_with("21.") || name.starts_with("stock"))
+                        if (name.contains(app_alias)
+                            || name.starts_with("21.")
+                            || name.starts_with("stock"))
                             && name.ends_with(".apk")
                             && !name.contains("test-")
                             && !name.contains("-Anddea")
@@ -239,7 +271,7 @@ pub(crate) async fn install_jre(State(state): State<AppState>) -> impl IntoRespo
 
 pub(crate) async fn start_patch(
     State(state): State<AppState>,
-    Json(payload): Json<PatchRequest>,
+    Json(mut payload): Json<PatchRequest>,
 ) -> impl IntoResponse {
     if state.is_patching() {
         return (
@@ -271,6 +303,7 @@ pub(crate) async fn start_patch(
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs();
+    let selection = read_storage_selection(&state).await.unwrap_or(Value::Null);
     let valid = plan
         .get("expiresAt")
         .and_then(Value::as_u64)
@@ -283,11 +316,42 @@ pub(crate) async fn start_patch(
         && plan.get("workspaceLocationId").and_then(Value::as_str)
             == payload.workspace_location_id.as_deref()
         && plan.get("outputLocationId").and_then(Value::as_str)
-            == payload.output_location_id.as_deref();
+            == payload.output_location_id.as_deref()
+        && plan.get("inputApkPath").and_then(Value::as_str) == payload.input_apk_path.as_deref()
+        && plan.get("workspacePath").and_then(Value::as_str)
+            == selection.get("workspacePath").and_then(Value::as_str)
+        && plan.get("outputPath").and_then(Value::as_str)
+            == selection.get("outputPath").and_then(Value::as_str);
     if !valid {
         return (
             StatusCode::PRECONDITION_FAILED,
-            Json(json!({"error":"Download plan expired or no longer matches this build"})),
+            Json(
+                json!({"error":"Rencana resource sudah kedaluwarsa atau folder/input berubah. Periksa resource kembali sebelum memulai.", "code":"plan_changed"}),
+            ),
+        );
+    }
+
+    payload.prepared_workspace = plan
+        .get("workspacePath")
+        .and_then(Value::as_str)
+        .map(PathBuf::from);
+    payload.prepared_output = plan
+        .get("outputPath")
+        .and_then(Value::as_str)
+        .map(PathBuf::from);
+    if state
+        .is_patching
+        .compare_exchange(
+            false,
+            true,
+            std::sync::atomic::Ordering::SeqCst,
+            std::sync::atomic::Ordering::SeqCst,
+        )
+        .is_err()
+    {
+        return (
+            StatusCode::CONFLICT,
+            Json(json!({"error":"Proses lain masih berjalan", "code":"job_running"})),
         );
     }
 
@@ -311,193 +375,49 @@ pub(crate) async fn stream_logs(
         Err(_) => None,
     });
 
+    let stream = futures_util::stream::once(async {
+        Ok::<_, Infallible>(Event::default().data("STREAM_READY"))
+    })
+    .chain(stream);
     Sse::new(stream).keep_alive(KeepAlive::default())
 }
 
-pub(crate) async fn mount_apps(State(state): State<AppState>) -> impl IntoResponse {
-    let app_dir = state.modpath.join("app");
-    if !app_dir.exists() {
+pub(crate) async fn mount_apps(
+    State(state): State<AppState>,
+    Json(payload): Json<InstallRootRequest>,
+) -> impl IntoResponse {
+    let Some(path) = payload.apk_path else {
         return (
-            StatusCode::NOT_FOUND,
-            Json(json!({ "error": "No app directory found. Please patch an application first." })),
+            StatusCode::BAD_REQUEST,
+            Json(json!({"error":"Pilih satu APK hasil build yang akan dipasang"})),
         );
-    }
-
-    #[cfg(unix)]
-    {
-        let mut mounted_count = 0;
-        if let Ok(mut entries) = tokio::fs::read_dir(&app_dir).await {
-            while let Ok(Some(entry)) = entries.next_entry().await {
-                let p = entry.path();
-                if p.extension().map_or(false, |ext| ext == "apk") {
-                    let file_name = p
-                        .file_name()
-                        .unwrap_or_default()
-                        .to_string_lossy()
-                        .to_string();
-                    let pkg = resolve_pkg_from_filename(&file_name);
-                    let cmd = format!(
-                        "STOCKAPK=$(pm path {pkg} 2>/dev/null | grep base | cut -d: -f2 | head -n 1); \
-                         if [ -n \"$STOCKAPK\" ]; then \
-                             chcon u:object_r:apk_data_file:s0 \"{apk}\"; \
-                             mount -o bind \"{apk}\" \"$STOCKAPK\"; \
-                             am force-stop {pkg}; \
-                             mkdir -p /data/adb/service.d /data/adb/post-fs-data.d; \
-                             printf '#!/system/bin/sh\\nuntil [ \"$(getprop sys.boot_completed)\" = \"1\" ]; do sleep 2; done\\nS=$(pm path %s 2>/dev/null | grep base | cut -d: -f2 | head -n 1)\\nif [ -n \"$S\" ] && [ -f \"%s\" ]; then\\n  chcon u:object_r:apk_data_file:s0 \"%s\"\\n  mount -o bind \"%s\" \"$S\"\\nfi\\n' \"{pkg}\" \"{apk}\" \"{apk}\" \"{apk}\" > /data/adb/service.d/mount_{pkg}.sh; \
-                             chmod 755 /data/adb/service.d/mount_{pkg}.sh; \
-                             printf '#!/system/bin/sh\\nS=$(pm path %s 2>/dev/null | grep base | cut -d: -f2 | head -n 1)\\nif [ -n \"$S\" ]; then\\n  umount -l \"$S\" 2>/dev/null\\nfi\\n' \"{pkg}\" > /data/adb/post-fs-data.d/umount_{pkg}.sh; \
-                             chmod 755 /data/adb/post-fs-data.d/umount_{pkg}.sh; \
-                             echo 'MOUNT_SUCCESS'; \
-                         else \
-                             echo 'STOCK_NOT_FOUND'; \
-                         fi",
-                        pkg = pkg,
-                        apk = p.display()
-                    );
-                    if let Ok(out) = run_shell_command(&cmd).await {
-                        if out.contains("MOUNT_SUCCESS") {
-                            state.log(format!(
-                                "🎉 Hot-mounted {} ({}) successfully + dual persistence scripts installed!",
-                                pkg, file_name
-                            ));
-                            mounted_count += 1;
-                        }
-                    }
-                }
-            }
-        }
-
-        if mounted_count > 0 {
-            (
-                StatusCode::OK,
-                Json(
-                    json!({ "success": true, "message": format!("Successfully mounted {} app(s) with boot persistence!", mounted_count) }),
-                ),
-            )
-        } else {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(
-                    json!({ "error": "No patched apps could be mounted. Ensure target app is installed on device." }),
-                ),
-            )
-        }
-    }
-
-    #[cfg(not(unix))]
-    {
-        state.log("ℹ️ Mount command simulated on non-Android platform.");
-        (
-            StatusCode::OK,
-            Json(json!({ "success": true, "message": "Mount simulated (Non-Android host)" })),
-        )
+    };
+    match crate::root_install::install(&state, &path).await {
+        Ok(result) => (StatusCode::OK, Json(result)),
+        Err(error) => (
+            StatusCode::PRECONDITION_FAILED,
+            Json(json!({"success":false,"verified":false,"error":error})),
+        ),
     }
 }
 
 pub(crate) async fn umount_apps(State(state): State<AppState>) -> impl IntoResponse {
-    let _app_dir = state.modpath.join("app");
-    #[cfg(unix)]
-    {
-        let mut unmounted_count = 0;
-        if let Ok(mut entries) = tokio::fs::read_dir(&_app_dir).await {
-            while let Ok(Some(entry)) = entries.next_entry().await {
-                let p = entry.path();
-                if p.extension().map_or(false, |ext| ext == "apk") {
-                    let file_name = p
-                        .file_name()
-                        .unwrap_or_default()
-                        .to_string_lossy()
-                        .to_string();
-                    let pkg = resolve_pkg_from_filename(&file_name);
-                    let cmd = format!(
-                        "STOCKAPK=$(pm path {pkg} 2>/dev/null | grep base | cut -d: -f2 | head -n 1); \
-                         if [ -n \"$STOCKAPK\" ]; then \
-                             umount -l \"$STOCKAPK\" 2>/dev/null; \
-                             am force-stop {pkg}; \
-                             rm -f /data/adb/service.d/mount_{pkg}.sh /data/adb/post-fs-data.d/umount_{pkg}.sh; \
-                             echo 'UMOUNT_SUCCESS'; \
-                         fi",
-                        pkg = pkg
-                    );
-                    if let Ok(out) = run_shell_command(&cmd).await {
-                        if out.contains("UMOUNT_SUCCESS") {
-                            state.log(format!("🧹 Unmounted {} successfully and removed boot persistence.", pkg));
-                            unmounted_count += 1;
-                        }
-                    }
-                }
-            }
-        }
-        (
-            StatusCode::OK,
-            Json(json!({
-                "success": true,
-                "message": format!("Berhasil melepas mount {} aplikasi.", unmounted_count)
-            })),
-        )
-    }
-
-    #[cfg(not(unix))]
-    {
-        state.log("ℹ️ Umount command simulated on non-Android platform.");
-        (
-            StatusCode::OK,
-            Json(json!({ "success": true, "message": "Umount simulated (Non-Android host)" })),
-        )
+    match crate::root_install::inspect_install(&state, true).await {
+        Ok(result) => (StatusCode::OK, Json(result)),
+        Err(error) => (
+            StatusCode::PRECONDITION_FAILED,
+            Json(json!({"error":error,"success":false})),
+        ),
     }
 }
 
 pub(crate) async fn get_mount_status(State(state): State<AppState>) -> impl IntoResponse {
-    let _app_dir = state.modpath.join("app");
-    #[allow(unused_mut)]
-    let mut mounted_apps: Vec<String> = Vec::new();
-
-    #[cfg(unix)]
-    {
-        if let Ok(mounts) = tokio::fs::read_to_string("/proc/mounts").await {
-            if let Ok(mut entries) = tokio::fs::read_dir(&_app_dir).await {
-                while let Ok(Some(entry)) = entries.next_entry().await {
-                    let p = entry.path();
-                    if p.extension().map_or(false, |ext| ext == "apk") {
-                        let path_str = p.to_string_lossy();
-                        if mounts.contains(path_str.as_ref()) {
-                            let file_name = p.file_name().unwrap_or_default().to_string_lossy().to_string();
-                            let pkg = resolve_pkg_from_filename(&file_name);
-                            mounted_apps.push(pkg);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    let is_mounted = !mounted_apps.is_empty();
-    (
-        StatusCode::OK,
-        Json(json!({
-            "mounted": is_mounted,
-            "apps": mounted_apps
-        })),
-    )
-}
-
-#[allow(dead_code)]
-fn resolve_pkg_from_filename(name: &str) -> String {
-    let lower = name.to_lowercase();
-    if lower.contains("music") || lower.contains("ytmusic") {
-        "com.google.android.apps.youtube.music".to_string()
-    } else if lower.contains("youtube") {
-        "com.google.android.youtube".to_string()
-    } else if lower.contains("reddit") {
-        "com.reddit.frontpage".to_string()
-    } else if lower.contains("twitter") {
-        "com.twitter.android".to_string()
-    } else if lower.contains("tiktok") {
-        "com.zhiliaoapp.musically".to_string()
-    } else if name.starts_with("com.") {
-        name.trim_end_matches(".apk").to_string()
-    } else {
-        "com.google.android.youtube".to_string()
+    match crate::root_install::inspect_install(&state, false).await {
+        Ok(result) => (StatusCode::OK, Json(result)),
+        Err(error) => (
+            StatusCode::PRECONDITION_FAILED,
+            Json(json!({"error":error,"verified":false})),
+        ),
     }
 }
 
@@ -567,83 +487,8 @@ pub(crate) struct InstallRootRequest {
 }
 
 pub(crate) async fn install_root(
-    State(state): State<AppState>,
-    Json(payload): Json<InstallRootRequest>,
+    state: State<AppState>,
+    payload: Json<InstallRootRequest>,
 ) -> impl IntoResponse {
-    let target_apk = if let Some(ref path) = payload.apk_path {
-        PathBuf::from(path)
-    } else {
-        let app_dir = state.modpath.join("app");
-        let mut candidate = None;
-        if app_dir.exists() {
-            if let Ok(mut entries) = tokio::fs::read_dir(&app_dir).await {
-                while let Ok(Some(entry)) = entries.next_entry().await {
-                    if entry.path().extension().map_or(false, |ext| ext == "apk") {
-                        candidate = Some(entry.path());
-                        break;
-                    }
-                }
-            }
-        }
-        match candidate {
-            Some(p) => p,
-            None => {
-                return (
-                    StatusCode::NOT_FOUND,
-                    Json(json!({ "error": "Berkas APK hasil patch tidak ditemukan." })),
-                );
-            }
-        }
-    };
-
-    if !target_apk.exists() {
-        return (
-            StatusCode::NOT_FOUND,
-            Json(json!({ "error": format!("Berkas APK tidak ada di {}", target_apk.display()) })),
-        );
-    }
-
-    state.log(format!("📲 Memulai instalasi langsung via hak root untuk: {}", target_apk.display()));
-
-    let cmd = format!(
-        "cp \"{src}\" /data/local/tmp/install_temp.apk && chmod 644 /data/local/tmp/install_temp.apk && pm install -r -d /data/local/tmp/install_temp.apk; RET=$?; rm -f /data/local/tmp/install_temp.apk; exit $RET",
-        src = target_apk.display()
-    );
-
-    let output = crate::utils::run_shell_command(&cmd).await;
-    match output {
-        Ok(out) if out.contains("Success") => {
-            state.log("✅ Aplikasi berhasil dipasang dengan hak root!");
-            (
-                StatusCode::OK,
-                Json(json!({
-                    "success": true,
-                    "message": "Aplikasi berhasil dipasang dengan hak root!",
-                    "output": out
-                })),
-            )
-        }
-        Ok(out) => {
-            state.log(format!("⚠️ Instalasi root menghasilkan keluaran: {}", out));
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({
-                    "success": false,
-                    "error": format!("Gagal memasang APK via root: {}", out),
-                    "output": out
-                })),
-            )
-        }
-        Err(e) => {
-            state.log(format!("❌ Gagal mengeksekusi instalasi root: {}", e));
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({
-                    "success": false,
-                    "error": format!("Gagal mengeksekusi shell root: {}", e)
-                })),
-            )
-        }
-    }
+    mount_apps(state, payload).await
 }
-

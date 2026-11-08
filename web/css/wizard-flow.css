@@ -1,0 +1,73 @@
+/* One decision per step; storage and review use the same reading rhythm. */
+.build-dependency-panel { margin: 18px 0; padding: 16px; border: 1px solid var(--rvx-line); border-radius: 10px; background: var(--rvx-panel); }
+.build-dependency-panel h3 { font-size: 17px; }
+.build-dependency-panel ul { list-style: none; margin: 12px 0; padding: 0; }
+.build-dependency-panel li { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 9px 0; border-bottom: 1px solid var(--rvx-line-soft); font-size: 14px; }
+.build-dependency-panel li strong { color: var(--rvx-ink-2); font-size: 13px; text-align: right; }
+.build-dependency-panel li[data-state="ready"] strong { color: var(--rvx-positive); }
+.build-dependency-panel li[data-state="failed"] strong { color: var(--rvx-accent); }
+.build-dependency-panel p { color: var(--rvx-ink-2); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.recovery-precise-message { font-size: 14px; line-height: 1.65; white-space: normal; overflow-wrap: anywhere; }
+#wizardStep4 .install-mode-section { border: 0; padding: 0; }
+#wizardStep4 .wizard-nav-actions .btn-next { min-width: 0; }
+#wizardStep5 .curation-section-heading { margin-top: 0; }
+#wizardStep5 .wizard-patch-list { margin-top: 14px; }
+#wizardStep6 .engine-card { border-radius: 10px; }
+#wizardStep7 > .wizard-pane-scrollable,
+#wizardStep8 > .wizard-pane-scrollable { display: flex; flex-direction: column; gap: 18px; }
+#wizardStep7 > .wizard-pane-scrollable > *,
+#wizardStep8 > .wizard-pane-scrollable > * { flex-shrink: 0; }
+.storage-default-shortcut {
+  display: grid;
+  width: 100%;
+  gap: 5px;
+  padding: 16px;
+  text-align: left;
+  border: 1px solid var(--rvx-line);
+  border-radius: 10px;
+  background: var(--rvx-panel);
+  color: var(--rvx-ink);
+  cursor: pointer;
+}
+.storage-default-shortcut:hover { border-color: var(--rvx-accent); }
+.storage-default-shortcut strong { font-size: 15px; }
+.storage-default-shortcut span { color: var(--rvx-ink-2); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.wizard-storage-card { min-width: 0; padding-block: 2px 18px; border-bottom: 1px solid var(--rvx-line-soft); }
+.wizard-storage-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.wizard-storage-card h3 { font-size: 17px; line-height: 1.4; }
+.wizard-storage-card p { margin: 6px 0 12px; color: var(--rvx-ink-2); font-size: 14px; line-height: 1.5; }
+.storage-choice-state { color: var(--rvx-ink-3); font-size: 12px; text-align: right; }
+.wizard-storage-path { padding: 12px; border-radius: 8px; background: var(--rvx-panel); color: var(--rvx-ink); font: 500 13px/1.6 var(--font-mono); overflow-wrap: anywhere; }
+.wizard-storage-card-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-top: 12px; }
+.wizard-storage-card-actions > * { min-height: 44px; }
+.wizard-storage-status { margin: 0; color: var(--rvx-ink-2); font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.wizard-storage-manual { border-top: 1px solid var(--rvx-line-soft); }
+.wizard-storage-manual summary { padding-block: 14px; font-size: 14px; color: var(--rvx-ink-2); cursor: pointer; }
+.wizard-storage-manual label { display: grid; gap: 6px; margin-bottom: 12px; color: var(--rvx-ink-2); font-size: 14px; }
+.wizard-storage-manual input { width: 100%; min-width: 0; min-height: 48px; padding: 10px 12px; font-size: 16px; }
+.review-resources { min-width: 0; }
+.review-resources-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.review-resources-heading h3 { font-size: 17px; line-height: 1.4; }
+.review-resources-heading button { min-height: 44px; flex-shrink: 0; }
+.review-resources > p { margin: 6px 0 12px; color: var(--rvx-ink-2); font-size: 14px; line-height: 1.5; }
+.review-resources .download-plan-copy strong { font-size: 14px; }
+.review-resources .download-plan-copy small { font-size: 13px; line-height: 1.5; }
+.review-selected-patches { border-block: 1px solid var(--rvx-line-soft); }
+.review-selected-patches summary { min-height: 48px; padding: 14px 0; color: var(--rvx-ink-2); cursor: pointer; font-size: 14px; }
+.review-selected-patches ul { margin: 0; padding: 0 0 16px 20px; columns: 2 240px; }
+.review-selected-patches li { break-inside: avoid; padding-block: 5px; color: var(--rvx-ink-2); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+#wizardStep8 .summary-storage-item .summary-item-value { white-space: normal; overflow: visible; overflow-wrap: anywhere; font: 500 13px/1.6 var(--font-mono); }
+#wizardStep8 .wizard-summary-card { margin: 0; }
+#wizardStep8 .wizard-nav-actions { flex-wrap: wrap; }
+#wizardStep8 .wizard-nav-actions .btn-next { min-width: 0; white-space: normal; }
+@media (max-width: 600px) {
+  #wizardStep4 .install-mode-grid { grid-template-columns: minmax(0, 1fr); }
+  #wizardStep4 .install-mode-card { min-height: 92px; grid-template-columns: 36px minmax(0, 1fr) 20px; align-items: center; padding: 16px; }
+  #wizardStep4 .install-mode-copy { min-width: 0; }
+  #wizardStep4 .install-mode-copy small { font-size: 14px; line-height: 1.5; }
+  #wizardStep8 .wizard-nav-actions { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; padding-block: 12px; }
+  #wizardStep8 .wizard-nav-actions #btnWizardFinish { grid-column: 2; grid-row: 1; }
+  #wizardStep8 .wizard-nav-actions #btnWizardStartBuild { grid-column: 1 / -1; grid-row: 2; min-height: 48px; }
+  #wizardStep8 .download-plan-item { grid-template-columns: 18px minmax(0, 1fr); }
+  #wizardStep8 .download-plan-state { grid-column: 2; justify-self: start; white-space: normal; }
+}

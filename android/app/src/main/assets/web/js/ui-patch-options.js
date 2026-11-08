@@ -523,7 +523,7 @@ async function savePatchOptionsModal() {
     const scrollTop = scrollRoot?.scrollTop || 0;
     const returnFocusId = STATE.patchOptionsReturnFocusId;
     closePatchOptionsModal();
-    renderMorphePatchList(STATE.wizardStep === 4 ? 'wizardPatchCategoriesContainer' : 'patchCategoriesContainer');
+    renderMorphePatchList(STATE.activeScreen === 'wizard' ? 'wizardPatchCategoriesContainer' : 'patchCategoriesContainer');
     requestAnimationFrame(() => {
       if (scrollRoot) scrollRoot.scrollTop = scrollTop;
       if (returnFocusId) document.getElementById(returnFocusId)?.focus();

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.DocumentsContract
 import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.ValueCallback
@@ -26,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
@@ -37,6 +39,54 @@ class MainActivity : AppCompatActivity() {
 
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
     private var lastBackPressTime: Long = 0L
+    private var pendingDirectoryRequest: Pair<String, String>? = null
+
+    private fun sendDirectoryResult(requestId: String, result: JSONObject) {
+        result.put("requestId", requestId)
+        webView.evaluateJavascript("window.rvxStorageDirectoryResult?.($result)", null)
+    }
+
+    private fun deviceDirectoryPath(uri: Uri): String {
+        require(uri.authority == "com.android.externalstorage.documents") {
+            "Pilih folder pada penyimpanan perangkat. Folder cloud belum dapat digunakan oleh mesin build."
+        }
+        val documentId = DocumentsContract.getTreeDocumentId(uri)
+        val volume = documentId.substringBefore(':')
+        val relative = documentId.substringAfter(':', "")
+        val root = if (volume.equals("primary", true)) {
+            android.os.Environment.getExternalStorageDirectory()
+        } else {
+            require(volume.matches(Regex("[A-Za-z0-9-]+"))) { "Volume penyimpanan tidak dikenali." }
+            File("/storage", volume)
+        }.canonicalFile
+        val directory = File(root, relative).canonicalFile
+        require(directory == root || directory.path.startsWith(root.path + File.separator)) {
+            "Alamat folder berada di luar volume penyimpanan."
+        }
+        return directory.path
+    }
+
+    private val directoryPickerLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val pending = pendingDirectoryRequest ?: return@registerForActivityResult
+        pendingDirectoryRequest = null
+        val uri = result.data?.data
+        if (result.resultCode != RESULT_OK || uri == null) {
+            sendDirectoryResult(pending.second, JSONObject().put("cancelled", true))
+            return@registerForActivityResult
+        }
+        try {
+            val path = deviceDirectoryPath(uri)
+            val granted = (result.data?.flags ?: 0) and
+                (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            contentResolver.takePersistableUriPermission(uri, granted)
+            getSharedPreferences("storage-picker", MODE_PRIVATE).edit().putString(pending.first, uri.toString()).apply()
+            sendDirectoryResult(pending.second, JSONObject().put("path", path).put("uri", uri.toString()))
+        } catch (error: Exception) {
+            sendDirectoryResult(pending.second, JSONObject().put("error", error.message ?: "Folder tidak dapat digunakan."))
+        }
+    }
 
     private val filePickerLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -56,7 +106,6 @@ class MainActivity : AppCompatActivity() {
         setupLayout()
         setupWebView()
         setupBackHandler()
-        checkStoragePermissions()
 
         lifecycleScope.launch {
             loadingText.text = getString(R.string.daemon_starting)
@@ -120,7 +169,7 @@ class MainActivity : AppCompatActivity() {
 
         // Append custom token for native app bridge detection
         val currentUa = settings.userAgentString
-        settings.userAgentString = "$currentUa RVXPatcherApp/2.1.26"
+        settings.userAgentString = "$currentUa RVXPatcherApp/${BuildConfig.VERSION_NAME}"
 
         webView.addJavascriptInterface(AndroidBridge(), "RVXNativeBridge")
 
@@ -227,17 +276,7 @@ class MainActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun isRootAvailable(): Boolean {
-            val suCandidates = arrayOf("/system/bin/su", "/data/adb/ap/bin/su", "/data/adb/magisk/su", "su")
-            return suCandidates.any { bin ->
-                try {
-                    val p = ProcessBuilder(bin, "-c", "id").start()
-                    val out = p.inputStream.bufferedReader().readText()
-                    p.waitFor()
-                    out.contains("uid=0")
-                } catch (_: Exception) {
-                    false
-                }
-            }
+            return daemonManager.hasVerifiedRootAccess
         }
 
         @JavascriptInterface
@@ -383,6 +422,22 @@ class MainActivity : AppCompatActivity() {
         }
 
         @JavascriptInterface
+        fun getInstalledApkInfo(packageName: String): String {
+            return try {
+                val info = packageManager.getPackageInfo(packageName, 0)
+                val app = info.applicationInfo ?: return JSONObject().put("available", false).toString()
+                val source = File(app.publicSourceDir ?: app.sourceDir)
+                val split = !app.splitSourceDirs.isNullOrEmpty()
+                JSONObject().put("available", source.isFile && source.canRead() && !split)
+                    .put("packageName", info.packageName).put("versionName", info.versionName ?: "")
+                    .put("path", if (!split) source.absolutePath else JSONObject.NULL)
+                    .put("size", source.length()).put("split", split).toString()
+            } catch (_: Exception) {
+                JSONObject().put("available", false).toString()
+            }
+        }
+
+        @JavascriptInterface
         fun openBrowser(url: String) {
             runOnUiThread {
                 try {
@@ -398,6 +453,27 @@ class MainActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun isNativeWrapper(): Boolean = true
+
+        @JavascriptInterface
+        fun pickStorageDirectory(kind: String, requestId: String) {
+            if (kind !in setOf("workspace", "output") || requestId.length > 128) return
+            runOnUiThread {
+                if (pendingDirectoryRequest != null) return@runOnUiThread
+                pendingDirectoryRequest = kind to requestId
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                        Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or Intent.FLAG_GRANT_PREFIX_URI_PERMISSION)
+                    getSharedPreferences("storage-picker", MODE_PRIVATE).getString(kind, null)?.let {
+                        putExtra(DocumentsContract.EXTRA_INITIAL_URI, Uri.parse(it))
+                    }
+                }
+                try { directoryPickerLauncher.launch(intent) }
+                catch (error: Exception) {
+                    pendingDirectoryRequest = null
+                    sendDirectoryResult(requestId, JSONObject().put("error", error.message ?: "Pemilih Files tidak tersedia."))
+                }
+            }
+        }
 
         @JavascriptInterface
         fun requestStoragePermission() {

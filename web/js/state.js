@@ -11,7 +11,13 @@ const STATE = {
 
   // Setup Wizard & Returning User Dashboard State
   setupCompleted: RVX_STORAGE.local.getItem('rvx_setup_completed') === 'true',
-  wizardStep: 1, // 1: Source & Release, 2: App, 3: Version, 4: Mode & Patches, 5: Build
+  wizardStep: 1, // App, source, version, mode, patches, advanced, storage, review.
+  wizardStorageDraft: null,
+  wizardStorageValidated: false,
+  wizardStorageBusy: false,
+  wizardReviewKey: '',
+  wizardReviewLoading: false,
+  wizardReviewError: '',
   targetMode: null, // user must explicitly choose 'root' or 'non-root'
   appConfigs: {},
 
@@ -62,7 +68,6 @@ const STATE = {
   patchListFilter: 'all',
   editingPatchName: null,
   modeEditorExpanded: true,
-  wizardStep4ActiveTab: 'patches', // 'patches' | 'engine'
   morpheEngineOptions: (() => {
     try {
       const saved = JSON.parse(RVX_STORAGE.local.getItem('rvx_morphe_engine_config') || '{}');
@@ -76,8 +81,9 @@ const STATE = {
         stripLibs: saved.stripLibs !== false,
         selectedArchs: Array.isArray(saved.selectedArchs) && saved.selectedArchs.length > 0 ? saved.selectedArchs : ['arm64-v8a'],
         bytecodeMode: saved.bytecodeMode || 'STRIP_FAST',
-        continueOnError: saved.continueOnError !== false,
-        force: saved.force !== false,
+        continueOnError: saved.executionPolicyVersion === 2 && saved.continueOnError === true,
+        force: saved.executionPolicyVersion === 2 && saved.force === true,
+        executionPolicyVersion: 2,
         disablePurge: saved.disablePurge === true,
       };
     } catch (_) {
@@ -91,8 +97,9 @@ const STATE = {
         stripLibs: true,
         selectedArchs: ['arm64-v8a'],
         bytecodeMode: 'STRIP_FAST',
-        continueOnError: true,
-        force: true,
+        continueOnError: false,
+        force: false,
+        executionPolicyVersion: 2,
         disablePurge: false,
       };
     }
@@ -132,12 +139,11 @@ const STATE = {
   storageBrowseReturnFocusId: '',
   pendingDownloadPlan: null,
   eventSource: null,
-  logHistory: [
-    { type: 'I', text: 'Remove background playback restrictions succeeded' },
-    { type: 'I', text: 'Return YouTube Dislike succeeded' },
-    { type: 'I', text: 'SponsorBlock succeeded' },
-    { type: 'I', text: 'Spoof video streams succeeded' }
-  ]
+  buildSession: { status: 'idle', key: '', path: '', blob: null, error: '' },
+  activePreset: '',
+  patchGroup: '',
+  homeAppQuery: '',
+  logHistory: []
 };
 
 const SVG_CHECK = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
@@ -500,13 +506,13 @@ function addCustomSource(source) {
   if (!source || (!source.repository && !source.manifestUrl)) return null;
   const rawInput = (source.repository || source.manifestUrl || '').trim();
   const cleanRepo = rawInput.replace(/^https?:\/\/github\.com\//i, '').replace(/\/$/, '');
-  
+
   const isUrl = cleanRepo.startsWith('http://') || cleanRepo.startsWith('https://');
   const id = (source.id || (isUrl ? 'custom_' + Date.now().toString(36) : cleanRepo.replace(/[\/\.-]/g, '_').toLowerCase())).slice(0, 32);
   const name = (source.name || (isUrl ? 'Custom Feed' : cleanRepo.split('/')[1] || cleanRepo)).trim();
-  
-  const manifestUrl = isUrl 
-    ? cleanRepo 
+
+  const manifestUrl = isUrl
+    ? cleanRepo
     : `https://raw.githubusercontent.com/${cleanRepo}/refs/heads/main/patches-list.json`;
 
   const newSource = {

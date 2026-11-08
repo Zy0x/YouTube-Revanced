@@ -40,10 +40,20 @@ pub(crate) async fn create_download_plan(
     let workspace_id = request.workspace_location_id.as_deref().unwrap_or_default();
     let output_id = request.output_location_id.as_deref().unwrap_or_default();
     let sel_storage_id = selection.get("storageId").and_then(Value::as_str);
-    let sel_ws_id = selection.get("workspaceId").and_then(Value::as_str).or(sel_storage_id);
-    let sel_out_id = selection.get("outputId").and_then(Value::as_str).or(sel_storage_id);
-    if (!workspace_id.is_empty() && sel_ws_id != Some(workspace_id) && sel_storage_id != Some(workspace_id))
-        || (!output_id.is_empty() && sel_out_id != Some(output_id) && sel_storage_id != Some(output_id))
+    let sel_ws_id = selection
+        .get("workspaceId")
+        .and_then(Value::as_str)
+        .or(sel_storage_id);
+    let sel_out_id = selection
+        .get("outputId")
+        .and_then(Value::as_str)
+        .or(sel_storage_id);
+    if (!workspace_id.is_empty()
+        && sel_ws_id != Some(workspace_id)
+        && sel_storage_id != Some(workspace_id))
+        || (!output_id.is_empty()
+            && sel_out_id != Some(output_id)
+            && sel_storage_id != Some(output_id))
     {
         return (
             StatusCode::CONFLICT,
@@ -86,40 +96,30 @@ pub(crate) async fn create_download_plan(
     let cached_bundle_url = tokio::fs::read_to_string(&bundle_marker)
         .await
         .unwrap_or_default();
-    let bundle_cached = bundle_path.is_file() && cached_bundle_url.trim() == bundle_url;
+    let bundle_cached = bundle_path.is_file()
+        && cached_bundle_url.trim() == bundle_url
+        && crate::patcher::validate_downloaded_patch_bundle(&bundle_path)
+            .await
+            .is_ok()
+        && crate::patcher::verify_file_sha256(&bundle_path, request.patch_bundle_sha256.as_deref())
+            .await
+            .is_ok();
     let cli_path = cache.join("morphe-cli.jar");
-    let cli_cached = cli_path.is_file();
-    let jre_cached = get_java_binary_in(&state.modpath, Some(&workspace)).is_some();
-    let app_alias = match request.package_name.as_str() {
-        "com.google.android.youtube" => "YouTube",
-        "com.google.android.apps.youtube.music" => "YouTubeMusic",
-        "com.reddit.frontpage" => "Reddit",
-        "com.twitter.android" => "Twitter",
-        "com.zhiliaoapp.musically" => "TikTok",
-        _ => request.package_name.split('.').last().unwrap_or("App"),
+    let cli_cached = crate::dependencies::cli_valid(&cli_path).await.is_ok();
+    let java = get_java_binary_in(&state.modpath, Some(&workspace));
+    let jre_cached = match java.as_ref() {
+        Some(java) => crate::dependencies::probe_java(java).await.is_ok(),
+        None => false,
     };
-    let apk_candidates = [
-        cache.join(format!("{}-{}.apk", app_alias, request.target_version)),
-        cache.join(format!(
-            "{}-{}.apk",
-            request.package_name, request.target_version
-        )),
-    ];
-    #[allow(unused_mut)]
-    let mut apk_local = apk_candidates.iter().find(|path| path.is_file()).cloned();
-    #[cfg(unix)]
-    if apk_local.is_none() {
-        let command = format!(
-            "pm path {} 2>/dev/null | grep base | cut -d: -f2 | head -n 1",
-            request.package_name
-        );
-        if let Ok(path) = crate::utils::run_shell_command(&command).await {
-            let candidate = PathBuf::from(path.trim());
-            if candidate.is_file() {
-                apk_local = Some(candidate);
-            }
-        }
-    }
+    let app_alias = request.package_name.as_str();
+    let apk_local = crate::patcher::find_local_stock(
+        &state,
+        &request.package_name,
+        &request.target_version,
+        &cache,
+        request.input_apk_path.as_deref(),
+    )
+    .await;
 
     let (bundle_size, cli_size, jre_size) = tokio::join!(
         async {
@@ -151,7 +151,13 @@ pub(crate) async fn create_download_plan(
         Some(path) => tokio::fs::metadata(path).await.ok().map(|m| m.len()),
         None => None,
     };
-    let jre_stored_size = directory_size(&runtime.join("jre")).await;
+    let jre_home = java
+        .as_ref()
+        .and_then(|path| path.parent())
+        .and_then(|path| path.parent())
+        .map(PathBuf::from)
+        .unwrap_or_else(|| state.modpath.join("jre"));
+    let jre_stored_size = directory_size(&jre_home).await;
     let mut known_download_bytes = 0_u64;
     let mut unknown_size_count = 0_u64;
     let mut item = |id: &str,
@@ -201,7 +207,7 @@ pub(crate) async fn create_download_plan(
             if jre_cached { "ready" } else { "download" },
             if jre_cached { Some(0) } else { jre_size },
             jre_stored_size,
-            &runtime.join("jre"),
+            &jre_home,
             !jre_cached,
         ),
         item(
@@ -237,6 +243,8 @@ pub(crate) async fn create_download_plan(
         "packageName": request.package_name, "targetVersion": request.target_version,
         "patchBundleUrl": request.patch_bundle_url,
         "workspaceLocationId": workspace_id, "outputLocationId": output_id,
+        "workspacePath": workspace.to_string_lossy(), "outputPath": output.to_string_lossy(),
+        "inputApkPath": request.input_apk_path,
     });
     let mut plans = state.download_plans.write().await;
     plans.retain(|_, value| {
@@ -255,7 +263,6 @@ pub(crate) async fn create_download_plan(
         "storage": {"id": sel_storage_id.unwrap_or(workspace_id), "path": workspace.to_string_lossy(), "availableBytes": workspace_available}
     }))).into_response()
 }
-
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -283,7 +290,10 @@ pub(crate) async fn download_stock_apk(
     let target_file = cache.join(format!("{}-{}.apk", app_alias, req.target_version));
     if target_file.is_file() {
         if let Ok(true) = crate::apkmirror::validate_apk_file(&target_file) {
-            state.log(format!("✅ APK Stok sudah tersedia di cache: {}", target_file.display()));
+            state.log(format!(
+                "✅ APK Stok sudah tersedia di cache: {}",
+                target_file.display()
+            ));
             return (
                 StatusCode::OK,
                 Json(json!({
@@ -307,7 +317,14 @@ pub(crate) async fn download_stock_apk(
     let target_clone = target_file.clone();
 
     tokio::spawn(async move {
-        match crate::apkmirror::scrape_and_download_apkmirror(&state_clone, &pkg, &ver, &target_clone).await {
+        match crate::apkmirror::scrape_and_download_apkmirror(
+            &state_clone,
+            &pkg,
+            &ver,
+            &target_clone,
+        )
+        .await
+        {
             Ok(p) => {
                 state_clone.log(format!("🎉 Berhasil mengunduh APK stok: {}", p.display()));
             }

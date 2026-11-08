@@ -3,21 +3,8 @@ use std::process::Stdio;
 use tokio::process::Command;
 
 pub fn is_root_available() -> bool {
-    #[cfg(unix)]
-    {
-        for su_bin in ["su", "/system/bin/su", "/system/xbin/su", "/data/adb/ap/bin/su", "/data/adb/magisk/su"] {
-            if let Ok(o) = std::process::Command::new(su_bin).arg("-c").arg("id").output() {
-                if o.status.success() && String::from_utf8_lossy(&o.stdout).contains("uid=0") {
-                    return true;
-                }
-            }
-        }
-        false
-    }
-    #[cfg(not(unix))]
-    {
-        false
-    }
+    // A diagnostic must not launch su or open a root authorization prompt.
+    crate::api::storage::runtime_has_root_access()
 }
 
 pub fn get_java_binary_in(modpath: &Path, workspace: Option<&Path>) -> Option<PathBuf> {
@@ -42,23 +29,10 @@ pub fn get_java_binary_in(modpath: &Path, workspace: Option<&Path>) -> Option<Pa
             "/data/adb/modules/rvx_patcher/jre/bin/java",
             "/data/adb/modules/magisk_openjdk/bin/java",
         ];
-        let root_ok = is_root_available();
         for candidate in termux_candidates {
-            let p = Path::new(candidate);
-            if p.exists() {
-                return Some(p.to_path_buf());
-            }
-            if root_ok {
-                let check_cmd = format!("su -c '[ -f \"{}\" ]'", candidate);
-                if std::process::Command::new("/system/bin/sh")
-                    .arg("-c")
-                    .arg(&check_cmd)
-                    .status()
-                    .map(|s| s.success())
-                    .unwrap_or(false)
-                {
-                    return Some(p.to_path_buf());
-                }
+            let path = Path::new(candidate);
+            if path.is_file() {
+                return Some(path.to_path_buf());
             }
         }
     }

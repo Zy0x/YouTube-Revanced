@@ -30,6 +30,8 @@ function resetWizardSelections() {
   STATE.selectedOptions = {};
   STATE.patchSearchQuery = '';
   STATE.patchListFilter = 'all';
+  STATE.patchGroup = '';
+  STATE.activePreset = '';
 }
 
 function updateWizardNavigationState() {
@@ -43,15 +45,20 @@ function updateWizardNavigationState() {
   );
   const states = [
     ['btnWizStep1Next', Boolean(STATE.currentApp), 'Pilih aplikasi terlebih dahulu'],
-    ['btnWizStep2Next', sourceReady && Boolean(STATE.patchTag), STATE.channelLoading ? 'Sedang memverifikasi metadata source terpilih' : 'Pilih sumber dan saluran rilis terlebih dahulu'],
+    ['btnWizStep2Next', sourceReady && Boolean(STATE.patchTag), STATE.channelLoading ? 'Sedang memverifikasi metadata sumber terpilih' : 'Pilih sumber dan saluran rilis terlebih dahulu'],
     ['btnWizStep3Next', Boolean(STATE.currentVersion), 'Pilih versi APK terlebih dahulu'],
-    ['btnWizStep4Next', Boolean(STATE.targetMode) && STATE.selectedPatches.size > 0, 'Pilih mode dan minimal satu patch terlebih dahulu']
+    ['btnWizStep4Next', Boolean(STATE.targetMode), 'Pilih cara pemasangan terlebih dahulu'],
+    ['btnWizStep5Next', STATE.selectedPatches.size > 0, 'Pilih minimal satu fitur patch terlebih dahulu'],
+    ['btnWizStep7Next', Boolean(STATE.wizardStorageDraft?.workspace && STATE.wizardStorageDraft?.output), 'Pilih folder Workspace dan Output terlebih dahulu']
   ];
   states.forEach(([id, enabled, hint]) => {
     const button = document.getElementById(id);
     if (!button) return;
     button.disabled = !enabled;
     button.title = enabled ? '' : hint;
+    const step = id.match(/Step(\d)/)?.[1];
+    setText(`wizardStep${step}Hint`, enabled ? (step === '1' ? `${STATE.currentApp?.name} dipilih` : '') : hint);
+    if (step) button.setAttribute('aria-describedby', `wizardStep${step}Hint`);
   });
 }
 
@@ -72,7 +79,8 @@ function initWizardOrDashboard() {
 }
 
 function goToWizardStep(step) {
-  if (step < 1 || step > 5) return;
+  if (step < 1 || step > 8) return;
+  if (STATE.wizardStep === 8 && step !== 8) invalidateWizardReview();
   STATE.wizardStep = step;
 
   // Update Stepper Visuals
@@ -82,27 +90,29 @@ function goToWizardStep(step) {
     node.classList.toggle('active', nodeStep === step);
     node.classList.toggle('completed', nodeStep < step);
     node.setAttribute('aria-current', nodeStep === step ? 'step' : 'false');
+    node.disabled = nodeStep > step;
   });
 
   const progressLine = document.getElementById('wizardStepperProgress');
   if (progressLine) {
-    const pct = ((step - 1) / 4) * 100;
+    const pct = ((step - 1) / 7) * 100;
     progressLine.style.width = `${pct}%`;
   }
 
   // M3 Minimalist Stepper Update
   const m3Bar = document.getElementById('wizardProgressBar');
   if (m3Bar) {
-    m3Bar.style.width = `${step * 20}%`;
+    m3Bar.style.width = `${step / 8 * 100}%`;
   }
   const stepCounter = document.getElementById('wizardStepCounter');
   if (stepCounter) {
-    stepCounter.textContent = `${String(step).padStart(2, '0')}/05`;
+    stepCounter.textContent = `${String(step).padStart(2, '0')}/08`;
   }
   const stepTitle = document.getElementById('wizardStepTitle');
   const refreshButton = document.getElementById('btnWizardStepRefresh');
+  refreshButton?.classList.toggle('hidden', ![1, 2, 3, 5].includes(step));
   if (stepTitle) {
-    const labels = ['Aplikasi', 'Sumber patch', 'Versi APK', 'Mode & fitur', 'Konfirmasi'];
+    const labels = ['Aplikasi', 'Sumber patch', 'Versi APK', 'Cara pemasangan', 'Fitur patch', 'Pengaturan lanjutan', 'Lokasi penyimpanan', 'Tinjau pilihan'];
     stepTitle.textContent = labels[step - 1];
     if (refreshButton) {
       refreshButton.setAttribute('aria-label', `Muat ulang metadata ${labels[step - 1].toLowerCase()}`);
@@ -111,7 +121,7 @@ function goToWizardStep(step) {
   }
 
   // Switch Active Step Pane
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 8; i++) {
     const pane = document.getElementById(`wizardStep${i}`);
     if (pane) pane.classList.toggle('active', i === step);
   }
@@ -131,14 +141,29 @@ function goToWizardStep(step) {
       renderWizardModeAndPatchesStep();
       break;
     case 5:
+      if (!STATE.selectedPatches.size && STATE.patches?.length && typeof applyCuratedPreset === 'function') {
+        applyCuratedPreset('balanced');
+      }
+      renderWizardModeAndPatchesStep();
+      break;
+    case 6:
+      renderMorpheEnginePanel(document.getElementById('viewCurateEngine'));
+      break;
+    case 7:
+      renderWizardStorageStep();
+      break;
+    case 8:
       renderWizardBuildStep();
+      prepareWizardReview();
       break;
   }
 
   updateWizardNavigationState();
   updateWizardRefreshStatus();
 
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  requestAnimationFrame(() => document.querySelector(`#wizardStep${step} .wizard-pane-title`)?.focus({ preventScroll: true }));
+  renderRuntimeAvailability();
 }
 
 function updateWizardRefreshStatus(message = '') {
@@ -255,8 +280,12 @@ async function refreshWizardStep() {
       }
       if (step === 3) renderWizardVersionStep();
       if (step === 4) renderWizardModeAndPatchesStep();
-      if (step === 5) {
+      if (step === 5) renderWizardModeAndPatchesStep();
+      if (step === 6) renderMorpheEnginePanel(document.getElementById('viewCurateEngine'));
+      if (step === 7) renderWizardStorageStep();
+      if (step === 8) {
         renderWizardBuildStep();
+        prepareWizardReview();
         const valid = Boolean(STATE.currentVersion && STATE.targetMode && STATE.selectedPatches.size);
         if (!valid) {
           updateWizardBuildValidation('Ada pilihan yang sudah tidak tersedia setelah pembaruan.');
@@ -290,7 +319,8 @@ async function refreshWizardStep() {
     if (step === 2) renderWizardSourceStep();
     if (step === 3) renderWizardVersionStep();
     if (step === 4) renderWizardModeAndPatchesStep();
-    if (step === 5) {
+    if (step === 5) renderWizardModeAndPatchesStep();
+    if (step === 8) {
       renderWizardBuildStep();
       if (!STATE.currentVersion || !STATE.targetMode || STATE.selectedPatches.size === 0) {
         updateWizardBuildValidation(error.message);
@@ -342,19 +372,8 @@ function renderWizardVersionStep() {
       const [item] = versions.splice(installedIdx, 1);
       item.isInstalled = true;
       versions.unshift(item);
-    } else {
-      versions.unshift({
-        version: installedVer,
-        isInstalled: true,
-        supportedPatchCount: totalPatches,
-        totalPatchCount: totalPatches,
-        isManifest: true
-      });
     }
-    if (!STATE.currentVersion) {
-      STATE.currentVersion = installedVer;
-      syncAllSummaries();
-    }
+
   }
 
   if (versions.length === 0) {
@@ -371,7 +390,7 @@ function renderWizardVersionStep() {
     const fullySupported = total > 0 && supported === total;
     const unsupported = supported === 0;
     const supportClass = fullySupported ? 'full' : unsupported ? 'none' : 'partial';
-    const supportLabel = isInstalled ? 'Terpasang & Siap' : fullySupported ? 'Didukung penuh' : unsupported ? 'Tidak didukung' : 'Didukung sebagian';
+    const supportLabel = fullySupported ? 'Didukung penuh' : unsupported ? 'Tidak didukung' : 'Didukung sebagian';
 
     const row = document.createElement('div');
     row.className = `version-choice-row ${isSelected ? 'active' : ''} ${unsupported ? 'unsupported' : ''}`;
@@ -390,7 +409,7 @@ function renderWizardVersionStep() {
         </div>
       </div>
       <div class="version-support-copy">
-        <span class="version-support-badge ${isInstalled ? 'full' : supportClass}">${supportLabel}</span>
+        <span class="version-support-badge ${supportClass}">${supportLabel}</span>
         <span class="version-support-count">${supported} dari ${total} patch</span>
       </div>
     `;
@@ -402,6 +421,7 @@ function renderWizardVersionStep() {
       renderWizardVersionStep();
       syncAllSummaries();
       updateWizardNavigationState();
+      document.querySelector('#wizardVersionList [aria-checked="true"]')?.focus({ preventScroll: true });
     };
     row.addEventListener('click', selectVersion);
     row.addEventListener('keydown', event => {
@@ -429,7 +449,7 @@ function renderWizardVersionStep() {
   }
 
   const visibleCount = document.getElementById('wizardVersionVisibleCount');
-  if (visibleCount) visibleCount.textContent = `${totalVersions} versi direkomendasikan source`;
+  if (visibleCount) visibleCount.textContent = `${totalVersions} versi direkomendasikan sumber`;
   updateWizardNavigationState();
 }
 
@@ -622,21 +642,15 @@ function renderWizardModeAndPatchesStep() {
   const searchInput = document.getElementById('inputWizPatchSearch');
   if (searchInput) searchInput.value = STATE.patchSearchQuery || '';
   updateModeSwitcherUI();
+  const group = document.getElementById('wizardPatchGroup');
+  if (group) group.value = STATE.patchGroup || '';
   renderModeWorkspaceState();
   bindModeSwitcherEvents();
-
-  // Tab switching between Patch Fitur (Source) and Mesin Morphe CLI
-  const tabPatches = document.getElementById('tabCuratePatches');
-  const tabEngine = document.getElementById('tabCurateEngine');
-  if (tabPatches && tabEngine) {
-    tabPatches.onclick = () => { if (typeof switchCurateTab === 'function') switchCurateTab('patches'); };
-    tabEngine.onclick = () => { if (typeof switchCurateTab === 'function') switchCurateTab('engine'); };
-    if (typeof switchCurateTab === 'function') switchCurateTab(STATE.wizardStep4ActiveTab || 'patches');
-  }
 
   renderMorphePatchList('wizardPatchCategoriesContainer');
   updateWizardPatchStats();
   updateWizardNavigationState();
+  updatePresetPresentation();
 }
 
 function bindModeSwitcherEvents() {
@@ -646,6 +660,13 @@ function bindModeSwitcherEvents() {
   if (cardNonRoot) cardNonRoot.onclick = () => setTargetMode('non-root');
   [cardRoot, cardNonRoot].filter(Boolean).forEach(card => {
     card.onkeydown = event => {
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+        event.preventDefault();
+        const mode = card.id === 'modeCardRoot' ? 'non-root' : 'root';
+        setTargetMode(mode);
+        (mode === 'root' ? cardRoot : cardNonRoot)?.focus();
+        return;
+      }
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       setTargetMode(card.id === 'modeCardRoot' ? 'root' : 'non-root');
@@ -662,7 +683,7 @@ function bindModeSwitcherEvents() {
 function renderModeWorkspaceState() {
   const step = document.getElementById('wizardStep4');
   const hasMode = STATE.targetMode === 'root' || STATE.targetMode === 'non-root';
-  const collapsed = hasMode && !STATE.modeEditorExpanded;
+  const collapsed = false;
   const isRoot = STATE.targetMode === 'root';
   step?.classList.toggle('mode-workspace-active', collapsed);
 
@@ -674,6 +695,10 @@ function renderModeWorkspaceState() {
   const subtitle = isRoot ? 'Magisk, KernelSU, APatch' : hasMode ? 'APK mandiri dengan GmsCore' : 'Pilih lingkungan perangkat';
   setText('modeCompactTitle', title);
   setText('modeCompactSubtitle', subtitle);
+  const needsGms = STATE.targetMode === 'non-root' && STATE.patches.some(patch => RVX_UI.isGms(patch.name));
+  document.getElementById('wizardModeHelp')?.classList.toggle('hidden', !hasMode);
+  document.getElementById('btnCheckModeMicrog')?.classList.toggle('hidden', !needsGms);
+  setText('wizardModeHelpText', needsGms ? 'GmsCore diperlukan untuk menggunakan aplikasi hasil patch tanpa root.' : isRoot ? 'Menyiapkan hasil untuk perangkat dengan Magisk, KernelSU, atau APatch.' : 'Menyiapkan APK yang dapat dipasang melalui pemasang aplikasi.');
   const icon = compact?.querySelector('.mode-compact-icon');
   if (icon) icon.textContent = isRoot ? 'R' : hasMode ? 'N' : '·';
 }
@@ -683,6 +708,8 @@ function updateModeSwitcherUI() {
   const isNonRoot = STATE.targetMode === 'non-root';
   const cardRoot = document.getElementById('modeCardRoot');
   const cardNonRoot = document.getElementById('modeCardNonRoot');
+  const nonRootDescription = cardNonRoot?.querySelector('small');
+  if (nonRootDescription) nonRootDescription.textContent = STATE.patches.some(patch => RVX_UI.isGms(patch.name)) ? 'APK mandiri dengan GmsCore' : 'APK mandiri melalui pemasang Android';
 
   if (cardRoot && cardNonRoot) {
     cardRoot.classList.toggle('active', isRoot);
@@ -704,6 +731,7 @@ function setTargetMode(mode) {
   RVX_STORAGE.local.setItem('rvx_target_mode', STATE.targetMode);
   updateModeSwitcherUI();
   adjustMicrogForMode(STATE.targetMode);
+  if (STATE.activePreset) STATE.selectedPatches = RVX_UI.preset(STATE.patches, STATE.activePreset, STATE.targetMode);
   renderModeWorkspaceState();
 
   renderMorphePatchList('wizardPatchCategoriesContainer');
@@ -712,14 +740,7 @@ function setTargetMode(mode) {
   updateWizardNavigationState();
   if (typeof updatePreflightDoctor === 'function') updatePreflightDoctor();
 
-  if (STATE.targetMode === 'non-root') {
-    const hasGms = window.RVXNativeBridge?.isPackageInstalled ?
-      (window.RVXNativeBridge.isPackageInstalled('app.revanced.android.gms') || window.RVXNativeBridge.isPackageInstalled('com.mgoogle.android.gms')) :
-      false;
-    if (!hasGms) {
-      setTimeout(() => openMicrogManagerModal(), 200);
-    }
-  }
+  document.getElementById('btnModeCompactSummary')?.focus({ preventScroll: true });
 }
 
 function updateWizardPatchStats(visibleCount = null) {
@@ -746,9 +767,10 @@ function updateWizardPatchStats(visibleCount = null) {
     button.setAttribute('aria-pressed', String(active));
   });
 
-  const next = document.getElementById('btnWizStep4Next');
+  const next = document.getElementById('btnWizStep5Next');
+  updatePresetPresentation();
   if (next) {
-    next.textContent = selectedCount > 0 ? `Lanjut · ${selectedCount} patch ›` : 'Pilih patch untuk lanjut';
+    next.textContent = 'Lanjut: pengaturan lanjutan';
   }
 }
 
@@ -788,7 +810,7 @@ function checkMicrogSmartWarning(patchName, newCheckedState) {
       btnFix.textContent = 'Perbaiki Otomatis (Uncheck)';
       btnFix.onclick = () => {
         STATE.selectedPatches.delete(patchName);
-        renderMorphePatchList(STATE.wizardStep === 4 ? 'wizardPatchCategoriesContainer' : 'patchCategoriesContainer');
+        renderMorphePatchList(STATE.activeScreen === 'wizard' ? 'wizardPatchCategoriesContainer' : 'patchCategoriesContainer');
         modal.classList.add('hidden');
       };
     }
@@ -803,7 +825,7 @@ function checkMicrogSmartWarning(patchName, newCheckedState) {
       btnFix.textContent = 'Centang Otomatis (Check)';
       btnFix.onclick = () => {
         STATE.selectedPatches.add(patchName);
-        renderMorphePatchList(STATE.wizardStep === 4 ? 'wizardPatchCategoriesContainer' : 'patchCategoriesContainer');
+        renderMorphePatchList(STATE.activeScreen === 'wizard' ? 'wizardPatchCategoriesContainer' : 'patchCategoriesContainer');
         modal.classList.add('hidden');
       };
     }
@@ -821,9 +843,11 @@ function renderWizardBuildStep() {
   setText('summaryAppName', STATE.currentApp?.name || '—');
   setText('summaryVersion', STATE.currentVersion ? `v${STATE.currentVersion}` : '—');
   setText('summarySource', getSourceDisplayName(STATE.currentSource));
+  const release = getSelectedSourceRelease();
+  setText('summaryRelease', `${release?.tag_name || STATE.patchTag || '—'}${release ? release.prerelease ? ' · Pra-rilis' : ' · Stabil' : ''}`);
   setText('summaryMode', STATE.targetMode === 'root'
-    ? 'Mode Root (Magisk/KSU/APatch)'
-    : STATE.targetMode === 'non-root' ? 'Mode Non-Root (Standalone APK)' : '—');
+    ? 'Root · Magisk / KernelSU / APatch'
+    : STATE.targetMode === 'non-root' ? 'Non-root · APK mandiri' : '—');
   setText('summaryPatchesCount', `${STATE.selectedPatches.size} aktif`);
   if (typeof getMorpheEngineSummaryText === 'function') {
     setText('summaryEngineConfig', getMorpheEngineSummaryText());
@@ -835,6 +859,7 @@ function renderWizardBuildStep() {
     btnRoot.classList.toggle('hidden', STATE.targetMode !== 'root');
   }
   updateWizardBuildValidation();
+  renderBuildResult();
 }
 
 function updateWizardBuildValidation(message = '') {
@@ -842,25 +867,44 @@ function updateWizardBuildValidation(message = '') {
   const buildButton = document.getElementById('btnWizardStartBuild');
   const missingVersion = !STATE.currentVersion;
   const missingPatchSetup = !STATE.targetMode || STATE.selectedPatches.size === 0;
-  const valid = Boolean(STATE.currentApp && STATE.currentSource && STATE.patchTag && !missingVersion && !missingPatchSetup);
+  const source = STATE.sources.find(item => item.id === STATE.currentSource);
+  const configValid = Boolean(STATE.currentApp && source && source.bundleStatus === 'ready' && !STATE.channelLoading && STATE.patchTag && !missingVersion && !missingPatchSetup && [...STATE.selectedPatches].every(name => STATE.patches.some(patch => patch.name === name)));
+  const availability = getBuildAvailability();
+  const valid = configValid && availability.ready && isWizardReviewReady() && STATE.buildSession.status !== 'running';
   if (buildButton) {
     buildButton.disabled = !valid;
-    buildButton.title = valid ? '' : 'Perbaiki pilihan yang sudah tidak tersedia.';
+    buildButton.title = valid ? '' : !availability.ready ? availability.message : 'Periksa kembali pilihan konfigurasi.';
+    buildButton.setAttribute('aria-describedby', 'wizardValidationNotice');
+    buildButton.classList.toggle('hidden', !availability.ready);
   }
   if (!notice) return valid;
   notice.classList.toggle('hidden', valid && !message);
+  const save = document.getElementById('btnWizardFinish');
+  if (save) {
+    save.disabled = !configValid;
+    save.textContent = availability.ready ? 'Simpan saja' : 'Simpan konfigurasi';
+    save.classList.toggle('morphe-pill-sky', !availability.ready);
+    save.classList.toggle('btn-next', !availability.ready);
+    save.classList.toggle('morphe-pill-outline', availability.ready);
+  }
   if (!valid || message) {
-    const targetStep = missingVersion ? 3 : missingPatchSetup ? 4 : 2;
-    const label = targetStep === 3 ? 'Periksa versi APK' : targetStep === 4 ? 'Periksa mode & patch' : 'Periksa sumber patch';
+    if (configValid && !availability.ready) {
+      notice.textContent = availability.message;
+      return valid;
+    }
+    if (STATE.buildSession.status === 'running') { notice.textContent = 'Proses patch masih berjalan. Tunggu hingga selesai.'; return false; }
+    if (configValid && availability.ready) { notice.textContent = message || getWizardReviewHint(); return valid; }
+    const targetStep = missingVersion ? 3 : missingPatchSetup ? (!STATE.targetMode ? 4 : 5) : 2;
+    const label = targetStep === 3 ? 'Periksa versi APK' : targetStep === 4 ? 'Periksa cara pemasangan' : targetStep === 5 ? 'Periksa fitur patch' : 'Periksa sumber patch';
     notice.innerHTML = `<span>${escapeHtml(message || 'Sebagian konfigurasi perlu diperiksa kembali.')}</span><button type="button">${label}</button>`;
     notice.querySelector('button')?.addEventListener('click', () => goToWizardStep(targetStep));
   }
   return valid;
 }
 
-function completeWizardAndEnterDashboard() {
+function persistWizardConfiguration() {
   const pkg = STATE.currentApp?.packageName;
-  if (!pkg || !STATE.currentSource || !STATE.patchTag || !STATE.currentVersion || !STATE.targetMode) return;
+  if (!pkg || !STATE.currentSource || !STATE.patchTag || !STATE.currentVersion || !STATE.targetMode || !STATE.selectedPatches.size) return false;
   saveAppConfig(pkg, {
     appName: STATE.currentApp?.name || 'YouTube',
     targetVersion: STATE.currentVersion,
@@ -868,12 +912,18 @@ function completeWizardAndEnterDashboard() {
     patchTag: STATE.patchTag,
     mode: STATE.targetMode,
     selectedPatches: Array.from(STATE.selectedPatches),
-    selectedOptions: STATE.selectedOptions
+    selectedOptions: STATE.selectedOptions,
+    storageFolders: STATE.wizardStorageDraft,
+    engineOptions: STATE.morpheEngineOptions
   });
 
   STATE.setupCompleted = true;
   RVX_STORAGE.local.setItem('rvx_setup_completed', 'true');
+  return true;
+}
 
+function completeWizardAndEnterDashboard() {
+  if (!persistWizardConfiguration()) return;
   initWizardOrDashboard();
 }
 

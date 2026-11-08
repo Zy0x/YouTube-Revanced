@@ -73,6 +73,12 @@ pub struct PatchRequest {
     pub output_location_id: Option<String>,
     #[serde(default)]
     pub morphe_engine_options: Option<MorpheEngineOptions>,
+    #[serde(default)]
+    pub input_apk_path: Option<String>,
+    #[serde(skip)]
+    pub prepared_workspace: Option<PathBuf>,
+    #[serde(skip)]
+    pub prepared_output: Option<PathBuf>,
 }
 
 pub async fn execute_patch_job(state: AppState, req: PatchRequest) {
@@ -90,6 +96,9 @@ pub async fn execute_patch_job(state: AppState, req: PatchRequest) {
     state.log("🚀 =================================================");
 
     if let Err(e) = run_pipeline(&state, &req).await {
+        if e.starts_with("DEPENDENCY_ERROR|") {
+            state.log(&e);
+        }
         state.log(format!("❌ Patching failed with error: {}", e));
     } else {
         state.log("🎉 =================================================");
@@ -109,48 +118,45 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
     tokio::fs::create_dir_all(&output_root)
         .await
         .map_err(|e| format!("Failed to create output directory: {}", e))?;
-    // 1. Verify Java JRE
-    state.log("🔍 Checking Java Runtime Environment (JRE)...");
-    let java_bin = match get_java_binary_in(&state.modpath, Some(&workspace_root)) {
-        Some(bin) => bin,
-        None => {
-            state.log("⚠️ Java not found. Attempting automatic micro-JRE setup...");
-            crate::jre::ensure_jre_installed(state, None, Some(&workspace_root)).await?;
-            get_java_binary_in(&state.modpath, Some(&workspace_root))
-                .ok_or_else(|| "Failed to locate java binary after installation".to_string())?
-        }
-    };
-    state.log(format!("  Using Java: {}", java_bin.display()));
-
     let build_dir = workspace_root.join("cache");
     tokio::fs::create_dir_all(&build_dir)
         .await
-        .map_err(|e| format!("Failed to create build_out directory: {}", e))?;
-
-    // 2. Download or import Morphe CLI
+        .map_err(|e| crate::dependencies::error("storage", "storage_unwritable", e.to_string()))?;
+    crate::dependencies::status(
+        state,
+        "apk",
+        "checking",
+        "Memeriksa paket dan versi APK asli",
+    );
+    let stock_apk = crate::apk::locate_or_download_stock(
+        state,
+        &req.package_name,
+        &req.target_version,
+        &build_dir,
+        req.input_apk_path.as_deref(),
+    )
+    .await
+    .map_err(|e| crate::dependencies::error("apk", "apk_unavailable", e))?;
+    crate::dependencies::status(
+        state,
+        "apk",
+        "ready",
+        "APK asli dengan paket dan versi yang dipilih sudah tervalidasi",
+    );
+    crate::jre::ensure_jre_installed(state, None, Some(&workspace_root))
+        .await
+        .map_err(|e| crate::dependencies::error("java", "java_unavailable", e))?;
+    let java_bin = get_java_binary_in(&state.modpath, Some(&workspace_root)).ok_or_else(|| {
+        crate::dependencies::error(
+            "java",
+            "java_unavailable",
+            "Runtime tidak ditemukan setelah persiapan",
+        )
+    })?;
     let cli_jar = build_dir.join("morphe-cli.jar");
-    if !cli_jar.exists() {
-        #[cfg(unix)]
-        {
-            let local_cands = [
-                "/sdcard/Revancify-Xisr/cache/morphe-cli.jar",
-                "/data/data/com.termux/files/home/Revancify-Xisr/cache/morphe-cli.jar",
-            ];
-            for cand in &local_cands {
-                let cp_cmd = format!("cp \"{}\" \"{}\" 2>/dev/null; chmod 666 \"{}\" 2>/dev/null", cand, cli_jar.display(), cli_jar.display());
-                let _ = std::process::Command::new("su").arg("-c").arg(&cp_cmd).status();
-                if cli_jar.exists() {
-                    state.log(format!("✨ Menggunakan Morphe CLI dari cache lokal: {}", cand));
-                    break;
-                }
-            }
-        }
-        if !cli_jar.exists() {
-            state.log("📦 Downloading Morphe CLI jar...");
-            download_file(&state.client, MORPHE_CLI_URL, &cli_jar, state, "cli").await?;
-        }
-    }
-    state.log("  Morphe CLI is ready.");
+    crate::dependencies::ensure_cli(state, &java_bin, &cli_jar)
+        .await
+        .map_err(|e| crate::dependencies::error("cli", "cli_unavailable", e))?;
 
     // 3. Download the exact Patch Bundle (.mpp) selected by the UI.
     // The manifest is catalog metadata and is not consumed by Morphe CLI.
@@ -166,7 +172,9 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
         .filter(|url| !url.is_empty());
 
     let mpp_url = explicit_bundle
-        .ok_or_else(|| "The selected release did not provide an explicit .mpp bundle URL".to_string())?
+        .ok_or_else(|| {
+            "The selected release did not provide an explicit .mpp bundle URL".to_string()
+        })?
         .to_string();
 
     validate_patch_bundle_url(&mpp_url)?;
@@ -183,22 +191,53 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
         && patch_mpp.exists()
         && validate_downloaded_patch_bundle(&patch_mpp).await.is_ok()
         && cached_hash_valid;
-    if cache_valid {
-        state.log("✅ Using cached patch bundle for the selected release.");
-    } else {
-        state.log(format!("  Fetching patch bundle from: {}", mpp_url));
-        download_file(&state.client, &mpp_url, &patch_mpp, state, "bundle").await?;
-        validate_downloaded_patch_bundle(&patch_mpp).await?;
-        verify_file_sha256(&patch_mpp, req.patch_bundle_sha256.as_deref()).await?;
+    if !cache_valid {
+        let mut failure = String::new();
+        for attempt in 0..2 {
+            crate::dependencies::status(
+                state,
+                "bundle",
+                if attempt == 0 {
+                    "downloading"
+                } else {
+                    "retrying"
+                },
+                "Menyiapkan bundle rilis yang dipilih dan memeriksa integritasnya",
+            );
+            let result = async {
+                download_file(&state.client, &mpp_url, &patch_mpp, state, "bundle").await?;
+                validate_downloaded_patch_bundle(&patch_mpp).await?;
+                verify_file_sha256(&patch_mpp, req.patch_bundle_sha256.as_deref()).await
+            }
+            .await;
+            match result {
+                Ok(()) => {
+                    failure.clear();
+                    break;
+                }
+                Err(error) => failure = error,
+            }
+        }
+        if !failure.is_empty() {
+            return Err(crate::dependencies::error(
+                "bundle",
+                "bundle_unavailable",
+                failure,
+            ));
+        }
         tokio::fs::write(&bundle_marker, &mpp_url)
             .await
-            .map_err(|e| format!("Failed to save patch bundle cache marker: {}", e))?;
+            .map_err(|e| {
+                crate::dependencies::error("bundle", "bundle_cache_failed", e.to_string())
+            })?;
     }
-
-    // 4. Resolve Stock APK
-    let stock_apk =
-        locate_or_download_stock(state, &req.package_name, &req.target_version, &build_dir).await?;
-    state.log(format!("  Stock APK: {}", stock_apk.display()));
+    crate::dependencies::status(
+        state,
+        "bundle",
+        "ready",
+        "Bundle rilis terpilih terverifikasi",
+    );
+    state.log("DEPENDENCIES_READY|APK, Java, mesin Morphe, dan bundle telah diverifikasi");
 
     let engine_opts = req.morphe_engine_options.clone().unwrap_or_default();
 
@@ -216,12 +255,12 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
     ];
 
     // Force version compatibility check
-    if engine_opts.force.unwrap_or(true) {
+    if engine_opts.force.unwrap_or(false) {
         args.push("-f".to_string());
     }
 
     // Continue patching on individual patch error
-    if engine_opts.continue_on_error.unwrap_or(true) {
+    if engine_opts.continue_on_error.unwrap_or(false) {
         args.push("--continue-on-error".to_string());
     }
 
@@ -264,7 +303,10 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
             if sec_file.exists() {
                 args.push("-p".to_string());
                 args.push(sec_file.to_string_lossy().to_string());
-                state.log(format!("📦 Added secondary patch bundle: {}", sec_file.display()));
+                state.log(format!(
+                    "📦 Added secondary patch bundle: {}",
+                    sec_file.display()
+                ));
             } else {
                 state.log(format!("⚠️ Secondary patch bundle not found: {}", trimmed));
             }
@@ -326,7 +368,7 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
     } else {
         format!("{}.RVX.v{}-NonRoot.apk", app_alias, req.target_version)
     };
-    let output_apk = if req.is_root {
+    let published_output = if req.is_root {
         state
             .modpath
             .join("app")
@@ -334,6 +376,13 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
     } else {
         output_root.join(&final_name)
     };
+    let output_apk = published_output.with_extension(format!(
+        "{}.building.apk",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_err(|e| e.to_string())?
+            .as_nanos()
+    ));
 
     if let Some(parent) = output_apk.parent() {
         let _ = tokio::fs::create_dir_all(parent).await;
@@ -387,89 +436,31 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
     // Root-specific adjustments
     if req.is_root {
         for r_name in ["GmsCore support", "MicroG support", "Spoof signature"] {
-            args.push("-d".to_string());
-            args.push(r_name.to_string());
+            if req
+                .included_patches
+                .iter()
+                .chain(&req.excluded_patches)
+                .any(|name| name == r_name)
+            {
+                args.push("-d".to_string());
+                args.push(r_name.to_string());
+            }
         }
     }
 
     args.push(stock_apk.to_string_lossy().to_string());
 
-    // 6. Execute Morphe CLI process with live log streaming
-    let use_su = req.is_root || crate::utils::is_root_available();
+    // Probes and builds run with exactly the same Java launcher and environment.
+    state
+        .log("PIPELINE_STAGE|patch|Menerapkan fitur patch dengan resource yang telah diverifikasi");
     state.log("⚡ Executing Morphe CLI patcher...");
-    state.log(format!(
-        "  Executing: {} with {} arguments (root execution: {})",
-        java_bin.display(),
-        args.len(),
-        use_su
-    ));
-
-    #[cfg(unix)]
-    fn shell_quote(s: &str) -> String {
-        format!("'{}'", s.replace('\'', "'\\''"))
-    }
-
-    #[cfg(unix)]
-    let mut child_cmd = {
-        let mut parts = vec![];
-        if let Some(parent) = java_bin.parent().and_then(|p| p.parent()) {
-            let jre_lib = parent.join("lib");
-            let jre_server = jre_lib.join("server");
-            parts.push(jre_lib.to_string_lossy().to_string());
-            parts.push(jre_server.to_string_lossy().to_string());
-        }
-        parts.push("/data/data/com.termux/files/usr/lib".to_string());
-        if let Ok(existing_ld) = std::env::var("LD_LIBRARY_PATH") {
-            if !existing_ld.is_empty() {
-                parts.push(existing_ld);
-            }
-        }
-        parts.push("/system/lib64".to_string());
-        let ld_path_str = parts.join(":");
-
-        let quoted_args: Vec<String> = std::iter::once(java_bin.to_string_lossy().to_string())
-            .chain(args.iter().cloned())
-            .map(|a| shell_quote(&a))
-            .collect();
-
-        let inner_cmd = format!(
-            "export LD_LIBRARY_PATH=\"{}\"; export TMPDIR=\"{}\"; exec {}",
-            ld_path_str,
-            tmp_dir.display(),
-            quoted_args.join(" ")
-        );
-
-        let mut cmd = if use_su {
-            let su_bin = ["/system/bin/su", "/data/adb/ap/bin/su", "su"]
-                .into_iter()
-                .find(|p| std::path::Path::new(p).exists())
-                .unwrap_or("su");
-            let mut c = Command::new(su_bin);
-            c.arg("-c").arg(&inner_cmd);
-            c
-        } else {
-            let mut c = Command::new("/system/bin/sh");
-            c.arg("-c").arg(&inner_cmd);
-            c
-        };
-
-        cmd.current_dir(&state.modpath)
-            .env("TMPDIR", &tmp_dir)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
-        cmd
-    };
-
-    #[cfg(not(unix))]
-    let mut child_cmd = {
-        let mut cmd = Command::new(&java_bin);
-        cmd.args(&args)
-            .current_dir(&state.modpath)
-            .env("TMPDIR", &tmp_dir)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
-        cmd
-    };
+    let mut child_cmd = crate::dependencies::java_command(&java_bin);
+    child_cmd
+        .args(&args)
+        .current_dir(&state.modpath)
+        .env("TMPDIR", &tmp_dir)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
 
     let mut child = child_cmd
         .spawn()
@@ -479,7 +470,7 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
     let stderr = child.stderr.take().ok_or("Failed to capture stderr")?;
 
     let state_out = state.clone();
-    tokio::spawn(async move {
+    let stdout_task = tokio::spawn(async move {
         let mut reader = BufReader::new(stdout).lines();
         while let Ok(Some(line)) = reader.next_line().await {
             state_out.log(line);
@@ -487,7 +478,7 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
     });
 
     let state_err = state.clone();
-    tokio::spawn(async move {
+    let stderr_task = tokio::spawn(async move {
         let mut reader = BufReader::new(stderr).lines();
         while let Ok(Some(line)) = reader.next_line().await {
             state_err.log(format!("⚠️ {}", line));
@@ -498,10 +489,27 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
         .wait()
         .await
         .map_err(|e| format!("Process error: {}", e))?;
+    let _ = stdout_task.await;
+    let _ = stderr_task.await;
 
     if !status.success() {
         return Err(format!("Morphe CLI exited with code: {:?}", status.code()));
     }
+
+    let candidate = output_apk.clone();
+    let identity = tokio::task::spawn_blocking(move || crate::apk::inspect_apk(&candidate))
+        .await
+        .map_err(|e| format!("Validasi hasil tidak selesai: {}", e))?
+        .map_err(|e| format!("APK hasil patch tidak valid: {}", e))?;
+    if identity.version != req.target_version
+        || (req.is_root && identity.package != req.package_name)
+    {
+        return Err("Paket atau versi APK hasil patch tidak sesuai konfigurasi".into());
+    }
+    tokio::fs::rename(&output_apk, &published_output)
+        .await
+        .map_err(|e| format!("Hasil tervalidasi tidak dapat disimpan: {}", e))?;
+    let output_apk = published_output;
 
     state.log(format!("✅ Output APK generated: {}", output_apk.display()));
     if req.is_root {
@@ -526,7 +534,10 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
         if download_dir.exists() && download_dir.is_dir() {
             let dest = download_dir.join(&final_name);
             if let Ok(_) = tokio::fs::copy(&output_apk, &dest).await {
-                state.log(format!("📥 APK disalin ke folder Download: {}", dest.display()));
+                state.log(format!(
+                    "📥 APK disalin ke folder Download: {}",
+                    dest.display()
+                ));
             }
         }
         state.log(format!(
@@ -543,8 +554,11 @@ async fn run_pipeline(state: &AppState, req: &PatchRequest) -> Result<(), String
 
 async fn resolve_request_locations(
     state: &AppState,
-    _req: &PatchRequest,
+    req: &PatchRequest,
 ) -> Result<(PathBuf, PathBuf), String> {
+    if let (Some(workspace), Some(output)) = (&req.prepared_workspace, &req.prepared_output) {
+        return Ok((workspace.clone(), output.clone()));
+    }
     let config_path = state.modpath.join("config").join("storage.json");
     if let Ok(bytes) = tokio::fs::read(&config_path).await {
         if let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) {
@@ -581,32 +595,22 @@ fn validate_patch_bundle_url(url: &str) -> Result<(), String> {
     Ok(())
 }
 
-async fn validate_downloaded_patch_bundle(path: &Path) -> Result<(), String> {
-    let metadata = tokio::fs::metadata(path)
+pub(crate) async fn validate_downloaded_patch_bundle(path: &Path) -> Result<(), String> {
+    let path = path.to_path_buf();
+    tokio::task::spawn_blocking(move || crate::dependencies::validate_zip(&path, None))
         .await
-        .map_err(|e| format!("Failed to inspect patch bundle: {}", e))?;
-    if metadata.len() == 0 {
-        return Err("Downloaded patch bundle is empty".to_string());
-    }
-
-    let mut file = tokio::fs::File::open(path)
-        .await
-        .map_err(|e| format!("Failed to validate patch bundle: {}", e))?;
-    let mut header = [0_u8; 4];
-    file.read_exact(&mut header)
-        .await
-        .map_err(|e| format!("Patch bundle is truncated: {}", e))?;
-    if header != *b"PK\x03\x04" && header != *b"PK\x05\x06" {
-        return Err("Downloaded .mpp is not a valid ZIP-based Morphe bundle".to_string());
-    }
-    Ok(())
+        .map_err(|e| e.to_string())?
 }
 
-async fn verify_file_sha256(path: &Path, expected: Option<&str>) -> Result<(), String> {
+pub(crate) async fn verify_file_sha256(path: &Path, expected: Option<&str>) -> Result<(), String> {
     let Some(expected) = expected.map(str::trim).filter(|value| !value.is_empty()) else {
         return Ok(());
     };
-    if expected.len() != 64 || !expected.chars().all(|character| character.is_ascii_hexdigit()) {
+    if expected.len() != 64
+        || !expected
+            .chars()
+            .all(|character| character.is_ascii_hexdigit())
+    {
         return Err("Patch bundle SHA-256 is invalid".to_string());
     }
     let mut file = tokio::fs::File::open(path)
@@ -634,183 +638,7 @@ async fn verify_file_sha256(path: &Path, expected: Option<&str>) -> Result<(), S
     Ok(())
 }
 
-async fn locate_or_download_stock(
-    state: &AppState,
-    package_name: &str,
-    version: &str,
-    build_dir: &Path,
-) -> Result<PathBuf, String> {
-    let app_alias = match package_name {
-        "com.google.android.youtube" => "youtube",
-        "com.google.android.apps.youtube.music" => "ytmusic",
-        "com.reddit.frontpage" => "reddit",
-        "com.twitter.android" => "twitter",
-        "com.zhiliaoapp.musically" => "tiktok",
-        _ => package_name.split('.').last().unwrap_or("app"),
-    };
-
-    let target_stock = build_dir.join(format!("{}-{}.apk", app_alias, version));
-    if target_stock.exists() {
-        if let Ok(true) = crate::apkmirror::validate_apk_file(&target_stock) {
-            state.log(format!("📦 Menggunakan cache Stock APK: {}", target_stock.display()));
-            return Ok(target_stock);
-        }
-    }
-
-    // 1. Check user provided APK in module directory
-    let cands = [
-        state.modpath.join(format!("stock-{}.apk", app_alias)),
-        state.modpath.join(format!("stock-{}.apk", package_name)),
-    ];
-    for cand in cands {
-        if cand.exists() {
-            if let Ok(true) = crate::apkmirror::validate_apk_file(&cand) {
-                state.log(format!("📂 Using provided stock APK: {}", cand.display()));
-                return Ok(cand);
-            }
-        }
-    }
-
-    // 2. Auto-import from Revancify-Xisr local storage
-    #[cfg(unix)]
-    {
-        let revancify_candidates = [
-            format!("/sdcard/Revancify-Xisr/cache/{}-{}.apk", app_alias, version),
-            format!("/sdcard/Revancify-Xisr/cache/{}.apk", version),
-            format!("/sdcard/Revancify-Xisr/cache/youtube-{}.apk", version),
-            format!("/data/data/com.termux/files/home/Revancify-Xisr/cache/{}-{}.apk", app_alias, version),
-            format!("/data/data/com.termux/files/home/Revancify-Xisr/cache/{}.apk", version),
-            format!("/data/data/com.termux/files/home/Revancify-Xisr/apps/YouTube/{}.apk", version),
-            format!("/data/data/com.termux/files/home/Revancify-Xisr/apps/YouTube/youtube-{}.apk", version),
-            format!("/data/data/com.termux/files/home/Revancify-Xisr/apps/{}/{}.apk", app_alias, version),
-            format!("/sdcard/Revancify-Xisr/apps/YouTube/{}.apk", version),
-            format!("/sdcard/Revancify-Xisr/{}-{}.apk", app_alias, version),
-            format!("/sdcard/RVX-Patcher/apps/YouTube/{}.apk", version),
-            format!("/sdcard/Download/{}-{}.apk", app_alias, version),
-            format!("/sdcard/Download/YouTube-{}.apk", version),
-        ];
-        for cand in &revancify_candidates {
-            let cp_cmd = format!(
-                "cp \"{}\" \"{}\" 2>/dev/null; chmod 666 \"{}\" 2>/dev/null",
-                cand, target_stock.display(), target_stock.display()
-            );
-            let _ = std::process::Command::new("/system/bin/su")
-                .arg("-c")
-                .arg(&cp_cmd)
-                .status()
-                .or_else(|_| std::process::Command::new("su").arg("-c").arg(&cp_cmd).status());
-            if target_stock.exists() {
-                if let Ok(true) = crate::apkmirror::validate_apk_file(&target_stock) {
-                    state.log(format!("✨ Berhasil mengimpor Stock APK dari cache lokal: {}", cand));
-                    return Ok(target_stock);
-                }
-            }
-        }
-
-        // 2b. Auto-fallback to any available stock APK for this app
-        let wildcard_search_dirs = [
-            "/sdcard/Revancify-Xisr/cache",
-            "/sdcard/Revancify-Xisr/apps/YouTube",
-            "/sdcard/Revancify-Xisr",
-            "/sdcard/RVX-Patcher/cache",
-            "/sdcard/RVX-Patcher",
-            "/sdcard/Download",
-            "/data/data/com.termux/files/home/Revancify-Xisr/apps/YouTube",
-            "/data/data/com.termux/files/home/Revancify-Xisr/cache",
-        ];
-        for dir in &wildcard_search_dirs {
-            if let Ok(mut entries) = tokio::fs::read_dir(dir).await {
-                while let Ok(Some(entry)) = entries.next_entry().await {
-                    let name = entry.file_name().to_string_lossy().to_string();
-                    if (name.contains(app_alias) || name.starts_with("21.") || name.starts_with("stock"))
-                        && name.ends_with(".apk")
-                        && !name.contains("test-")
-                        && !name.contains("-Anddea")
-                        && !name.contains("-Patched")
-                    {
-                        let cand_path = entry.path();
-                        let cp_cmd = format!(
-                            "cp \"{}\" \"{}\" 2>/dev/null; chmod 666 \"{}\" 2>/dev/null",
-                            cand_path.display(), target_stock.display(), target_stock.display()
-                        );
-                        let _ = std::process::Command::new("/system/bin/su")
-                            .arg("-c")
-                            .arg(&cp_cmd)
-                            .status()
-                            .or_else(|_| std::process::Command::new("su").arg("-c").arg(&cp_cmd).status());
-                        if target_stock.exists() {
-                            if let Ok(true) = crate::apkmirror::validate_apk_file(&target_stock) {
-                                state.log(format!("📦 Menggunakan cache Stock APK yang tersedia: {}", cand_path.display()));
-                                return Ok(target_stock);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // 3. Extract installed APK from device via root/pm
-    #[cfg(unix)]
-    {
-        let query_cmd = format!(
-            "/system/bin/su -c 'pm path {pkg} 2>/dev/null | grep base | cut -d: -f2 | head -n1' 2>/dev/null || su -c 'pm path {pkg} 2>/dev/null | grep base | cut -d: -f2 | head -n1' 2>/dev/null || pm path {pkg} 2>/dev/null | grep base | cut -d: -f2 | head -n1",
-            pkg = package_name
-        );
-        if let Ok(output) = crate::utils::run_shell_command(&query_cmd).await {
-            let path_str = output.trim();
-            if !path_str.is_empty() {
-                state.log(format!("📱 Mengambil APK terpasang ({}) via root: {}", package_name, path_str));
-                let cp_cmd = format!(
-                    "cp \"{}\" \"{}\" 2>/dev/null; chmod 666 \"{}\" 2>/dev/null",
-                    path_str, target_stock.display(), target_stock.display()
-                );
-                let _ = std::process::Command::new("/system/bin/su")
-                    .arg("-c")
-                    .arg(&cp_cmd)
-                    .status()
-                    .or_else(|_| std::process::Command::new("su").arg("-c").arg(&cp_cmd).status());
-                if target_stock.exists() {
-                    if let Ok(true) = crate::apkmirror::validate_apk_file(&target_stock) {
-                        return Ok(target_stock);
-                    }
-                }
-            }
-        }
-    }
-
-    // 4. Crawl APKMirror natively via reqwest
-    state.log(format!("🌐 Mengambil Stock APK v{} dari APKMirror...", version));
-    match crate::apkmirror::scrape_and_download_apkmirror(state, package_name, version, &target_stock).await {
-        Ok(path) => {
-            state.log(format!("✅ Berhasil mengunduh Stock APK dari APKMirror: {}", path.display()));
-            return Ok(path);
-        }
-        Err(e) => {
-            state.log(format!("⚠️ APKMirror crawler: {}", e));
-        }
-    }
-
-    // 5. Direct Mirrors Fallback
-    let mirrors = [
-        format!("https://github.com/revanced-apks/builds/releases/download/v{}/youtube.apk", version),
-        format!("https://archive.org/download/youtube-apk-{}/youtube-{}.apk", version.replace('.', "-"), version),
-        format!("https://github.com/Zy0x/YouTube-Revanced/releases/download/v{}/youtube-{}.apk", version, version),
-    ];
-    for m in mirrors {
-        state.log(format!("📥 Mencoba mirror unduhan: {}", m));
-        if download_file(&state.client, &m, &target_stock, state, "stock-mirror").await.is_ok() {
-            if let Ok(true) = crate::apkmirror::validate_apk_file(&target_stock) {
-                return Ok(target_stock);
-            }
-        }
-    }
-
-    Err(format!(
-        "Stock APK untuk {} (v{}) tidak ditemukan. Silakan pasang aplikasi di perangkat atau letakkan stock-{}.apk di direktori kerja.",
-        package_name, version, app_alias
-    ))
-}
+pub use crate::apk::find_local_stock;
 
 pub(crate) async fn download_file(
     client: &reqwest::Client,
@@ -819,75 +647,117 @@ pub(crate) async fn download_file(
     state: &AppState,
     label: &str,
 ) -> Result<(), String> {
-    let res = client
-        .get(url)
-        .send()
-        .await
-        .map_err(|e| format!("Failed to download {}: {}", url, e))?;
-
-    if !res.status().is_success() {
-        return Err(format!(
-            "Download failed with status {} for {}",
-            res.status(),
-            url
-        ));
-    }
-
-    let total = res.content_length().unwrap_or(0);
-    let part_name = target
-        .file_name()
-        .and_then(|name| name.to_str())
-        .map(|name| format!("{}.part", name))
-        .unwrap_or_else(|| "download.part".to_string());
-    let part_path = target.with_file_name(part_name);
-    let mut file = tokio::fs::File::create(&part_path)
-        .await
-        .map_err(|e| format!("Failed to create {}: {}", part_path.display(), e))?;
-    let mut stream = res.bytes_stream();
-    let mut received = 0_u64;
-    let mut last_reported = 0_u64;
-    state.log(format!("DOWNLOAD_PROGRESS|{}|0|{}", label, total));
-
-    while let Some(chunk) = stream.next().await {
-        let chunk = chunk.map_err(|e| format!("Failed to read download stream: {}", e))?;
-        file.write_all(&chunk)
-            .await
-            .map_err(|e| format!("Failed to write {}: {}", part_path.display(), e))?;
-        received += chunk.len() as u64;
-        let report_step = if total > 0 {
-            (total / 100).max(256 * 1024)
-        } else {
-            1024 * 1024
-        };
-        if received.saturating_sub(last_reported) >= report_step || (total > 0 && received >= total)
-        {
+    let part = target.with_file_name(format!(
+        "{}.part",
+        target
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("download")
+    ));
+    let mut last_error = String::new();
+    for attempt in 0..3 {
+        if attempt > 0 {
+            crate::dependencies::status(
+                state,
+                label,
+                "retrying",
+                &format!(
+                    "Mengulang unduhan {}/3 setelah gangguan jaringan atau berkas terpotong",
+                    attempt + 1
+                ),
+            );
+            tokio::time::sleep(std::time::Duration::from_millis(250 * attempt)).await;
+        }
+        let result: Result<(), (bool, String)> = async {
+            let response = client
+                .get(url)
+                .timeout(std::time::Duration::from_secs(600))
+                .send()
+                .await
+                .map_err(|e| (true, format!("Koneksi unduhan gagal: {}", e)))?;
+            let status = response.status();
+            if !status.is_success() {
+                return Err((
+                    status.is_server_error() || status.as_u16() == 429 || status.as_u16() == 408,
+                    format!(
+                        "Sumber unduhan mengembalikan HTTP {}: {}",
+                        status.as_u16(),
+                        url
+                    ),
+                ));
+            }
+            let content_type = response
+                .headers()
+                .get(reqwest::header::CONTENT_TYPE)
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("");
+            if content_type.contains("text/html") || content_type.contains("application/json") {
+                return Err((
+                    false,
+                    "Server memberikan halaman HTML/JSON, bukan berkas dependency".into(),
+                ));
+            }
+            let total = response.content_length().unwrap_or(0);
+            let mut file = tokio::fs::File::create(&part)
+                .await
+                .map_err(|e| (false, format!("Cache tidak dapat ditulis: {}", e)))?;
+            let mut stream = response.bytes_stream();
+            let mut received = 0u64;
+            let mut reported = 0u64;
+            state.log(format!("DOWNLOAD_PROGRESS|{}|0|{}", label, total));
+            while let Some(chunk) = stream.next().await {
+                let chunk = chunk.map_err(|e| (true, format!("Unduhan terputus: {}", e)))?;
+                file.write_all(&chunk)
+                    .await
+                    .map_err(|e| (false, format!("Cache tidak dapat ditulis: {}", e)))?;
+                received += chunk.len() as u64;
+                if received.saturating_sub(reported) >= (total / 100).max(256 * 1024)
+                    || total > 0 && received >= total
+                {
+                    state.log(format!(
+                        "DOWNLOAD_PROGRESS|{}|{}|{}",
+                        label, received, total
+                    ));
+                    reported = received;
+                }
+            }
+            if received == 0 || total > 0 && received != total {
+                return Err((
+                    true,
+                    format!("Unduhan belum lengkap: {} dari {} byte", received, total),
+                ));
+            }
+            file.flush().await.map_err(|e| (false, e.to_string()))?;
+            file.sync_all().await.map_err(|e| (false, e.to_string()))?;
+            drop(file);
+            #[cfg(windows)]
+            if target.exists() {
+                tokio::fs::remove_file(target)
+                    .await
+                    .map_err(|e| (false, e.to_string()))?;
+            }
+            tokio::fs::rename(&part, target)
+                .await
+                .map_err(|e| (false, format!("Tidak dapat mengaktifkan unduhan: {}", e)))?;
             state.log(format!(
                 "DOWNLOAD_PROGRESS|{}|{}|{}",
                 label, received, total
             ));
-            last_reported = received;
+            Ok(())
+        }
+        .await;
+        match result {
+            Ok(()) => return Ok(()),
+            Err((retryable, error)) => {
+                last_error = error;
+                if !retryable {
+                    break;
+                }
+            }
         }
     }
-    file.flush()
-        .await
-        .map_err(|e| format!("Failed to flush {}: {}", part_path.display(), e))?;
-    drop(file);
-    if received != last_reported {
-        state.log(format!(
-            "DOWNLOAD_PROGRESS|{}|{}|{}",
-            label, received, total
-        ));
-    }
-    if target.exists() {
-        tokio::fs::remove_file(target)
-            .await
-            .map_err(|e| format!("Failed to replace {}: {}", target.display(), e))?;
-    }
-    tokio::fs::rename(&part_path, target)
-        .await
-        .map_err(|e| format!("Failed to finalize {}: {}", target.display(), e))?;
-
-    Ok(())
+    let _ = tokio::fs::remove_file(&part).await;
+    Err(last_error)
 }
 
 async fn resolve_persistent_keystore(state: &AppState, build_dir: &Path) -> PathBuf {
@@ -943,4 +813,81 @@ async fn resolve_persistent_keystore(state: &AppState, build_dir: &Path) -> Path
         local_ks.display()
     ));
     local_ks
+}
+
+#[cfg(test)]
+mod download_tests {
+    use super::*;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    async fn server(responses: Vec<&'static [u8]>) -> (String, tokio::task::JoinHandle<usize>) {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("http://{}/artifact", listener.local_addr().unwrap());
+        let handle = tokio::spawn(async move {
+            let mut count = 0;
+            for response in responses {
+                let (mut socket, _) = listener.accept().await.unwrap();
+                let mut request = [0u8; 2048];
+                let _ = socket.read(&mut request).await;
+                socket.write_all(response).await.unwrap();
+                socket.shutdown().await.unwrap();
+                count += 1;
+            }
+            count
+        });
+        (url, handle)
+    }
+    fn state() -> AppState {
+        AppState::new(std::env::temp_dir(), String::new(), vec![])
+    }
+    fn target() -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "rvx-download-test-{}-{}.bin",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ))
+    }
+    #[tokio::test]
+    async fn retries_server_errors_then_activates_complete_file() {
+        let (url,server)=server(vec![b"HTTP/1.1 503 Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",b"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: 5\r\nConnection: close\r\n\r\nvalid"]).await;
+        let state = state();
+        let path = target();
+        download_file(&state.client, &url, &path, &state, "cli")
+            .await
+            .unwrap();
+        assert_eq!(std::fs::read(&path).unwrap(), b"valid");
+        assert_eq!(server.await.unwrap(), 2);
+        std::fs::remove_file(path).unwrap();
+    }
+    #[tokio::test]
+    async fn retries_truncated_stream_instead_of_marking_it_ready() {
+        let (url, server) = server(vec![
+            b"HTTP/1.1 200 OK\r\nContent-Length: 50\r\nConnection: close\r\n\r\nshort",
+            b"HTTP/1.1 200 OK\r\nContent-Length: 8\r\nConnection: close\r\n\r\ncomplete",
+        ])
+        .await;
+        let state = state();
+        let path = target();
+        download_file(&state.client, &url, &path, &state, "bundle")
+            .await
+            .unwrap();
+        assert_eq!(std::fs::read(&path).unwrap(), b"complete");
+        assert_eq!(server.await.unwrap(), 2);
+        std::fs::remove_file(path).unwrap();
+    }
+    #[tokio::test]
+    async fn html_failure_keeps_previous_complete_file() {
+        let (url,server)=server(vec![b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 4\r\nConnection: close\r\n\r\noops"]).await;
+        let state = state();
+        let path = target();
+        std::fs::write(&path, b"existing").unwrap();
+        assert!(download_file(&state.client, &url, &path, &state, "cli")
+            .await
+            .is_err());
+        assert_eq!(std::fs::read(&path).unwrap(), b"existing");
+        assert_eq!(server.await.unwrap(), 1);
+        std::fs::remove_file(path).unwrap();
+    }
 }

@@ -1,5 +1,5 @@
-use super::storage::read_storage_selection;
 use super::releases::html_meta_content;
+use super::storage::read_storage_selection;
 use crate::state::AppState;
 use axum::{
     body::Body,
@@ -710,7 +710,10 @@ pub(crate) async fn get_source_catalog_patches(
     Query(query): Query<CatalogPatchQuery>,
 ) -> Response {
     let bundle_id = query.bundle.trim();
-    if bundle_id.is_empty() || bundle_id.len() > 64 || !bundle_id.chars().all(|ch| ch.is_ascii_hexdigit()) {
+    if bundle_id.is_empty()
+        || bundle_id.len() > 64
+        || !bundle_id.chars().all(|ch| ch.is_ascii_hexdigit())
+    {
         return (
             StatusCode::BAD_REQUEST,
             Json(json!({ "error": "Invalid registry bundle ID." })),
@@ -850,8 +853,6 @@ pub(crate) async fn get_app_icon(
         .body(Body::from(bytes))
         .unwrap_or_else(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())
 }
-
-
 
 #[derive(serde::Deserialize)]
 pub(crate) struct AppIconQuery {

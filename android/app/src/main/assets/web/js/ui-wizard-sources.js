@@ -81,7 +81,9 @@ function createWizardAppCard(app) {
   const card = document.createElement('div');
   card.className = `morphe-app-card ${isSelected ? 'active-app' : ''}`;
   card.setAttribute('role', 'radio');
+  card.dataset.packageName = app.packageName;
   card.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+  card.tabIndex = 0;
 
   card.innerHTML = `
     ${renderAppIcon(app)}
@@ -96,6 +98,7 @@ function createWizardAppCard(app) {
   `;
 
   card.addEventListener('click', async () => {
+    if (STATE.currentApp?.packageName === app.packageName) return;
     STATE.currentSource = null;
     STATE.patchTag = '';
     STATE.patchReleases = [];
@@ -105,10 +108,18 @@ function createWizardAppCard(app) {
     STATE.targetMode = null;
     STATE.modeEditorExpanded = true;
     STATE.selectedPatches.clear();
+    STATE.activePreset = '';
     selectApp(app.packageName);
-    goToWizardStep(2);
+    renderWizardAppStep();
+    updateWizardNavigationState();
+    document.querySelector(`[data-package-name="${app.packageName}"]`)?.focus({ preventScroll: true });
   });
 
+  card.addEventListener('keydown', event => {
+    if (!['Enter', ' '].includes(event.key)) return;
+    event.preventDefault();
+    card.click();
+  });
   return card;
 }
 
@@ -188,7 +199,7 @@ function renderWizardActiveSource() {
 
   if (avatar) {
     avatar.textContent = activeSrc.avatarText || displayName.charAt(0).toUpperCase();
-    avatar.style.background = activeSrc.avatarColor || '#3182CE';
+    avatar.style.background = 'var(--rvx-panel)';
   }
   if (name) name.textContent = displayName;
   if (repo) repo.textContent = repoText;
@@ -206,13 +217,13 @@ function renderWizardActiveSource() {
         : verified ? 'Tidak kompatibel' : sourceStatus === 'error' ? 'Manifest gagal dimuat' : 'Tidak terverifikasi';
   if (status) status.textContent = `${statusText}${activeSrc.isPreinstalled === false ? ' · Kustom' : ''}`;
   const compatibleCount = STATE.sources.filter(source => isSourceCompatibleWithApp(source.id, targetPkg)).length;
-  if (pickerSub) pickerSub.textContent = `${STATE.currentApp?.name || targetPkg} · ${compatibleCount} source kompatibel`;
+  if (pickerSub) pickerSub.textContent = `${STATE.currentApp?.name || targetPkg} · ${compatibleCount} sumber kompatibel`;
   const nextButton = document.getElementById('btnWizStep2Next');
   if (nextButton) {
     const canContinue = isUsable && Boolean(STATE.patchTag) && !STATE.channelLoading;
     nextButton.disabled = !canContinue;
     nextButton.title = canContinue ? '' : STATE.channelLoading
-      ? 'Sedang memverifikasi metadata source terpilih'
+      ? 'Sedang memverifikasi metadata sumber terpilih'
       : 'Pilih sumber kompatibel dan saluran rilis terlebih dahulu';
   }
 }
@@ -267,6 +278,9 @@ function renderWizardSourcePickerList() {
     const latestRelease = STATE.sourceReleases[src.id]?.[0];
     const releaseDate = latestRelease?.published_at ? formatCompactReleaseDate(latestRelease.published_at) : '';
     const latestName = latestRelease?.tag_name || latestRelease?.name || '';
+    const sourcePatches = filterPatchesForApp(STATE.sourceManifestCache[src.id] || [], targetPkg);
+    const descriptions = { 'anddea/revanced-patches': 'Patch YouTube dan YouTube Music dengan pengaturan RVX.', 'MorpheApp/morphe-patches': 'Paket patch dari tim Morphe.' };
+    const sourceDescription = descriptions[src.repository] || String(src.description || '').replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF\uFE0F]/gu, '').trim() || (sourcePatches.length ? `${sourcePatches.length} patch untuk ${STATE.currentApp?.name || 'aplikasi ini'}` : 'Daftar fitur mengikuti metadata sumber');
     const releaseMeta = latestRelease && latestName
       ? `Rilis ${latestName}${releaseDate ? ` · ${releaseDate}` : ''}`
       : '';
@@ -298,6 +312,7 @@ function renderWizardSourcePickerList() {
         <span class="source-item-tag ${isCompatible ? 'tag-rec' : manifestCompatible ? 'tag-unverified' : isVerified ? 'tag-incompatible' : 'tag-unverified'}">${compatibilityLabel}</span>
           ${isCustom ? '<span class="source-item-tag tag-custom">Kustom</span>' : ''}
         </span>
+        <span class="source-item-description">${escapeHtml(sourceDescription)}</span>
         <span class="source-item-repo">${escapeHtml(repoText)}</span>
         ${releaseMeta ? `<span class="source-item-latest">${escapeHtml(releaseMeta)}</span>` : ''}
       </span>
@@ -308,6 +323,7 @@ function renderWizardSourcePickerList() {
       document.getElementById('modalWizardSourcePicker')?.classList.add('hidden');
       await selectPatchSource(src.id);
       renderWizardSourceStep();
+      document.getElementById('btnOpenWizardSourcePicker')?.focus();
     });
     item.appendChild(choose);
 
@@ -472,6 +488,7 @@ function renderStep2ChannelSection() {
   const selectedTag = selectedRelease?.tag_name || selectedRelease?.name || currentTag;
   const selectedDate = selectedRelease?.published_at ? formatCompactReleaseDate(selectedRelease.published_at) : '';
   const newestTag = newestRelease?.tag_name || newestRelease?.name || '';
+  const stableTag = (releases.find(release => !release.prerelease && !release.draft)?.tag_name) || '';
   const isLatest = Boolean(selectedTag && newestTag && selectedTag === newestTag);
 
   if (title) title.textContent = !hasSource
@@ -593,6 +610,7 @@ function renderFilteredTagsList() {
   const releases = STATE.patchReleases || [];
   const newestRelease = releases.find(release => !release.draft);
   const newestTag = newestRelease?.tag_name || newestRelease?.name || '';
+  const stableTag = (releases.find(release => !release.prerelease && !release.draft)?.tag_name) || '';
 
   const filtered = releases.filter(rel => {
     const tagName = (rel.tag_name || rel.name || '').toLowerCase();
@@ -624,6 +642,7 @@ function renderFilteredTagsList() {
     row.className = `tag-picker-item ${isSelected ? 'active' : ''}`;
     row.setAttribute('role', 'radio');
     row.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+    row.tabIndex = 0;
 
     row.innerHTML = `
       <div class="tag-item-radio">
@@ -632,8 +651,9 @@ function renderFilteredTagsList() {
       <div class="tag-item-info">
         <div class="tag-item-name-row">
           <span class="tag-item-name">${escapeHtml(tagName)}</span>
-          ${isLatestRelease ? '<span class="tag-simple-badge badge-latest">Latest</span>' : ''}
-          <span class="tag-simple-badge ${isPre ? 'badge-pre' : 'badge-stable'}">${isPre ? 'Pra-rilis' : 'Stabil'}</span>
+          ${tagName === stableTag ? '<span class="tag-simple-badge badge-stable">Stabil terbaru</span>' : ''}
+          ${isLatestRelease ? '<span class="tag-simple-badge badge-latest">Terbaru</span>' : ''}
+          ${tagName !== stableTag ? `<span class="tag-simple-badge ${isPre ? 'badge-pre' : 'badge-stable'}">${isPre ? 'Pra-rilis' : 'Stabil'}</span>` : ''}
         </div>
         ${dateStr ? `<span class="tag-item-date">${escapeHtml(dateStr)}</span>` : ''}
       </div>
@@ -643,6 +663,11 @@ function renderFilteredTagsList() {
       </button>
     `;
 
+    row.addEventListener('keydown', event => {
+      if (event.target !== row || !['Enter', ' '].includes(event.key)) return;
+      event.preventDefault();
+      row.click();
+    });
     row.addEventListener('click', async (e) => {
       if (e.target.closest('.btn-tag-changelog')) {
         e.stopPropagation();
@@ -651,6 +676,7 @@ function renderFilteredTagsList() {
       }
       if (modal) modal.classList.add('hidden');
       await syncReleaseChannelSelection(tagName, isPre);
+      document.getElementById('btnChannelPicker')?.focus();
     });
 
     listContainer.appendChild(row);
@@ -668,7 +694,7 @@ function openPatchTagPickerModal() {
   wizardOverlayReturnFocus = document.getElementById('btnChannelPicker');
   const releases = STATE.patchReleases || [];
 
-  if (titleEl) titleEl.textContent = 'Pilih Versi Patch';
+  if (titleEl) titleEl.textContent = 'Pilih rilis patch';
   if (subEl) subEl.textContent = `Sumber: ${activeSrc.name || getSourceDisplayName(activeSrc.id)} • ${releases.length} rilis tersedia`;
 
   tagPickerFilter = 'all';

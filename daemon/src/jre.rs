@@ -1,7 +1,7 @@
+use crate::dependencies::{probe_java, status, JRE_SHA256};
 use crate::state::AppState;
 use crate::utils::get_java_binary_in;
 use flate2::read::GzDecoder;
-use std::fs::File;
 use std::path::Path;
 use tar::Archive;
 
@@ -12,105 +12,149 @@ pub async fn ensure_jre_installed(
     download_url: Option<String>,
     workspace: Option<&Path>,
 ) -> Result<(), String> {
-    if get_java_binary_in(&state.modpath, workspace).is_some() {
-        state.log("☕ Java runtime is already available.");
+    status(
+        state,
+        "java",
+        "checking",
+        "Memeriksa Java 21 dengan menjalankannya, bukan hanya mencari berkas",
+    );
+    if let Some(java) = get_java_binary_in(&state.modpath, workspace) {
+        match probe_java(&java).await {
+            Ok(()) => {
+                status(state, "java", "ready", "Java 21+ dapat dijalankan");
+                return Ok(());
+            }
+            Err(error) => status(state, "java", "invalid", &error),
+        }
+    }
+    if !cfg!(all(target_os = "android", target_arch = "aarch64")) {
+        return Err("Java 21+ belum dapat dijalankan pada host ini. Pasang runtime yang sesuai dengan sistem operasi dan arsitekturnya.".into());
+    }
+    let url = download_url.unwrap_or_else(|| JRE_DOWNLOAD_URL.into());
+    if url != JRE_DOWNLOAD_URL {
+        return Err("Sumber runtime tidak cocok dengan rilis yang SHA-256-nya dipin".into());
+    }
+    // Executables stay in private storage, never on Android's noexec shared volume.
+    let runtime = &state.modpath;
+    tokio::fs::create_dir_all(runtime)
+        .await
+        .map_err(|e| e.to_string())?;
+    let archive_path = runtime.join("jre.tar.gz");
+    let staging = runtime.join("jre.prepare");
+    let target = runtime.join("jre");
+    let backup = runtime.join("jre.previous");
+    let mut last_error = String::new();
+    for attempt in 0..2 {
+        status(
+            state,
+            "java",
+            if attempt == 0 {
+                "downloading"
+            } else {
+                "retrying"
+            },
+            "Menyiapkan runtime Android ARM64 yang terverifikasi",
+        );
+        if crate::patcher::verify_file_sha256(&archive_path, Some(JRE_SHA256))
+            .await
+            .is_err()
+        {
+            crate::patcher::download_file(&state.client, &url, &archive_path, state, "jre").await?;
+        }
+        if let Err(error) =
+            crate::patcher::verify_file_sha256(&archive_path, Some(JRE_SHA256)).await
+        {
+            last_error = error;
+            continue;
+        }
+        if staging.exists() {
+            tokio::fs::remove_dir_all(&staging)
+                .await
+                .map_err(|e| e.to_string())?;
+        }
+        tokio::fs::create_dir_all(&staging)
+            .await
+            .map_err(|e| e.to_string())?;
+        let archive = archive_path.clone();
+        let directory = staging.clone();
+        let unpacked = tokio::task::spawn_blocking(move || {
+            let file = std::fs::File::open(archive).map_err(|e| e.to_string())?;
+            Archive::new(GzDecoder::new(file))
+                .unpack(directory)
+                .map_err(|e| e.to_string())
+        })
+        .await
+        .map_err(|e| e.to_string())?;
+        if let Err(error) = unpacked {
+            last_error = format!("Arsip Java tidak dapat diekstrak: {}", error);
+            continue;
+        }
+        let home = find_jre_home(&staging).ok_or("Arsip Java tidak memiliki bin/java")?;
+        let java = home.join("bin/java");
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&java, std::fs::Permissions::from_mode(0o755))
+                .map_err(|e| e.to_string())?;
+        }
+        if let Err(error) = probe_java(&java).await {
+            last_error = error;
+            continue;
+        }
+        if backup.exists() {
+            tokio::fs::remove_dir_all(&backup)
+                .await
+                .map_err(|e| e.to_string())?;
+        }
+        if target.exists() {
+            tokio::fs::rename(&target, &backup)
+                .await
+                .map_err(|e| e.to_string())?;
+        }
+        if let Err(error) = tokio::fs::rename(&home, &target).await {
+            if backup.exists() {
+                let _ = tokio::fs::rename(&backup, &target).await;
+            }
+            return Err(format!(
+                "Runtime tervalidasi tidak dapat diaktifkan: {}",
+                error
+            ));
+        }
+        if let Err(error) = probe_java(&target.join("bin/java")).await {
+            let _ = tokio::fs::remove_dir_all(&target).await;
+            if backup.exists() {
+                let _ = tokio::fs::rename(&backup, &target).await;
+            }
+            return Err(error);
+        }
+        let _ = tokio::fs::remove_file(&archive_path).await;
+        if backup.exists() {
+            let _ = tokio::fs::remove_dir_all(&backup).await;
+        }
+        if staging.exists() {
+            let _ = tokio::fs::remove_dir_all(&staging).await;
+        }
+        status(
+            state,
+            "java",
+            "ready",
+            "Runtime Android berhasil dipasang dan diuji jalankan",
+        );
         return Ok(());
     }
+    Err(format!(
+        "Runtime belum siap setelah dua percobaan: {}",
+        last_error
+    ))
+}
 
-    #[cfg(unix)]
-    {
-        let termux_candidates = [
-            "/data/data/com.termux/files/usr/lib/jvm/java-21-openjdk",
-            "/data/data/com.termux/files/usr/lib/jvm/openjdk-21",
-            "/data/data/com.termux/files/usr/lib/jvm/openjdk-17",
-        ];
-        for src_str in termux_candidates {
-            let exists = Path::new(src_str).exists() || {
-                let su_bin = ["/system/bin/su", "/data/adb/ap/bin/su", "su"]
-                    .into_iter()
-                    .find(|p| std::path::Path::new(p).exists())
-                    .unwrap_or("su");
-                std::process::Command::new(su_bin)
-                    .arg("-c")
-                    .arg(format!("[ -e \"{}/bin/java\" ]", src_str))
-                    .status()
-                    .map(|s| s.success())
-                    .unwrap_or(false)
-            };
-            if exists {
-                state.log("☕ Menemukan Java dari instalasi Termux lokal, menyinkronkan JRE...");
-                let dest_jre = state.modpath.join("jre");
-                let _ = tokio::fs::create_dir_all(&dest_jre).await;
-                let su_bin = ["/system/bin/su", "/data/adb/ap/bin/su", "su"]
-                    .into_iter()
-                    .find(|p| std::path::Path::new(p).exists())
-                    .unwrap_or("su");
-                let cp_cmd = format!(
-                    "cp -a \"{src}/\"* \"{dest}/\" 2>/dev/null; cp -a /data/data/com.termux/files/usr/lib/libz.so* /data/data/com.termux/files/usr/lib/libandroid-*.so /data/data/com.termux/files/usr/lib/libc++_shared.so /data/data/com.termux/files/usr/lib/libiconv.so* \"{dest}/lib/\" 2>/dev/null; chmod -R 755 \"{dest}\"; chown -R $(stat -c %u:%g \"{parent}\") \"{dest}\" 2>/dev/null",
-                    src = src_str,
-                    dest = dest_jre.display(),
-                    parent = state.modpath.display()
-                );
-                let _ = std::process::Command::new(su_bin)
-                    .arg("-c")
-                    .arg(&cp_cmd)
-                    .status();
-
-                if dest_jre.join("bin").join("java").exists() {
-                    state.log("✅ Berhasil menyinkronkan OpenJDK dari Termux!");
-                    return Ok(());
-                }
-            }
-        }
+fn find_jre_home(root: &Path) -> Option<std::path::PathBuf> {
+    if root.join("bin/java").is_file() {
+        return Some(root.to_path_buf());
     }
-
-    let url = download_url.unwrap_or_else(|| JRE_DOWNLOAD_URL.to_string());
-
-    state.log(format!(
-        "📥 Downloading headless OpenJDK 21 for Android from: {}",
-        url
-    ));
-
-    let runtime_root = workspace
-        .filter(|p| !p.starts_with("/sdcard") && !p.starts_with("/storage"))
-        .map(|path| path.join("runtime"))
-        .unwrap_or_else(|| state.modpath.clone());
-    tokio::fs::create_dir_all(&runtime_root)
-        .await
-        .map_err(|e| format!("Failed to create runtime dir: {}", e))?;
-    let jre_dir = runtime_root.join("jre");
-    let tar_gz_path = runtime_root.join("jre.tar.gz");
-
-    crate::patcher::download_file(&state.client, &url, &tar_gz_path, state, "jre").await?;
-
-    state.log("📦 Extracting JRE archive to module directory...");
-
-    let tar_gz_file = File::open(&tar_gz_path)
-        .map_err(|e| format!("Failed to open downloaded archive: {}", e))?;
-    let tar = GzDecoder::new(tar_gz_file);
-    let mut archive = Archive::new(tar);
-
-    tokio::fs::create_dir_all(&jre_dir)
-        .await
-        .map_err(|e| format!("Failed to create jre dir: {}", e))?;
-
-    archive
-        .unpack(&jre_dir)
-        .map_err(|e| format!("Failed to unpack JRE: {}", e))?;
-
-    // Cleanup archive
-    let _ = tokio::fs::remove_file(&tar_gz_path).await;
-
-    // Ensure executable permissions on Unix/Android
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let java_bin = jre_dir.join("bin").join("java");
-        if java_bin.exists() {
-            let _ = std::fs::set_permissions(&java_bin, std::fs::Permissions::from_mode(0o755));
-        }
-    }
-
-    state.log("✅ Headless JRE setup completed successfully!");
-    Ok(())
+    std::fs::read_dir(root)
+        .ok()?
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .find(|path| path.join("bin/java").is_file())
 }

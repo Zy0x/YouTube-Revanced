@@ -113,7 +113,7 @@ function renderActiveSourceDetails() {
   const patchesCount = STATE.patches.length || STATE.allManifestPatches.length || 0;
   const appsCount = STATE.availableApps.length || 1;
   const activeTag = STATE.patchTag || (STATE.preReleasePatches ? 'dev' : 'latest');
-  const browserUrl = activeSrc.repository 
+  const browserUrl = activeSrc.repository
     ? `https://github.com/${activeSrc.repository}`
     : (activeSrc.manifestUrl || '#');
 
@@ -318,6 +318,7 @@ function renderMorphePatchList(containerId = 'patchCategoriesContainer') {
     if (enabledOnly && !isSelected) return false;
     if (viewFilter === 'selected' && !isSelected) return false;
     if (viewFilter === 'options' && !(Array.isArray(patch.options) && patch.options.length > 0)) return false;
+    if (isWizardList && STATE.patchGroup && RVX_UI.patchGroup(patch.name) !== STATE.patchGroup) return false;
     if (query) {
       const n = (patch.name || '').toLowerCase();
       const d = (patch.description || '').toLowerCase();
@@ -371,6 +372,8 @@ function renderMorphePatchList(containerId = 'patchCategoriesContainer') {
         openPatchOptionsModal(patch);
         return;
       }
+      STATE.activePreset = '';
+      setText('presetSelectionStatus', 'Pilihan kustom');
       const willBeChecked = !STATE.selectedPatches.has(patch.name);
       if (STATE.selectedPatches.has(patch.name)) {
         STATE.selectedPatches.delete(patch.name);
@@ -382,11 +385,15 @@ function renderMorphePatchList(containerId = 'patchCategoriesContainer') {
       if (typeof checkMicrogSmartWarning === 'function') {
         checkMicrogSmartWarning(patch.name, willBeChecked);
       }
-      if (isWizardList) renderMorphePatchList(containerId);
+      if (isWizardList) {
+        renderMorphePatchList(containerId);
+        [...container.querySelectorAll('[data-patch-name]')].find(row => row.dataset.patchName === patch.name)?.focus({ preventScroll: true });
+      }
       syncAllSummaries();
     };
     card.addEventListener('click', togglePatch);
     card.addEventListener('keydown', event => {
+      if (event.target !== card) return;
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       togglePatch(event);
@@ -411,12 +418,12 @@ function syncAllSummaries() {
   setText('versionAppHeading', appName);
   setText('expertHeaderSource', `${srcName} Patches`);
   setText('expertCounterText', `${active}/${total}`);
-  setText('progressPatchRatio', `${active} / ${total}`);
+  setText('progressPatchRatio', `${active} dipilih`);
   setText('sourceSheetPatchCount', `${total} ›`);
 
   const headerEl = document.getElementById('morpheExpertHeader');
   if (headerEl && STATE.currentApp?.gradient) {
-    headerEl.style.background = STATE.currentApp.gradient;
+    headerEl.style.background = 'var(--rvx-canvas-raised)';
   }
   const headerIconEl = document.getElementById('expertHeaderAppIcon');
   if (headerIconEl && STATE.currentApp?.iconSvg) {
@@ -451,11 +458,17 @@ function syncAllSummaries() {
 
   setText('tuiDialogSubtitle', `${appName} v${ver} • ${srcName} (${active}/${total})`);
   if (typeof updateWizardNavigationState === 'function') updateWizardNavigationState();
+  if (typeof renderRuntimeAvailability === 'function') renderRuntimeAvailability();
+  if (typeof renderBuildResult === 'function') renderBuildResult();
 }
 
 function triggerBuildPipeline() {
+  if (STATE.buildSession.status === 'running') return;
+  const availability = getBuildAvailability();
+  if (!availability.ready) { showRvxToast(availability.message); return; }
   if (STATE.engineMode === 'local' || STATE.engineMode === 'browser') {
-    openDownloadConsentModal();
+    if (STATE.activeScreen === 'wizard' && STATE.wizardStep === 8) startReviewedBuild();
+    else openDownloadConsentModal();
   } else {
     triggerCloudBuild();
   }
@@ -467,9 +480,15 @@ function createLocalPatchPayload() {
   const nativeMpp = activeRelease?.capabilities?.nativeMpp || activeSourceObj?.capabilities?.nativeMpp || {};
   const selectedAsset = getSelectedBundleAsset();
   const packageName = STATE.currentApp?.packageName;
+  let installedInput = null;
+  try {
+    const info = JSON.parse(window.RVXNativeBridge?.getInstalledApkInfo?.(packageName) || 'null');
+    if (info?.available && info.packageName === packageName && info.versionName === STATE.currentVersion && !info.split) installedInput = info.path;
+  } catch (_) {}
   const allPatchNames = STATE.patches.map(p => p.name);
   return {
     package_name: packageName,
+    input_apk_path: installedInput,
     target_version: STATE.currentVersion,
     patch_source: activeSourceObj?.repository || STATE.currentSource,
     patch_tag: STATE.patchTag,
@@ -497,8 +516,8 @@ function createLocalPatchPayload() {
       unsigned: STATE.morpheEngineOptions?.keystoreMode === 'unsigned',
       strip_libs: STATE.morpheEngineOptions?.stripLibs ? (STATE.morpheEngineOptions.selectedArchs || ['arm64-v8a']) : [],
       bytecode_mode: STATE.morpheEngineOptions?.bytecodeMode || 'STRIP_FAST',
-      continue_on_error: STATE.morpheEngineOptions?.continueOnError !== false,
-      force: STATE.morpheEngineOptions?.force !== false,
+      continue_on_error: STATE.morpheEngineOptions?.continueOnError === true,
+      force: STATE.morpheEngineOptions?.force === true,
       disable_purge: STATE.morpheEngineOptions?.disablePurge === true,
       secondary_bundle_path: STATE.morpheEngineOptions?.secondaryBundlePath || null
     }
@@ -537,6 +556,7 @@ function renderDownloadPlanItem(icon, title, detail, state, stateClass = '') {
 
 
 async function triggerBrowserPatchBuild(plan, apkFile) {
+  if (!beginBuildSession()) return;
   const controller = new AbortController();
   STATE.browserPatchAbortController?.abort();
   STATE.browserPatchAbortController = controller;
@@ -571,11 +591,12 @@ async function triggerBrowserPatchBuild(plan, apkFile) {
       }
     });
     setLocalBuildProgress(100, 'APK selesai dan terverifikasi');
-    const appAlias = STATE.currentApp?.alias || 'app';
-    await rvxSaveBlob(output, `rvx-${appAlias}-${STATE.currentVersion}.apk`, 'application/vnd.android.package-archive');
-    appendTerminalLog('Hasil patch berhasil disimpan pada perangkat.', 'S');
+    finishBuildSession({ blob: output });
+    appendTerminalLog('APK selesai. Pilih Simpan APK untuk menyimpan hasil.', 'I');
   } catch (error) {
-    if (error?.name !== 'AbortError') {
+    if (error?.name === 'AbortError') failBuildSession('Proses dibatalkan. Konfigurasi Anda tetap tersedia.', 'cancelled');
+    else {
+      failBuildSession(error.message);
       appendTerminalLog(`Build browser dihentikan: ${error.message}`, 'E');
       setLocalBuildProgress(0, error.message);
     }
@@ -590,6 +611,7 @@ function setLocalBuildProgress(percent, label) {
   setText('progressPercentPill', `${safePercent}%`);
   const barFill = document.getElementById('progressBarFill');
   if (barFill) barFill.style.width = `${safePercent}%`;
+  document.getElementById('buildProgressTrack')?.setAttribute('aria-valuenow', String(safePercent));
 }
 
 function parseDownloadProgress(line) {
@@ -603,7 +625,7 @@ function parseDownloadProgress(line) {
 async function triggerLocalPatch(payload = createLocalPatchPayload()) {
   const activeSourceObj = STATE.sources.find(s => s.id === STATE.currentSource);
   const packageName = STATE.currentApp?.packageName;
-  if (!activeSourceObj?.bundleUrl || !packageName) return;
+  if (!activeSourceObj?.bundleUrl || !packageName || !beginBuildSession()) return;
 
   if (STATE.uiMode === 'morphe') {
     switchScreen('progress');
@@ -624,6 +646,13 @@ async function triggerLocalPatch(payload = createLocalPatchPayload()) {
   window.RVXNativeBridge?.setKeepScreenOn?.(true);
 
   try {
+    if (STATE.eventSource) STATE.eventSource.close();
+    const controller = new AbortController();
+    STATE.eventSource = { close: () => controller.abort() };
+    const streamResponse = await fetch(`${STATE.daemonUrl}/api/v1/patch/stream`, {
+      headers: daemonAuthHeaders(), signal: controller.signal
+    });
+    if (!streamResponse.ok || !streamResponse.body) throw new Error(`Log stream HTTP ${streamResponse.status}`);
     const res = await fetch(`${STATE.daemonUrl}/api/v1/patch/start`, {
       method: 'POST',
       headers: daemonAuthHeaders({ 'Content-Type': 'application/json' }),
@@ -635,18 +664,13 @@ async function triggerLocalPatch(payload = createLocalPatchPayload()) {
       throw new Error(err.error || `HTTP ${res.status}`);
     }
 
-    if (STATE.eventSource) STATE.eventSource.close();
-    const controller = new AbortController();
-    STATE.eventSource = { close: () => controller.abort() };
-    const streamResponse = await fetch(`${STATE.daemonUrl}/api/v1/patch/stream`, {
-      headers: daemonAuthHeaders(), signal: controller.signal
-    });
-    if (!streamResponse.ok || !streamResponse.body) throw new Error(`Log stream HTTP ${streamResponse.status}`);
     consumePatchEventStream(streamResponse.body, line => {
+      if (line === 'STREAM_READY') return;
+      if (processDependencyEvent(line)) return;
       const download = parseDownloadProgress(line);
       if (download) {
-        const ranges = { jre: [5, 18], cli: [18, 30], bundle: [30, 48] };
-        const [start, end] = ranges[download.label] || [10, 45];
+        const ranges = { apk: [1, 10], jre: [10, 20], cli: [20, 30], bundle: [30, 35] };
+        const [start, end] = ranges[download.label] || [1, 10];
         const fraction = download.total > 0 ? download.received / download.total : 0;
         setLocalBuildProgress(start + ((end - start) * fraction), `Mengunduh ${download.label} · ${formatDownloadBytes(download.received)}${download.total > 0 ? ` / ${formatDownloadBytes(download.total)}` : ''}`);
         setText('telemetryIoVal', formatDownloadBytes(download.received));
@@ -658,12 +682,7 @@ async function triggerLocalPatch(payload = createLocalPatchPayload()) {
         STATE.lastOutputApkPath = path;
         setLocalBuildProgress(99, `Hasil ${formatDownloadBytes(size)} disimpan ke ${path}`);
         appendTerminalLog(`Hasil akhir: ${path} (${formatDownloadBytes(size)})`, 'I');
-        const isRoot = STATE.targetMode === 'root' || STATE.deviceAccessMode === 'root-integrated' || (window.RVXNativeBridge?.isRootAvailable && window.RVXNativeBridge.isRootAvailable());
-        if (window.RVXNativeBridge?.installApk && !isRoot) {
-          setTimeout(() => {
-            try { window.RVXNativeBridge.installApk(path); } catch (_) {}
-          }, 600);
-        }
+
         return;
       }
       const isOk = line.includes('completed successfully') || line.includes('succeeded');
@@ -675,31 +694,38 @@ async function triggerLocalPatch(payload = createLocalPatchPayload()) {
       else if (line.includes('Morphe CLI is ready')) setLocalBuildProgress(30, 'Mesin Morphe siap');
       else if (line.includes('Using cached patch bundle')) setLocalBuildProgress(48, 'Bundle patch diambil dari cache');
       else if (line.includes('Resolving patch bundle')) setLocalBuildProgress(32, 'Menyiapkan bundle patch');
-      else if (line.includes('Stock APK')) setLocalBuildProgress(55, 'APK target siap');
       else if (line.includes('Executing Morphe CLI')) setLocalBuildProgress(62, 'Menerapkan patch');
       else if (line.includes('Output APK generated')) setLocalBuildProgress(96, 'Menyelesaikan APK hasil patch');
 
       if (line.includes('Patching process completed successfully')) {
         window.RVXNativeBridge?.setKeepScreenOn?.(false);
-        if (heroCard) heroCard.classList.remove('hidden');
-        setLocalBuildProgress(100, 'Selesai');
+        finishBuildSession({ path: STATE.lastOutputApkPath });
+        setLocalBuildProgress(100, STATE.buildSession.status === 'succeeded' ? 'APK selesai dan siap digunakan' : 'Hasil belum dapat diverifikasi');
         if (STATE.eventSource) STATE.eventSource.close();
-      } else if (line.includes('Patching failed')) {
+      } else if (line.includes('Patching failed') && STATE.buildSession.status === 'running') {
         window.RVXNativeBridge?.setKeepScreenOn?.(false);
-        setLocalBuildProgress(100, 'Proses dihentikan karena kesalahan');
+        failBuildSession(line);
+        setText('progressStatusSub', 'Proses gagal. Periksa detail di bawah.');
         if (STATE.eventSource) STATE.eventSource.close();
         if (typeof openSmartRecoveryModal === 'function') {
           openSmartRecoveryModal({ error: line });
         }
       }
+    }).then(() => {
+      if (STATE.buildSession.status === 'running') failBuildSession('Koneksi log berakhir sebelum hasil terverifikasi. Periksa proses pada perangkat sebelum memulai lagi.');
     }).catch(error => {
       window.RVXNativeBridge?.setKeepScreenOn?.(false);
-      if (error.name !== 'AbortError') appendTerminalLog(`Log stream terputus: ${error.message}`, '!');
+      if (error.name !== 'AbortError') {
+        failBuildSession(`Koneksi terputus: ${error.message}. Proses pada perangkat mungkin masih berjalan.`);
+        appendTerminalLog(`Log stream terputus: ${error.message}`, '!');
+      }
     });
   } catch (err) {
     window.RVXNativeBridge?.setKeepScreenOn?.(false);
+    STATE.eventSource?.close();
     appendTerminalLog(`Failed to start patching: ${err.message}`, '!');
-    setLocalBuildProgress(100, 'Gagal memulai proses');
+    failBuildSession(err.message);
+    setText('progressStatusSub', 'Gagal memulai proses');
     if (typeof openSmartRecoveryModal === 'function') {
       openSmartRecoveryModal({ error: err.message });
     }

@@ -723,6 +723,7 @@ async function checkDaemonStatus() {
     STATE.daemonStatus = null;
     STATE.deviceAccessMode = 'root-helper-unavailable';
     setEngineMode('browser');
+    try { STATE.portableEngineManifest = await RVX_LOCAL_ENGINE.loadManifest(); } catch (_) { STATE.portableEngineManifest = null; }
     return false;
   }
 }
@@ -789,9 +790,6 @@ async function fetchInstalledAppInfo() {
       if (nativeVer && nativeVer.trim().length > 0) {
         STATE.installedVersion = nativeVer.trim();
         if (text) text.textContent = `v${STATE.installedVersion}`;
-        if (!STATE.currentVersion) {
-          STATE.currentVersion = STATE.installedVersion;
-        }
         if (typeof renderWizardVersionStep === 'function') renderWizardVersionStep();
         syncAllSummaries();
         return;
@@ -819,9 +817,6 @@ async function fetchInstalledAppInfo() {
       if (detected) {
         STATE.installedVersion = detected;
         if (text) text.textContent = `v${detected}`;
-        if (!STATE.currentVersion) {
-          STATE.currentVersion = detected;
-        }
         if (typeof renderWizardVersionStep === 'function') renderWizardVersionStep();
       } else {
         STATE.installedVersion = null;

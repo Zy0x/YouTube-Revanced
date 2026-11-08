@@ -4,21 +4,21 @@
    ========================================================================== */
 
 :root {
-  --morphe-bg: #0B0C10;
-  --morphe-surface: #13151B;
-  --morphe-card: #171920;
-  --morphe-card-hover: #1D2029;
+  --morphe-bg: var(--rvx-panel);
+  --morphe-surface: var(--rvx-panel);
+  --morphe-card: var(--rvx-panel);
+  --morphe-card-hover: var(--rvx-panel);
   --morphe-border: rgba(255, 255, 255, 0.1);
   --morphe-border-strong: rgba(255, 255, 255, 0.16);
 
-  --morphe-text: #F2F4F8;
-  --morphe-text-sub: #9EA4B0;
-  --morphe-text-muted: #6C727F;
+  --morphe-text: var(--rvx-ink-2);
+  --morphe-text-sub: var(--rvx-accent);
+  --morphe-text-muted: var(--rvx-accent);
 
-  --morphe-sky: #A4C9FF;
-  --morphe-blue-check: #386BB0;
-  --morphe-slate-blue: #3C5168;
-  --morphe-slate-blue-hover: #48607A;
+  --morphe-sky: var(--rvx-ink-2);
+  --morphe-blue-check: var(--rvx-accent);
+  --morphe-slate-blue: var(--rvx-panel-hover);
+  --morphe-slate-blue-hover: var(--rvx-panel-hover);
   --morphe-coral: #E46962;
 
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Helvetica, Arial, sans-serif;
@@ -88,7 +88,7 @@ select,
   font-family: inherit;
   font-size: 14px;
   color: #FFFFFF;
-  background-color: #1A1E27;
+  background-color: var(--rvx-panel);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 12px;
   padding: 8px 12px;
@@ -98,7 +98,7 @@ select,
 }
 
 select option {
-  background-color: #1A1E27;
+  background-color: var(--rvx-panel);
   color: #FFFFFF;
 }
 
@@ -186,10 +186,10 @@ select option {
   bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%) translateY(24px);
-  background: rgba(23, 25, 32, 0.94);
-  color: #F2F4F8;
+  background: rgba(29, 28, 25, 0.94);
+  color: var(--rvx-ink-2);
   font-family: var(--font-sans);
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.2px;
   padding: 10px 20px;

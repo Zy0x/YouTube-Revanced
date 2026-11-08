@@ -8,11 +8,14 @@ use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod api;
+mod apk;
 mod apkmirror;
 mod cli;
+mod dependencies;
 mod embedded;
 mod jre;
 mod patcher;
+mod root_install;
 mod state;
 mod utils;
 

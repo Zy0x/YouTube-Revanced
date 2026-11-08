@@ -78,7 +78,7 @@ select:focus { border-color: var(--rvx-accent); box-shadow: 0 0 0 2px var(--rvx-
   border-radius: 6px;
   background: transparent;
   color: var(--rvx-ink-3);
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .tag-filter-pill:hover { background: var(--rvx-panel); color: var(--rvx-ink); }
@@ -98,7 +98,7 @@ select:focus { border-color: var(--rvx-accent); box-shadow: 0 0 0 2px var(--rvx-
   min-height: 54px;
   padding: 10px 12px;
   border-radius: 11px;
-  background: #151922;
+  background: var(--rvx-panel);
   border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
@@ -108,14 +108,14 @@ select:focus { border-color: var(--rvx-accent); box-shadow: 0 0 0 2px var(--rvx-
 }
 
 .tag-picker-item:hover {
-  background: #1C2230;
-  border-color: rgba(96, 165, 250, 0.45);
+  background: var(--rvx-panel);
+  border-color: rgba(240, 120, 102, 0.45);
 }
 
 .tag-picker-item.active {
-  background: rgba(56, 189, 248, 0.12);
-  border-color: #38BDF8;
-  box-shadow: 0 0 14px rgba(56, 189, 248, 0.15);
+  background: rgba(240, 120, 102, 0.12);
+  border-color: var(--rvx-accent);
+  box-shadow: none;
 }
 
 .source-check-icon,
@@ -168,13 +168,13 @@ select:focus { border-color: var(--rvx-accent); box-shadow: 0 0 0 2px var(--rvx-
   border-radius: 7px;
   background: var(--rvx-accent-soft);
   color: var(--rvx-accent);
-  font: 700 10px/1 var(--font-mono);
+  font: 700 12px/1 var(--font-mono);
 }
 
 .mode-compact-copy { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.mode-compact-copy strong { font-size: 11.5px; }
-.mode-compact-copy small { color: var(--rvx-ink-3); font-size: 9px; }
-.mode-compact-edit { color: var(--rvx-accent); font-size: 9.5px; }
+.mode-compact-copy strong { font-size: 12px; }
+.mode-compact-copy small { color: var(--rvx-ink-3); font-size: 12px; }
+.mode-compact-edit { color: var(--rvx-accent); font-size: 12px; }
 
 #wizardStep4.mode-workspace-active .mode-curation-header,
 #wizardStep4.mode-workspace-active .install-mode-section > .curation-section-heading,
@@ -207,9 +207,9 @@ select:focus { border-color: var(--rvx-accent); box-shadow: 0 0 0 2px var(--rvx-
   display: block;
   margin-bottom: 4px;
   color: var(--rvx-accent);
-  font: 650 9px/1.2 var(--font-mono);
+  font: 650 12px/1.2 var(--font-mono);
   letter-spacing: .075em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .curation-section-heading h3 {
@@ -226,7 +226,7 @@ select:focus { border-color: var(--rvx-accent); box-shadow: 0 0 0 2px var(--rvx-
   border: 1px solid var(--rvx-line);
   border-radius: 5px;
   color: var(--rvx-ink-3);
-  font-size: 9px;
+  font-size: 12px;
   line-height: 1;
 }
 
@@ -270,7 +270,7 @@ select:focus { border-color: var(--rvx-accent); box-shadow: 0 0 0 2px var(--rvx-
 
 .install-mode-card.active {
   border-color: rgba(255, 91, 77, .62);
-  background: linear-gradient(145deg, rgba(255, 91, 77, .1), rgba(255, 91, 77, .025));
+  background: var(--rvx-accent-soft);
   box-shadow: inset 0 0 0 1px rgba(255, 91, 77, .08);
 }
 
@@ -310,13 +310,13 @@ select:focus { border-color: var(--rvx-accent); box-shadow: 0 0 0 2px var(--rvx-
 
 .install-mode-copy strong {
   color: var(--rvx-ink);
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 650;
 }
 
 .install-mode-copy small {
   color: var(--rvx-ink-3);
-  font-size: 9.5px;
+  font-size: 12px;
   line-height: 1.35;
 }
 
@@ -358,7 +358,7 @@ select:focus { border-color: var(--rvx-accent); box-shadow: 0 0 0 2px var(--rvx-
   font: 650 17px/1 var(--font-mono);
 }
 
-.patch-selection-count span { font-size: 9.5px; }
+.patch-selection-count span { font-size: 12px; }
 
 .patch-curation-tools {
   position: sticky;
@@ -406,7 +406,7 @@ select:focus { border-color: var(--rvx-accent); box-shadow: 0 0 0 2px var(--rvx-
   background: transparent;
   color: var(--rvx-ink);
   font: inherit;
-  font-size: 11.5px;
+  font-size: 12px;
 }
 
 .patch-search-field input::placeholder { color: #746e67; }
@@ -437,7 +437,7 @@ select:focus { border-color: var(--rvx-accent); box-shadow: 0 0 0 2px var(--rvx-
   border-radius: 5px;
   background: transparent;
   color: var(--rvx-ink-3);
-  font-size: 9.5px;
+  font-size: 12px;
   cursor: pointer;
 }
 
@@ -451,7 +451,7 @@ select:focus { border-color: var(--rvx-accent); box-shadow: 0 0 0 2px var(--rvx-
 
 .patch-visible-count {
   color: var(--rvx-ink-3);
-  font-size: 9px;
+  font-size: 12px;
   white-space: nowrap;
 }
 
@@ -469,6 +469,6 @@ select:focus { border-color: var(--rvx-accent); box-shadow: 0 0 0 2px var(--rvx-
   border-radius: 6px;
   background: transparent;
   color: var(--rvx-ink-2);
-  font-size: 9px;
+  font-size: 12px;
   cursor: pointer;
 }

@@ -8,7 +8,7 @@
   padding: 12px 14px;
   text-align: left;
   color: #FFFFFF;
-  background: #151922;
+  background: var(--rvx-panel);
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 12px;
   cursor: pointer;
@@ -16,14 +16,14 @@
 }
 
 .step2-summary-card:hover {
-  background: #1C2230;
-  border-color: rgba(96, 165, 250, 0.55);
+  background: var(--rvx-panel);
+  border-color: rgba(240, 120, 102, 0.55);
 }
 
 .step2-summary-card:focus-visible,
 .wizard-source-select:focus-visible,
 .btn-delete-custom-src:focus-visible {
-  outline: 2px solid #60A5FA;
+  outline: 2px solid var(--rvx-accent);
   outline-offset: 2px;
 }
 
@@ -36,16 +36,16 @@
   align-items: center;
   justify-content: center;
   border-radius: 11px;
-  background: #3182CE;
+  background: var(--rvx-accent);
   color: #FFFFFF;
   font-size: 15px;
   font-weight: 700;
 }
 
 .summary-card-channel-icon {
-  color: #7DD3FC;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.18);
+  color: var(--rvx-ink-2);
+  background: rgba(240, 120, 102, 0.12);
+  border: 1px solid rgba(240, 120, 102, 0.18);
 }
 
 .summary-card-copy {
@@ -59,7 +59,7 @@
 .summary-card-title {
   overflow: hidden;
   color: #FFFFFF;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -67,17 +67,17 @@
 
 .summary-card-subtitle {
   overflow: hidden;
-  color: #94A3B8;
+  color: var(--rvx-accent);
   font-family: var(--font-mono, monospace);
-  font-size: 10.5px;
+  font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .summary-card-meta {
   flex: 0 0 auto;
-  color: #7DD3FC;
-  font-size: 10.5px;
+  color: var(--rvx-ink-2);
+  font-size: 12px;
   white-space: nowrap;
 }
 
@@ -107,7 +107,7 @@
   flex-direction: column;
   overflow: hidden;
   padding: 16px;
-  background: #161820;
+  background: var(--rvx-panel);
   border: 1px solid var(--morphe-border-strong);
   border-radius: 20px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
@@ -119,8 +119,8 @@
 
 .wizard-picker-card .modal-subtitle {
   margin-top: 4px;
-  color: #94A3B8;
-  font-size: 12px;
+  color: var(--rvx-accent);
+  font-size: 14px;
 }
 
 .wizard-picker-card .tag-picker-search-bar {
@@ -135,7 +135,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.42) transparent;
+  scrollbar-color: rgba(240, 120, 102, 0.42) transparent;
 }
 
 .wizard-picker-body::-webkit-scrollbar {
@@ -147,7 +147,7 @@
 }
 
 .wizard-picker-body::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.42);
+  background: rgba(240, 120, 102, 0.42);
   border-radius: 999px;
 }
 
@@ -176,7 +176,7 @@
   min-height: 62px;
   display: flex;
   align-items: stretch;
-  background: #141720;
+  background: var(--rvx-panel);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   overflow: hidden;
@@ -186,14 +186,14 @@
 }
 
 .wizard-source-item:hover {
-  background: #1B202C;
-  border-color: rgba(96, 165, 250, 0.4);
+  background: var(--rvx-panel);
+  border-color: rgba(240, 120, 102, 0.4);
 }
 
 .wizard-source-item.active {
-  background: rgba(56, 189, 248, 0.12);
-  border-color: #38BDF8;
-  box-shadow: 0 0 16px rgba(56, 189, 248, 0.16);
+  background: rgba(240, 120, 102, 0.12);
+  border-color: var(--rvx-accent);
+  box-shadow: none;
 }
 
 .wizard-source-item.incompatible {
@@ -203,7 +203,7 @@
 .source-check-icon {
   flex: 0 0 auto;
   margin-left: auto;
-  color: #38BDF8;
+  color: var(--rvx-accent);
   font-size: 16px;
   font-weight: 700;
 }
@@ -259,9 +259,9 @@
 }
 
 .wizard-source-select .source-item-repo {
-  color: #94A3B8;
+  color: var(--rvx-accent);
   font-family: var(--font-mono, monospace);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.35;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -270,8 +270,8 @@
 }
 
 .wizard-source-select .source-item-latest {
-  color: #64748B;
-  font-size: 10.5px;
+  color: var(--rvx-accent);
+  font-size: 12px;
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -285,9 +285,9 @@
 }
 
 .source-item-tag.tag-unverified {
-  color: #94A3B8;
-  background: rgba(148, 163, 184, 0.1);
-  border-color: rgba(148, 163, 184, 0.2);
+  color: var(--rvx-accent);
+  background: rgba(240, 120, 102, 0.1);
+  border-color: rgba(240, 120, 102, 0.2);
 }
 
 .wizard-source-item .btn-delete-custom-src {
@@ -300,9 +300,9 @@
 
 .wizard-source-empty {
   padding: 28px 12px;
-  color: #94A3B8;
+  color: var(--rvx-accent);
   text-align: center;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .wizard-picker-footer .step2-tool-btn {
@@ -319,8 +319,8 @@
 }
 
 .latest-tag-option.active {
-  background: rgba(59, 130, 246, 0.12);
-  border-color: rgba(59, 130, 246, 0.55);
+  background: rgba(240, 120, 102, 0.12);
+  border-color: rgba(240, 120, 102, 0.55);
 }
 
 @media (max-width: 420px) {
@@ -334,7 +334,7 @@
   }
 
   .channel-summary-card .choice-badge-rec {
-    font-size: 9px;
+    font-size: 12px;
   }
 
   .wizard-picker-card {
@@ -378,7 +378,7 @@
 }
 
 .modal-card-tags .tag-search-input {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .modal-card-tags .tag-filter-pills {
@@ -407,7 +407,7 @@
   padding-right: 3px;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.42) transparent;
+  scrollbar-color: rgba(240, 120, 102, 0.42) transparent;
 }
 
 .modal-card-tags .modal-tags-scroll-list::-webkit-scrollbar {
@@ -419,7 +419,7 @@
 }
 
 .modal-card-tags .modal-tags-scroll-list::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.42);
+  background: rgba(240, 120, 102, 0.42);
   border-radius: 999px;
 }
 
@@ -439,7 +439,7 @@
 }
 
 .modal-card-tags .tag-item-name {
-  font-size: 13.5px;
+  font-size: 14px;
 }
 
 .modal-card-tags .btn-tag-changelog {
@@ -472,7 +472,7 @@
 
   .modal-card-tags .btn-tag-changelog {
     padding: 5px 7px;
-    font-size: 10.5px;
+    font-size: 12px;
   }
 }
 
@@ -499,9 +499,9 @@
   padding: 8px 14px;
   border-radius: 10px;
   font-family: var(--font-sans, inherit);
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--morphe-text-sub, #9EA4B0);
+  color: var(--morphe-text-sub, var(--rvx-accent));
   background: transparent;
   border: 1px solid transparent;
   cursor: pointer;
@@ -509,14 +509,14 @@
 }
 
 .curation-tab-btn:hover {
-  color: #F2F4F8;
+  color: var(--rvx-ink-2);
   background: rgba(255, 255, 255, 0.04);
 }
 
 .curation-tab-btn.active {
-  color: #A4C9FF;
-  background: #191E29;
-  border-color: rgba(164, 201, 255, 0.32);
+  color: var(--rvx-ink-2);
+  background: var(--rvx-panel);
+  border-color: rgba(240, 120, 102, 0.32);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
@@ -527,10 +527,10 @@
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   border-radius: 9999px;
-  background: #2563EB;
+  background: var(--rvx-accent);
   color: #FFFFFF;
 }
 
@@ -538,8 +538,8 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #38BDF8;
-  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+  background: var(--rvx-accent);
+  box-shadow: none;
 }
 
 /* Morphe Engine Options Layout */
@@ -550,7 +550,7 @@
 }
 
 .engine-card {
-  background: #141720;
+  background: var(--rvx-panel);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   padding: 16px;
@@ -560,15 +560,15 @@
 }
 
 .engine-card:focus-within {
-  border-color: rgba(96, 165, 250, 0.45);
+  border-color: rgba(240, 120, 102, 0.45);
 }
 
 .engine-step-badge {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.6px;
-  color: #7DD3FC;
+  color: var(--rvx-ink-2);
   display: block;
   margin-bottom: 2px;
 }
@@ -576,13 +576,13 @@
 .engine-card-header h4 {
   font-size: 15px;
   font-weight: 700;
-  color: #F2F4F8;
+  color: var(--rvx-ink-2);
   margin: 0 0 3px 0;
 }
 
 .engine-subtext {
-  font-size: 12.5px;
-  color: #9EA4B0;
+  font-size: 14px;
+  color: var(--rvx-accent);
   line-height: 1.45;
   margin: 0;
 }
@@ -612,15 +612,15 @@
 }
 
 .engine-radio-item.active {
-  background: rgba(56, 107, 176, 0.14);
-  border-color: rgba(96, 165, 250, 0.45);
+  background: rgba(240, 120, 102, 0.14);
+  border-color: rgba(240, 120, 102, 0.45);
 }
 
 .engine-radio-item input[type="radio"] {
   margin-top: 3px;
   width: 17px;
   height: 17px;
-  accent-color: #3B82F6;
+  accent-color: var(--rvx-accent);
   cursor: pointer;
 }
 
@@ -631,14 +631,14 @@
 }
 
 .engine-radio-content strong {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
-  color: #F2F4F8;
+  color: var(--rvx-ink-2);
 }
 
 .engine-radio-content small {
-  font-size: 12px;
-  color: #9EA4B0;
+  font-size: 14px;
+  color: var(--rvx-accent);
   line-height: 1.35;
 }
 
@@ -666,9 +666,9 @@
 }
 
 .engine-label {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
-  color: #CBD5E1;
+  color: var(--rvx-ink-2);
 }
 
 .engine-toggle-list {
@@ -697,14 +697,14 @@
 }
 
 .engine-toggle-label span {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
-  color: #F2F4F8;
+  color: var(--rvx-ink-2);
 }
 
 .engine-toggle-label small {
-  font-size: 12px;
-  color: #9EA4B0;
+  font-size: 14px;
+  color: var(--rvx-accent);
   line-height: 1.35;
 }
 
@@ -713,7 +713,7 @@
   height: 24px;
   min-width: 44px;
   cursor: pointer;
-  accent-color: #3B82F6;
+  accent-color: var(--rvx-accent);
 }
 
 .engine-chips-wrapper {
@@ -738,8 +738,8 @@
   border-radius: 9999px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #F2F4F8;
-  font-size: 13px;
+  color: var(--rvx-ink-2);
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -751,16 +751,16 @@
 }
 
 .engine-chip-btn.active {
-  background: rgba(56, 107, 176, 0.28);
-  border-color: #60A5FA;
-  color: #93C5FD;
+  background: rgba(240, 120, 102, 0.28);
+  border-color: var(--rvx-accent);
+  color: var(--rvx-ink-2);
 }
 
 .engine-chip-btn .chip-badge {
-  font-size: 10px;
+  font-size: 12px;
   padding: 2px 6px;
-  background: rgba(56, 189, 248, 0.2);
-  color: #38BDF8;
+  background: rgba(240, 120, 102, 0.2);
+  color: var(--rvx-accent);
   border-radius: 4px;
   font-weight: 700;
 }

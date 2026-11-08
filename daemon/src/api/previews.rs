@@ -244,8 +244,6 @@ pub(crate) async fn get_option_previews(
 #[cfg(unix)]
 use crate::utils::run_shell_command;
 
-
-
 pub(crate) async fn upload_option_assets(
     State(state): State<AppState>,
     mut multipart: Multipart,
@@ -360,8 +358,3 @@ pub(crate) async fn upload_option_assets(
         })),
     )
 }
-
-
-
-
-

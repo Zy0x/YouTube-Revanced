@@ -11,7 +11,7 @@ pub fn validate_apk_file(path: &Path) -> Result<bool, String> {
         return Ok(false);
     }
     let metadata = std::fs::metadata(path).map_err(|e| e.to_string())?;
-    if metadata.len() < 10 * 1024 * 1024 {
+    if metadata.len() == 0 {
         return Ok(false);
     }
 
@@ -21,24 +21,8 @@ pub fn validate_apk_file(path: &Path) -> Result<bool, String> {
         Err(_) => return Ok(false),
     };
 
-    if archive.by_name("AndroidManifest.xml").is_ok() {
-        return Ok(true);
-    }
-
-    // If it's an APKM or bundle containing base.apk
-    if archive.by_name("base.apk").is_ok() {
-        let temp_path = path.with_extension("base.tmp");
-        {
-            let mut base_file = archive.by_name("base.apk").map_err(|e| e.to_string())?;
-            let mut out_file = File::create(&temp_path).map_err(|e| e.to_string())?;
-            std::io::copy(&mut base_file, &mut out_file).map_err(|e| e.to_string())?;
-        }
-        drop(archive);
-        let _ = std::fs::rename(&temp_path, path);
-        return Ok(true);
-    }
-
-    Ok(false)
+    drop(archive);
+    Ok(crate::apk::inspect_apk(path).is_ok())
 }
 
 fn extract_attr(tag: &str, attr: &str) -> Option<String> {
@@ -59,7 +43,12 @@ pub async fn scrape_and_download_apkmirror(
         "com.google.android.apps.youtube.music" => ("google-inc", "youtube-music"),
         "com.twitter.android" => ("x-corp", "twitter"),
         "com.reddit.frontpage" => ("redditinc", "reddit"),
-        _ => ("google-inc", "youtube"),
+        _ => {
+            return Err(format!(
+                "Sumber APK otomatis belum dikonfigurasi untuk {}",
+                package_name
+            ))
+        }
     };
 
     let v_slug = version.replace('.', "-");
@@ -74,7 +63,10 @@ pub async fn scrape_and_download_apkmirror(
         .client
         .get(&initial_url)
         .header("User-Agent", USER_AGENT)
-        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+        .header(
+            "Accept",
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        )
         .send()
         .await
         .map_err(|e| format!("Gagal memuat halaman utama APKMirror: {}", e))?;
@@ -130,9 +122,8 @@ pub async fn scrape_and_download_apkmirror(
         }
     }
 
-    let download_page_url = download_page_url.ok_or_else(|| {
-        "Tidak menemukan tombol unduh pada halaman varian APKMirror".to_string()
-    })?;
+    let download_page_url = download_page_url
+        .ok_or_else(|| "Tidak menemukan tombol unduh pada halaman varian APKMirror".to_string())?;
 
     state.log("📥 Mengambil link direct download...");
 
@@ -159,15 +150,15 @@ pub async fn scrape_and_download_apkmirror(
         }
     }
 
-    let direct_dl_url = direct_dl_url.ok_or_else(|| {
-        "Tidak menemukan direct link download.php dari APKMirror".to_string()
-    })?;
+    let direct_dl_url = direct_dl_url
+        .ok_or_else(|| "Tidak menemukan direct link download.php dari APKMirror".to_string())?;
 
     state.log("⬇️ Mengunduh Stock APK dari APKMirror...");
 
     let res4 = state
         .client
         .get(&direct_dl_url)
+        .timeout(std::time::Duration::from_secs(600))
         .header("User-Agent", USER_AGENT)
         .header("Referer", &download_page_url)
         .send()
@@ -180,7 +171,8 @@ pub async fn scrape_and_download_apkmirror(
 
     let total_size = res4.content_length().unwrap_or(0);
     let mut stream = res4.bytes_stream();
-    let mut file = tokio::fs::File::create(target_file)
+    let part = target_file.with_extension("apk.source.part");
+    let mut file = tokio::fs::File::create(&part)
         .await
         .map_err(|e| format!("Gagal membuat berkas target: {}", e))?;
 
@@ -196,17 +188,33 @@ pub async fn scrape_and_download_apkmirror(
 
         if total_size > 0 && downloaded - last_reported > 15 * 1024 * 1024 {
             let pct = (downloaded * 100) / total_size;
-            state.log(format!("  Mengunduh: {}% ({} MB / {} MB)", pct, downloaded / (1024 * 1024), total_size / (1024 * 1024)));
+            state.log(format!(
+                "  Mengunduh: {}% ({} MB / {} MB)",
+                pct,
+                downloaded / (1024 * 1024),
+                total_size / (1024 * 1024)
+            ));
             last_reported = downloaded;
         }
     }
 
     file.flush().await.map_err(|e| e.to_string())?;
     drop(file);
-
-    if validate_apk_file(target_file)? {
-        Ok(target_file.to_path_buf())
-    } else {
-        Err("Berkas yang diunduh bukan APK/APKM yang valid".to_string())
+    if downloaded == 0 || total_size > 0 && downloaded != total_size {
+        return Err(format!(
+            "Unduhan APK terpotong: {} dari {} byte",
+            downloaded, total_size
+        ));
     }
+    crate::apk::validate_target(&part, package_name, version)?;
+    #[cfg(windows)]
+    if target_file.exists() {
+        tokio::fs::remove_file(target_file)
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+    tokio::fs::rename(&part, target_file)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(target_file.to_path_buf())
 }

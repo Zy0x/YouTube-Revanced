@@ -35,7 +35,7 @@ function renderPrereleaseWarning(targetElement) {
 
   existingBanner.innerHTML = `
     <div class="prerelease-warning-content">
-      <span class="warning-icon" aria-hidden="true">⚠️</span>
+      <span class="warning-icon" aria-hidden="true"></span>
       <div class="warning-text">
         <strong>Versi Pra-rilis / Dev (${escapeHtml(STATE.patchTag || 'Beta')}) Terpilih</strong>
         <p>Versi ini mungkin memuat perubahan kode eksperimental dari pembuat patch. Jika patching gagal, Anda dapat beralih ke versi Stabil melalui tombol pemulihan cerdas.</p>
@@ -47,97 +47,39 @@ function renderPrereleaseWarning(targetElement) {
 function openSmartRecoveryModal({ error, details } = {}) {
   let modal = document.getElementById('smartRecoveryModal');
   if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'smartRecoveryModal';
-    modal.className = 'modal-backdrop smart-recovery-backdrop';
-    document.body.appendChild(modal);
+    modal = document.createElement('div'); modal.id = 'smartRecoveryModal';
+    modal.className = 'modal-overlay smart-recovery-backdrop hidden'; document.body.appendChild(modal);
   }
-
-  const isBeta = isCurrentReleasePreRelease();
-  const sourceObj = STATE.sources.find(s => s.id === STATE.currentSource);
-  const sourceName = sourceObj?.name || STATE.currentSource || 'Sumber Patch';
-  const tag = STATE.patchTag || 'Pra-rilis';
-
+  const issue = RVX_UI.failureDiagnosis(error || details);
+  const dependency = issue.category === 'dependency';
+  const compatibility = issue.category === 'compatibility';
+  const primary = dependency ? 'Periksa & siapkan ulang resource' : compatibility ? 'Periksa rilis stabil' : 'Kembali ke tinjauan';
+  const secondary = dependency && issue.dependency === 'storage' ? 'Periksa lokasi penyimpanan' : dependency && issue.dependency === 'apk' || compatibility ? 'Periksa versi APK' : 'Periksa pengaturan lanjutan';
   modal.innerHTML = `
     <div class="modal-card smart-recovery-card" role="dialog" aria-modal="true" aria-labelledby="recoveryTitle">
-      <div class="modal-header smart-recovery-header">
-        <div class="recovery-header-icon" aria-hidden="true">🛠️</div>
-        <div>
-          <h3 id="recoveryTitle" class="modal-title">Pemulihan Cerdas: Patching Terhenti</h3>
-          <p class="modal-subtitle">Terjadi kendala pada rilis <strong>${escapeHtml(sourceName)} (${escapeHtml(tag)})</strong></p>
-        </div>
-      </div>
-
+      <div class="modal-header smart-recovery-header"><div><h3 id="recoveryTitle" class="modal-title">${escapeHtml(issue.title)}</h3>
+        <p class="modal-subtitle">${escapeHtml(issue.explanation)}</p></div></div>
       <div class="modal-body smart-recovery-body">
-        <div class="recovery-error-box">
-          <div class="error-box-label">Pesan Kesalahan:</div>
-          <code class="error-box-code">${escapeHtml(error || details || 'Morphe CLI keluar dengan kode status gagal.')}</code>
-        </div>
-
-        ${isBeta ? `
-          <div class="recovery-tip-box">
-            <span class="tip-badge">Penyebab Umum</span>
-            <p>Rilis dev/beta sering kali memperkenalkan patch baru yang belum sepenuhnya kompatibel dengan struktur smali bytecode versi APK yang dipilih.</p>
-          </div>
-        ` : ''}
-
+        <div class="recovery-error-box"><div class="error-box-label">Penyebab yang terdeteksi</div><p class="recovery-precise-message">${escapeHtml(issue.message)}</p></div>
+        ${compatibility && isCurrentReleasePreRelease() ? '<p class="recovery-tip-box">Mesin melaporkan ketidakcocokan patch. Periksa versi APK dan rilis yang didukung sebelum mencoba kembali.</p>' : ''}
         <div class="recovery-options-list">
-          <!-- Opsi 1: Rollback ke Stabil -->
-          <button type="button" id="btnRecoveryRollbackStable" class="recovery-action-btn primary">
-            <span class="action-icon">🌟</span>
-            <div class="action-info">
-              <strong>Beralih ke Versi Stabil Terakhir (Rekomendasi 1-Klik)</strong>
-              <small>Otomatis mengganti sumber ke rilis stabil yang telah terverifikasi aman.</small>
-            </div>
-          </button>
-
-          <!-- Opsi 2: Retry Toleransi -->
-          <button type="button" id="btnRecoveryRetryTolerant" class="recovery-action-btn secondary">
-            <span class="action-icon">⚡</span>
-            <div class="action-info">
-              <strong>Coba Lagi dengan Toleransi Tinggi (--continue-on-error &amp; --force)</strong>
-              <small>Mengabaikan patch minor yang gagal dan melanjutkan kompilasi APK.</small>
-            </div>
-          </button>
-
-          <!-- Opsi 3: Ganti Versi APK Target -->
-          <button type="button" id="btnRecoveryChangeVersion" class="recovery-action-btn outline">
-            <span class="action-icon">📦</span>
-            <div class="action-info">
-              <strong>Pilih Versi APK Target Lain (Langkah 3)</strong>
-              <small>Gunakan versi APK yang direkomendasikan secara resmi oleh patch.</small>
-            </div>
-          </button>
+          <button type="button" id="btnRecoveryPrepare" class="recovery-action-btn primary"><div class="action-info"><strong>${primary}</strong><small>${dependency ? 'Pertahankan pilihan saat ini dan periksa resource yang belum siap.' : 'Periksa kembali pilihan dan kebutuhan proses.'}</small></div></button>
+          <button type="button" id="btnRecoveryTarget" class="recovery-action-btn secondary"><div class="action-info"><strong>${secondary}</strong><small>Pilihan hanya diubah setelah Anda menentukannya.</small></div></button>
         </div>
       </div>
-
-      <div class="modal-footer smart-recovery-footer">
-        <button type="button" id="btnCloseSmartRecovery" class="morphe-btn-secondary">Tutup &amp; Lihat Log</button>
-      </div>
-    </div>
-  `;
-
+      <div class="modal-footer smart-recovery-footer"><button type="button" id="btnCloseSmartRecovery" class="morphe-btn-secondary">Tutup & lihat log</button></div>
+    </div>`;
   modal.classList.remove('hidden');
-
-  // Bind actions
-  document.getElementById('btnRecoveryRollbackStable')?.addEventListener('click', () => {
+  document.getElementById('btnRecoveryPrepare').addEventListener('click', () => {
     closeSmartRecoveryModal();
-    executeRollbackToLatestStable();
+    if (compatibility) executeRollbackToLatestStable();
+    else { invalidateWizardReview(); openDownloadConsentModal(); }
   });
-
-  document.getElementById('btnRecoveryRetryTolerant')?.addEventListener('click', () => {
-    closeSmartRecoveryModal();
-    executeRetryWithTolerantFlags();
+  document.getElementById('btnRecoveryTarget').addEventListener('click', () => {
+    closeSmartRecoveryModal(); switchScreen('wizard');
+    goToWizardStep(dependency && issue.dependency === 'storage' ? 7 : dependency && issue.dependency === 'apk' || compatibility ? 3 : 6);
   });
-
-  document.getElementById('btnRecoveryChangeVersion')?.addEventListener('click', () => {
-    closeSmartRecoveryModal();
-    if (typeof navigateToStep === 'function') {
-      navigateToStep(3);
-    }
-  });
-
-  document.getElementById('btnCloseSmartRecovery')?.addEventListener('click', closeSmartRecoveryModal);
+  document.getElementById('btnCloseSmartRecovery').addEventListener('click', closeSmartRecoveryModal);
 }
 
 function closeSmartRecoveryModal() {
@@ -160,38 +102,12 @@ async function executeRollbackToLatestStable() {
   }
 
   const stableTag = latestStable.tag_name || latestStable.name;
-  STATE.patchTag = stableTag;
-  STATE.selectedRelease = latestStable;
-
-  if (typeof showToast === 'function') {
-    showToast(`Beralih ke rilis stabil: ${stableTag}... Menyiapkan metadata.`);
-  }
-
-  // Navigate back to Step 2 or re-evaluate Step 4
-  if (typeof navigateToStep === 'function') {
-    navigateToStep(2);
-    // Refresh release UI if available
-    if (typeof renderReleaseChannels === 'function') {
-      renderReleaseChannels();
-    }
-  }
+  const ready = await selectPatchChannel(stableTag, false);
+  goToWizardStep(ready ? 3 : 2);
+  switchScreen('wizard');
 }
 
 function executeRetryWithTolerantFlags() {
-  if (!STATE.morpheEngineOptions) STATE.morpheEngineOptions = {};
-  STATE.morpheEngineOptions.continueOnError = true;
-  STATE.morpheEngineOptions.force = true;
-
-  if (typeof saveMorpheEngineOptions === 'function') {
-    saveMorpheEngineOptions();
-  }
-
-  if (typeof showToast === 'function') {
-    showToast('Toleransi diaktifkan (--continue-on-error & --force). Mencoba ulang build...');
-  }
-
-  // Trigger rebuild
-  if (typeof triggerBuildPipeline === 'function') {
-    triggerBuildPipeline();
-  }
+  goToWizardStep(6);
+  switchScreen('wizard');
 }

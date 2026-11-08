@@ -6,8 +6,6 @@ use axum::{
 };
 use serde_json::json;
 
-
-
 pub(crate) async fn get_source_releases(
     State(state): State<AppState>,
     Query(query): Query<SourceReleaseQuery>,
@@ -130,7 +128,6 @@ pub(crate) async fn get_source_releases(
     (StatusCode::OK, Json(json!(releases))).into_response()
 }
 
-
 fn xml_text(xml: &str, tag: &str) -> Option<String> {
     let opening = format!("<{tag}");
     let start = xml.find(&opening)?;
@@ -189,14 +186,10 @@ fn html_hrefs(html: &str) -> Vec<String> {
     hrefs
 }
 
-
-
 #[derive(serde::Deserialize)]
 pub(crate) struct AppIconQuery {
     package: String,
 }
-
-
 
 #[derive(serde::Deserialize)]
 pub(crate) struct SourceReleaseQuery {

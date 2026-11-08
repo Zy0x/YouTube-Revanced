@@ -3,16 +3,24 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+def releaseSigningFile = new File(System.getProperty('user.home'), '.android/rvx-patcher/signing.properties')
+def releaseSigning = new Properties()
+if (releaseSigningFile.exists()) {
+    releaseSigningFile.withInputStream { releaseSigning.load(it) }
+}
+
 android {
     namespace 'com.rvx.patcher'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.rvx.patcher"
+        applicationId providers.gradleProperty('rvxApplicationId').getOrElse('com.rvx.patcher')
         minSdk 26
         targetSdk 34
-        versionCode 20261034
-        versionName "2.1.39"
+        versionCode 20261110
+        versionName "2.1.48"
+        manifestPlaceholders = [appLabel: providers.gradleProperty('rvxAppLabel').getOrElse('RVX Patcher')]
+        buildConfigField 'boolean', 'PREFER_ROOT', providers.gradleProperty('rvxPreferRoot').getOrElse('true').toBoolean().toString()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         ndk {
@@ -20,14 +28,28 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            storeFile file(releaseSigning.getProperty('storeFile', new File(releaseSigningFile.parentFile, 'release.p12').absolutePath))
+            storePassword releaseSigning.getProperty('storePassword')
+            keyAlias releaseSigning.getProperty('keyAlias', 'rvx-patcher')
+            keyPassword releaseSigning.getProperty('keyPassword')
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
             applicationIdSuffix ""
         }
+    }
+
+    buildFeatures {
+        buildConfig true
     }
 
     compileOptions {
@@ -52,6 +74,7 @@ android {
 dependencies {
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
     implementation 'androidx.webkit:webkit:1.10.0'
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'

@@ -60,7 +60,6 @@ function rvxHasBackNavTarget() {
   // 3. Modals
   const modalIds = [
     'storageBrowserModal',
-    'downloadConsentModal',
     'patchOptionsModal',
     'modalOtherVersions',
     'modalPatchTagPicker',
@@ -84,15 +83,15 @@ function rvxHasBackNavTarget() {
   if (anyVisibleModal) return true;
 
   // 4. TUI Mode
-  if (window.STATE?.uiMode === 'tui') return true;
+  if (STATE?.uiMode === 'tui') return true;
   const tuiView = document.getElementById('tuiView');
   if (tuiView && !tuiView.classList.contains('hidden')) return true;
 
   // 5. Wizard Steps
-  if (window.STATE?.activeScreen === 'wizard' && (window.STATE?.wizardStep || 1) > 1) return true;
+  if (STATE?.activeScreen === 'wizard' && (STATE?.wizardStep || 1) > 1) return true;
 
   // 6. Classic Morphe Screens
-  if (window.STATE?.activeScreen && window.STATE?.activeScreen !== 'wizard' && window.STATE?.activeScreen !== 'home') {
+  if (STATE?.activeScreen && STATE?.activeScreen !== 'wizard' && STATE?.activeScreen !== 'home') {
     return true;
   }
 
@@ -171,14 +170,6 @@ window.RVXHandleBackGesture = function() {
   if (storageModal && !storageModal.classList.contains('hidden')) {
     if (typeof closeStorageBrowser === 'function') closeStorageBrowser();
     else storageModal.classList.add('hidden');
-    syncPwaHistory();
-    return true;
-  }
-
-  const downloadConsentModal = document.getElementById('downloadConsentModal');
-  if (downloadConsentModal && !downloadConsentModal.classList.contains('hidden')) {
-    if (typeof closeDownloadConsentModal === 'function') closeDownloadConsentModal();
-    else downloadConsentModal.classList.add('hidden');
     syncPwaHistory();
     return true;
   }
@@ -281,7 +272,7 @@ window.RVXHandleBackGesture = function() {
   // -------------------------------------------------------------
   // Level 4: TUI Terminal mode -> switch back to Morphe UI
   // -------------------------------------------------------------
-  if (window.STATE?.uiMode === 'tui' || (document.getElementById('tuiView') && !document.getElementById('tuiView').classList.contains('hidden'))) {
+  if (STATE?.uiMode === 'tui' || (document.getElementById('tuiView') && !document.getElementById('tuiView').classList.contains('hidden'))) {
     if (typeof setUiMode === 'function') setUiMode('morphe');
     syncPwaHistory();
     return true;
@@ -290,8 +281,8 @@ window.RVXHandleBackGesture = function() {
   // -------------------------------------------------------------
   // Level 5: Wizard Step Navigation (Step 5 -> 4 -> 3 -> 2 -> 1)
   // -------------------------------------------------------------
-  if (window.STATE?.activeScreen === 'wizard') {
-    const currentStep = Number(window.STATE?.wizardStep || 1);
+  if (STATE?.activeScreen === 'wizard') {
+    const currentStep = Number(STATE?.wizardStep || 1);
     if (currentStep > 1) {
       if (typeof goToWizardStep === 'function') {
         goToWizardStep(currentStep - 1);
@@ -306,17 +297,22 @@ window.RVXHandleBackGesture = function() {
   // -------------------------------------------------------------
   // Level 6: Classic Morphe Screens (Progress -> Patches -> Version -> Home)
   // -------------------------------------------------------------
-  if (window.STATE?.activeScreen === 'progress') {
-    if (typeof switchScreen === 'function') switchScreen('patches');
+  if (STATE?.activeScreen === 'progress') {
+    if (STATE.buildSession?.status === 'running') {
+      showRvxToast('Proses patch masih berjalan.');
+      return true;
+    }
+    goToWizardStep(8);
+    switchScreen('wizard');
     syncPwaHistory();
     return true;
   }
-  if (window.STATE?.activeScreen === 'patches') {
+  if (STATE?.activeScreen === 'patches') {
     if (typeof switchScreen === 'function') switchScreen('version');
     syncPwaHistory();
     return true;
   }
-  if (window.STATE?.activeScreen === 'version') {
+  if (STATE?.activeScreen === 'version') {
     if (typeof switchScreen === 'function') switchScreen('home');
     syncPwaHistory();
     return true;
