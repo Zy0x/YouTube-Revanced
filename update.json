@@ -1,7 +1,7 @@
 {
-  "version": "v21.13.164",
-  "versionCode": 20261024,
-  "zipUrl": "https://github.com/Zy0x/YouTube-Revanced/releases/download/v21.13.164-R1/YouTube.RVX.v21.13.164-R1.zip",
+  "version": "v21.39.525",
+  "versionCode": 20261111,
+  "zipUrl": "https://github.com/Zy0x/YouTube-Revanced/releases/download/v21.39.525/YouTube.RVX.v21.39.525.zip",
   "changelog": "https://raw.githubusercontent.com/Zy0x/YouTube-Revanced/main/changelog.md",
-  "releaseType": "beta"
+  "releaseType": "stable"
 }
