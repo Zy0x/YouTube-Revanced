@@ -1,9 +1,9 @@
 Root Access: true
 Architecture: arm64-v8a
 App: YouTube v21.39.525
-CLI: assets/Morphe-CLI-v2.2.0-dev.12.jar
-Patches: assets/Anddea/Patches-v4.4.0-dev.6.mpp
-Arguments: -e Disable edge-to-edge display -e Override certificate pinning -e Spoof Wi-Fi connection -e Spoof signature -OpackageName= -OcertificateData= -e Ambient mode control -e App refresh rate -e Bypass URL redirects -e Bypass image region restrictions -e Captions -e Change form factor -e Change player flyout menu toggles -e Change share sheet -e Change start page -e Copy text -e Custom DPI -e Custom Shorts action buttons -OiconType=cairo -e Custom double tap length -OdoubleTapLengthArrays=3, 5, 10, 15, 20, 30, 60, 120, 180 -e DeArrow -e Description components -e Disable QUIC protocol -e Disable auto feed refresh -e Disable forced auto captions -e Disable haptic feedback -e Disable layout updates -e Disable playlist autoplay -e Disable resuming Miniplayer on startup -e Disable resuming Shorts on startup -e Disable scrolling speed limit -e Disable sign in to TV popup -e Download post images -e Enable debug logging -e Enable gradient loading screen -e Feed video actions -e Force original audio -e Fullscreen components -e Fullscreen video scale -e Gemini -e GmsCore support -OgmsCoreVendorGroupId=app.revanced -OcheckGmsCore=true -OdisableCoreServices=false -OpackageNameYouTube=anddea.youtube -OpackageNameYouTubeMusic=anddea.youtube.music -OpatchAllManifest=false -e Hide action buttons -e Hide ads -e Hide comments components -e Hide feed components -e Hide feed flyout menu -e Hide layout components -e Hide player buttons -e Hide player flyout menu -e Hook download actions -e Miniplayer -e Navigation bar components -e Open channel of live avatar -e Open links externally -e Overlay buttons -OiconType=rounded -ObottomMargin=2.5dip -OwiderButtonsSpace=false -OchangeTopButtons=true -e Override YouTube Music buttons -e Picture-in-picture button -e Playback buffer -e Playback in feeds -e Player components -e PoToken provider -e Preferred caption language -e Reload video -e Remember livestream playback position -e Remove background playback restrictions -e Remove viewer discretion dialog -e Restore original titles -e Return YouTube Dislike -e Return YouTube Username -e Sanitize sharing links -e Save to Watch later -e Search comments -e Seekbar components -e Set transcript cookies -e Settings for YouTube -OrvxSettingsLabel=RVX -e Settings menu filter -e Shorts components -e Skip silence -e Snack bar components -OcornerRadius=8.0dip -OapplyCornerRadiusToPlaylistBottomBar=false -OdarkThemeBackgroundColor=@color/yt_black3 -OlightThemeBackgroundColor=@color/yt_white3 -OstrokeColor= -e SponsorBlock -ONewSegmentAlignment=right -e Spoof app version -e Spoof video streams -e Spoof watch history -e Swipe controls -e Theme -OdarkThemeColor=#FF000000 -OlightThemeColor=#FFFFFFFF -OprecompileLegacyThemes=false -e Toolbar components -e Translate live chat -e Translations for YouTube -OcustomTranslations= -OselectedTranslations=ar, az-rAZ, be-rBY, bg-rBG, cs-rCZ, da-rDK, de-rDE, el-rGR, en-rGB, en-rUS, es-rES, es-rUS, fa-rIR, fil-rPH, fr-rFR, ga-rIE, hu-rHU, id-rID, in, it-rIT, iw-rIL, ja-rJP, ko-rKR, lo-rLA, my-rMM, nl-rNL, pa-rIN, pl-rPL, pt-rBR, ru-rRU, sk-rSK, sv-rSE, ta-rIN, tr-rTR, uk-rUA, ur-rPK, uz-rUZ, vi-rVN, zh-rCN, zh-rTW -OselectedStringResources=af, am, ar, ar-rXB, as, az, b+es+419, b+sr+Latn, be, bg, bn, bs, ca, cs, da, de, el, en-rAU, en-rCA, en-rGB, en-rIN, en-rXA, en-rXC, es, es-rUS, et, eu, fa, fi, fil-rPH, fr, fr-rCA, gl, gu, hi, hr, hu, hy, id, in, is, it, iw, ja, ka, kk, km, kn, ko, ky, lo, lt, lv, mk, ml, mn, mr, ms, my, nb, ne, nl, no, or, pa, pl, pt, pt-rBR, pt-rPT, ro, ru, si, sk, sl, sq, sr, sv, sw, ta, te, th, tl, tr, uk, ur, uz, vi, zh, zh-rCN, zh-rHK, zh-rTW, zu -e Unlock queue -e Video playback -e Visual preferences icons for YouTube -OsettingsMenuIcon=extension -OapplyToAll=true -e Voice Over Translation -e Watch later improvements -e Wide search bar -e Hide Shorts dimming -e Hide accessibility controls dialog -e Hide shortcuts -Oexplore=false -Osubscriptions=false -Osearch=false -Oshorts=false
+CLI: assets/Morphe-CLI-v2.3.0.jar
+Patches: assets/Anddea/Patches-v4.4.0-dev.8.mpp
+Arguments: -e Disable edge-to-edge display -e Override certificate pinning -e Spoof Wi-Fi connection -e Spoof signature -OpackageName= -OcertificateData= -e Ambient mode control -e App refresh rate -e Bypass URL redirects -e Bypass image region restrictions -e Captions -e Change form factor -e Change player flyout menu toggles -e Change share sheet -e Change start page -e Copy text -e Custom DPI -e Custom Shorts action buttons -OiconType=cairo -e Custom double tap length -OdoubleTapLengthArrays=3, 5, 10, 15, 20, 30, 60, 120, 180 -e DeArrow -e Description components -e Disable QUIC protocol -e Disable auto feed refresh -e Disable forced auto captions -e Disable haptic feedback -e Disable layout updates -e Disable playlist autoplay -e Disable resuming Miniplayer on startup -e Disable resuming Shorts on startup -e Disable scrolling speed limit -e Disable sign in to TV popup -e Download post images -e Enable debug logging -e Enable gradient loading screen -e Feed video actions -e Force original audio -e Fullscreen components -e Fullscreen video scale -e Gemini -e GmsCore support -OgmsCoreVendorGroupId=app.revanced -OcheckGmsCore=true -OdisableCoreServices=false -OpackageNameYouTube=anddea.youtube -OpackageNameYouTubeMusic=anddea.youtube.music -OpatchAllManifest=false -e Hide action buttons -e Hide ads -e Hide comments components -e Hide feed components -e Hide feed flyout menu -e Hide layout components -e Hide player buttons -e Hide player flyout menu -e Hook download actions -e Miniplayer -e Navigation bar components -e Open channel of live avatar -e Open links externally -e Overlay buttons -OiconType=rounded -ObottomMargin=2.5dip -OwiderButtonsSpace=false -OchangeTopButtons=true -e Override YouTube Music buttons -e Picture-in-picture button -e Playback buffer -e Playback in feeds -e Player components -e Playlist improvements -e PoToken provider -e Preferred caption language -e Reload video -e Remember livestream playback position -e Remove background playback restrictions -e Remove viewer discretion dialog -e Restore original titles -e Return YouTube Dislike -e Return YouTube Username -e Sanitize sharing links -e Save to Watch later -e Search comments -e Seekbar components -e Set transcript cookies -e Settings for YouTube -OrvxSettingsLabel=RVX -e Settings menu filter -e Shorts components -e Skip silence -e Snack bar components -OcornerRadius=8.0dip -OapplyCornerRadiusToPlaylistBottomBar=false -OdarkThemeBackgroundColor=@color/yt_black3 -OlightThemeBackgroundColor=@color/yt_white3 -OstrokeColor= -e SponsorBlock -ONewSegmentAlignment=right -e Spoof app version -e Spoof video streams -e Spoof watch history -e Swipe controls -e Theme -OdarkThemeColor=#FF000000 -OlightThemeColor=#FFFFFFFF -OprecompileLegacyThemes=false -e Toolbar components -e Translate live chat -e Translations for YouTube -OcustomTranslations= -OselectedTranslations=ar, az-rAZ, be-rBY, bg-rBG, cs-rCZ, da-rDK, de-rDE, el-rGR, en-rGB, en-rUS, es-rES, es-rUS, fa-rIR, fil-rPH, fr-rFR, ga-rIE, hu-rHU, id-rID, in, it-rIT, iw-rIL, ja-rJP, ko-rKR, lo-rLA, my-rMM, nl-rNL, pa-rIN, pl-rPL, pt-rBR, ru-rRU, sk-rSK, sv-rSE, ta-rIN, tr-rTR, uk-rUA, ur-rPK, uz-rUZ, vi-rVN, zh-rCN, zh-rTW -OselectedStringResources=af, am, ar, ar-rXB, as, az, b+es+419, b+sr+Latn, be, bg, bn, bs, ca, cs, da, de, el, en-rAU, en-rCA, en-rGB, en-rIN, en-rXA, en-rXC, es, es-rUS, et, eu, fa, fi, fil-rPH, fr, fr-rCA, gl, gu, hi, hr, hu, hy, id, in, is, it, iw, ja, ka, kk, km, kn, ko, ky, lo, lt, lv, mk, ml, mn, mr, ms, my, nb, ne, nl, no, or, pa, pl, pt, pt-rBR, pt-rPT, ro, ru, si, sk, sl, sq, sr, sv, sw, ta, te, th, tl, tr, uk, ur, uz, vi, zh, zh-rCN, zh-rHK, zh-rTW, zu -e Ungroup notifications -e Unlock queue -e Video playback -e Visual preferences icons for YouTube -OsettingsMenuIcon=extension -OapplyToAll=true -e Voice Over Translation -e Wide search bar -e Hide Shorts dimming -e Hide accessibility controls dialog -e Hide shortcuts -Oexplore=false -Osubscriptions=false -Osearch=false -Oshorts=false
 
 Logs:
 
@@ -14,12 +14,12 @@ INFO: Filtering patches for com.google.android.youtube v21.39.525...
 INFO: Skipping disabled: Change installer package name (default)
 INFO: Skipping disabled: Change version code (default)
 INFO: Skipping disabled: Custom branding for YouTube (default)
-INFO: Applying 94 patches...
+INFO: Applying 95 patches...
 INFO: Deleting existing temporary files directory
 INFO: Decoding the manifest
 INFO: Decoding resources on request, 17313 files can be decoded
 INFO: Executing patches
-INFO: Building instruction indexes for 64843 classes...
+INFO: Building instruction indexes for 55872 classes...
 INFO: Applied: Ambient mode control
 INFO: Applied: App refresh rate
 INFO: Applied: Bypass URL redirects
@@ -49,7 +49,6 @@ INFO: Applied: Disable resuming Shorts on startup
 INFO: Applied: Disable scrolling speed limit
 INFO: Applied: Disable sign in to TV popup
 INFO: Applied: Download post images
-INFO: Applied: Enable debug logging
 INFO: Applied: Enable gradient loading screen
 INFO: Applied: Feed video actions
 INFO: Applied: Force original audio
@@ -83,6 +82,7 @@ INFO: Applied: Picture-in-picture button
 INFO: Applied: Playback buffer
 INFO: Applied: Playback in feeds
 INFO: Applied: Player components
+INFO: Applied: Playlist improvements
 INFO: Applied: PoToken provider
 INFO: Applied: Preferred caption language
 INFO: Applied: Remember livestream playback position
@@ -112,22 +112,23 @@ INFO: Applied: Theme
 INFO: Applied: Toolbar components
 INFO: Applied: Translate live chat
 INFO: Applied: Translations for YouTube
+INFO: Applied: Ungroup notifications
 INFO: Applied: Unlock queue
 INFO: Applied: Video playback
 INFO: Applied: Voice Over Translation
-INFO: Applied: Watch later improvements
 INFO: Applied: Wide search bar
 INFO: Applied: Visual preferences icons for YouTube
 INFO: Applied: Reload video
+INFO: Applied: Enable debug logging
 INFO: Applied: Settings for YouTube
 INFO: Rebuilding APK...
 INFO: Compiling patched dex files (mode: STRIP_FAST)
-INFO: Copied 8964 unchanged extension classes to 4 DEX files
-INFO: Changed 1369 of 64891 classes to mutable
-INFO: Writing 1369 new classes to new DEX files
-INFO: Processing 1369 classes in parallel (4 threads)
-INFO: Wrote 4 dex files to /data/data/com.termux/files/home/Revancify-Xisr/assets/morphe-data/tmp/patching-1794386732912/patcher/patched/newDex
-INFO: Stripped 1314 modified classes from 7 original DEX files
+INFO: Copied 10299 unchanged extension classes to 4 DEX files
+INFO: Changed 1412 of 66230 classes to mutable
+INFO: Writing 1412 new classes to new DEX files
+INFO: Processing 1412 classes in parallel (4 threads)
+INFO: Wrote 4 dex files to /data/data/com.termux/files/home/Revancify-Xisr/assets/morphe-data/tmp/patching-1795357929184/patcher/patched/newDex
+INFO: Stripped 1353 modified classes from 7 original DEX files
 INFO: Compiling modified resources
 INFO: Stripping libs (keeping architectures arm64-v8a, armeabi-v7a, x86, x86_64)
 INFO: Stripped 0 lib files
@@ -137,10 +138,10 @@ INFO: Post-processing package name change
 INFO: Processing aapt macros
 INFO: Generating new resource IDs
 INFO: Writing resource APK
-INFO: Encoded 63696 of 66766 values in 33 files, 456 resource files and 0 configurations of patches for com.google.android.youtube
-INFO: Reusing 17050 unchanged archive entries, rebuilding 458 entries, dropping 0 entries, leaving out 7 replaced entries
-INFO: Resource APK scan: 3.9s write: 4.4s
+INFO: Encoded 66046 of 69116 values in 33 files, 464 resource files and 0 configurations of patches for com.google.android.youtube
+INFO: Reusing 17050 unchanged archive entries, rebuilding 466 entries, dropping 0 entries, leaving out 7 replaced entries
+INFO: Resource APK scan: 5.2s write: 4.8s
 INFO: Default keystore credentials failed (Keystore does not contain entry with alias Morphe). Retrying with legacy credentials
 INFO: Signing APK
 INFO: Saved to /data/data/com.termux/files/home/Revancify-Xisr/apps/YouTube/21.39.525-Anddea.apk
-INFO: Patching took 85.7 seconds
+INFO: Patching took 100.5 seconds
